@@ -37,6 +37,8 @@ use crate::{
 	AccountId, BlockNumber, Extrinsic, Transfer, H256 as Hash, Block, Header, Digest, AuthorityId
 };
 use sp_core::{storage::well_known_keys, ChangesTrieConfiguration};
+use sp_core::storage::well_known_keys::EXTRINSIC_INDEX;
+use sp_runtime::traits::ExtrinsicsRoot;
 
 const NONCE_OF: &[u8] = b"nonce:";
 const BALANCE_OF: &[u8] = b"balance:";
@@ -136,7 +138,7 @@ fn execute_block_with_state_root_handler(block: &mut Block, mode: Mode) {
 	if let Mode::Overwrite = mode {
 		header.extrinsics_root = new_header.extrinsics_root;
 	} else {
-		info_expect_equal_hash(&new_header.extrinsics_root, &header.extrinsics_root);
+		info_expect_equal_hash(&new_header.extrinsics_root.hash, &header.extrinsics_root.hash);
 		assert!(
 			new_header.extrinsics_root == header.extrinsics_root,
 			"Transaction trie root must be valid.",
@@ -202,7 +204,7 @@ pub fn execute_transaction(utx: Extrinsic) -> ApplyExtrinsicResult {
 pub fn finalize_block() -> Header {
 	let extrinsic_index: u32 = storage::unhashed::take(well_known_keys::EXTRINSIC_INDEX).unwrap();
 	let txs: Vec<_> = (0..extrinsic_index).map(ExtrinsicData::take).collect();
-	let extrinsics_root = trie::blake2_256_ordered_root(txs).into();
+	let root_hash = trie::blake2_256_ordered_root(txs).into();
 	let number = <Number>::take().expect("Number is set by `initialize_block`");
 	let parent_hash = <ParentHash>::take();
 	let mut digest = <StorageDigest>::take().expect("StorageDigest is set by `initialize_block`");
@@ -231,6 +233,8 @@ pub fn finalize_block() -> Header {
 			generic::ChangesTrieSignal::NewConfiguration(new_config)
 		));
 	}
+
+	let extrinsics_root = ExtrinsicsRoot::new(root_hash);
 
 	Header {
 		number,

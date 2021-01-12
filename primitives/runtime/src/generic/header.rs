@@ -28,9 +28,76 @@ use crate::traits::{
 use crate::generic::Digest;
 use sp_core::U256;
 use sp_std::{
+	prelude::*,
 	convert::TryFrom,
 	fmt::Debug,
+	vec,
 };
+
+#[derive(PartialEq, Eq, Clone, sp_core::RuntimeDebug, Default)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "std", serde(deny_unknown_fields))]
+pub struct ExtrinsicsRoot<HashOutput>
+{
+	/// The merkle root of the extrinsics.
+	pub hash: HashOutput,
+	pub commitment: Vec<u8>,
+}
+
+impl<HashOutput> traits::ExtrinsicsRoot for ExtrinsicsRoot<HashOutput> where
+	HashOutput: Member + MaybeSerializeDeserialize + Debug + sp_std::hash::Hash + Ord
+		+ Copy + MaybeDisplay + Default + SimpleBitOps + Codec + AsRef<[u8]>
+		+ AsMut<[u8]> + MaybeMallocSizeOf,
+{
+	type HashOutput = HashOutput;
+
+	fn hash(&self) -> &Self::HashOutput { &self.hash }
+	fn commitment(&self) -> &Vec<u8> { &self.commitment }
+
+	fn new<>(
+		hash: HashOutput
+	) -> Self {
+		Self {
+			hash,
+			commitment: vec![2,3,4,5]
+		}
+	}
+}
+
+#[cfg(feature = "std")]
+impl<HashOutput> parity_util_mem::MallocSizeOf for ExtrinsicsRoot<HashOutput>  where
+	HashOutput: parity_util_mem::MallocSizeOf,
+{
+	fn size_of(&self, ops: &mut parity_util_mem::MallocSizeOfOps) -> usize {
+			self.hash.size_of(ops) +
+			self.commitment.size_of(ops)
+	}
+}
+
+impl<HashOutput> Decode for ExtrinsicsRoot<HashOutput> where
+	HashOutput: Decode,
+{
+	fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+		Ok(ExtrinsicsRoot {
+			hash: Decode::decode(input)?,
+			commitment: Decode::decode(input)?,
+		})
+	}
+}
+
+impl<HashOutput> Encode for ExtrinsicsRoot<HashOutput> where
+	HashOutput: Encode,
+{
+	fn encode_to<T: Output>(&self, dest: &mut T) {
+		dest.push(&self.hash);
+		dest.push(&self.commitment);
+	}
+}
+
+impl<HashOutput> codec::EncodeLike for ExtrinsicsRoot<HashOutput> where
+	HashOutput: Encode,
+{}
 
 /// Abstraction over a block header for a substrate chain.
 #[derive(PartialEq, Eq, Clone, sp_core::RuntimeDebug)]
@@ -47,8 +114,8 @@ pub struct Header<Number: Copy + Into<U256> + TryFrom<U256>, Hash: HashT> {
 	pub number: Number,
 	/// The state trie merkle root
 	pub state_root: Hash::Output,
-	/// The merkle root of the extrinsics.
-	pub extrinsics_root: Hash::Output,
+	/// Hash and Kate Commitment
+	pub extrinsics_root: ExtrinsicsRoot<Hash::Output>,
 	/// A chain-specific digest of data useful for light clients or referencing auxiliary data.
 	pub digest: Digest<Hash::Output>,
 }
@@ -132,12 +199,13 @@ impl<Number, Hash> traits::Header for Header<Number, Hash> where
 	type Number = Number;
 	type Hash = <Hash as HashT>::Output;
 	type Hashing = Hash;
+	type Root = ExtrinsicsRoot<Self::Hash>;
 
 	fn number(&self) -> &Self::Number { &self.number }
 	fn set_number(&mut self, num: Self::Number) { self.number = num }
 
-	fn extrinsics_root(&self) -> &Self::Hash { &self.extrinsics_root }
-	fn set_extrinsics_root(&mut self, root: Self::Hash) { self.extrinsics_root = root }
+	fn extrinsics_root(&self) -> &Self::Root { &self.extrinsics_root }
+	fn set_extrinsics_root(&mut self, root: Self::Root) { self.extrinsics_root = root }
 
 	fn state_root(&self) -> &Self::Hash { &self.state_root }
 	fn set_state_root(&mut self, root: Self::Hash) { self.state_root = root }
@@ -155,7 +223,7 @@ impl<Number, Hash> traits::Header for Header<Number, Hash> where
 
 	fn new(
 		number: Self::Number,
-		extrinsics_root: Self::Hash,
+		extrinsics_root: Self::Root,
 		state_root: Self::Hash,
 		parent_hash: Self::Hash,
 		digest: Digest<Self::Hash>,
