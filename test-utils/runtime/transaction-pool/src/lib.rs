@@ -23,7 +23,7 @@ use codec::Encode;
 use parking_lot::RwLock;
 use sp_runtime::{
 	generic::{self, BlockId},
-	traits::{BlakeTwo256, Hash as HashT, Block as _, Header as _},
+	traits::{BlakeTwo256, Hash as HashT, Block as _, Header as _, ExtrinsicsRoot,},
 	transaction_validity::{
 		TransactionValidity, ValidTransaction, TransactionValidityError, InvalidTransaction,
 		TransactionSource,
@@ -165,7 +165,7 @@ impl TestApi {
 		let header = Header {
 			number: block_number,
 			digest: Default::default(),
-			extrinsics_root: Hash::random(),
+			extrinsics_root: ExtrinsicsRoot::new(Hash::random()),
 			parent_hash: parent,
 			state_root: Default::default(),
 		};

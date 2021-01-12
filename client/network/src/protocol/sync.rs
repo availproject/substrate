@@ -48,7 +48,7 @@ use sp_runtime::{
 	generic::BlockId,
 	traits::{
 		Block as BlockT, Header as HeaderT, NumberFor, Zero, One, CheckedSub, SaturatedConversion,
-		Hash, HashFor,
+		Hash, HashFor, ExtrinsicsRoot,
 	},
 };
 use sp_arithmetic::traits::Saturating;
@@ -1873,7 +1873,7 @@ fn validate_blocks<Block: BlockT>(
 			}
 		}
 		if let (Some(header), Some(body)) = (&b.header, &b.body) {
-			let expected = *header.extrinsics_root();
+			let expected = *header.extrinsics_root().hash();
 			let got = HashFor::<Block>::ordered_trie_root(body.iter().map(Encode::encode).collect());
 			if expected != got {
 				debug!(

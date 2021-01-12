@@ -537,6 +537,21 @@ pub trait IsMember<MemberId> {
 	fn is_member(member_id: &MemberId) -> bool;
 }
 
+pub trait ExtrinsicsRoot:
+	Member + MaybeSerializeDeserialize + Default + Debug + Codec + MaybeMallocSizeOf + 'static
+{
+	type HashOutput: Member + MaybeSerializeDeserialize + Debug + sp_std::hash::Hash + Ord
+		+ Copy + MaybeDisplay + Default + SimpleBitOps + Codec + AsRef<[u8]>
+		+ AsMut<[u8]> + MaybeMallocSizeOf;
+
+	fn hash(&self) -> &Self::HashOutput;
+	fn commitment(&self) -> &Vec<u8>;
+
+	fn new(
+		hash: Self::HashOutput
+	) -> Self;
+}
+
 /// Something which fulfills the abstract idea of a Substrate header. It has types for a `Number`,
 /// a `Hash` and a `Hashing`. It provides access to an `extrinsics_root`, `state_root` and
 /// `parent_hash`, as well as a `digest` and a block `number`.
@@ -555,11 +570,13 @@ pub trait Header:
 		+ AsMut<[u8]> + MaybeMallocSizeOf;
 	/// Hashing algorithm
 	type Hashing: Hash<Output = Self::Hash>;
+	/// Root Data
+	type Root: ExtrinsicsRoot<HashOutput = Self::Hash>;
 
 	/// Creates new header.
 	fn new(
 		number: Self::Number,
-		extrinsics_root: Self::Hash,
+		extrinsics_root: Self::Root,
 		state_root: Self::Hash,
 		parent_hash: Self::Hash,
 		digest: Digest<Self::Hash>,
@@ -571,9 +588,9 @@ pub trait Header:
 	fn set_number(&mut self, number: Self::Number);
 
 	/// Returns a reference to the extrinsics root.
-	fn extrinsics_root(&self) -> &Self::Hash;
+	fn extrinsics_root(&self) -> &Self::Root;
 	/// Sets the extrinsic root.
-	fn set_extrinsics_root(&mut self, root: Self::Hash);
+	fn set_extrinsics_root(&mut self, root: Self::Root);
 
 	/// Returns a reference to the state root.
 	fn state_root(&self) -> &Self::Hash;

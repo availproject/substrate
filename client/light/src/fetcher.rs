@@ -27,7 +27,7 @@ use codec::{Decode, Encode};
 use sp_core::{convert_hash, traits::{CodeExecutor, SpawnNamed}, storage::{ChildInfo, ChildType}};
 use sp_runtime::traits::{
 	Block as BlockT, Header as HeaderT, Hash, HashFor, NumberFor,
-	AtLeast32Bit, CheckedConversion,
+	AtLeast32Bit, CheckedConversion, ExtrinsicsRoot,
 };
 use sp_state_machine::{
 	ChangesTrieRootsStorage, ChangesTrieAnchorBlockId, ChangesTrieConfigurationRange,
@@ -286,15 +286,15 @@ impl<E, Block, H, S> FetchChecker<Block> for LightDataChecker<E, H, Block, S>
 		body: Vec<Block::Extrinsic>
 	) -> ClientResult<Vec<Block::Extrinsic>> {
 		// TODO: #2621
-		let extrinsics_root = HashFor::<Block>::ordered_trie_root(
+		let hash = HashFor::<Block>::ordered_trie_root(
 			body.iter().map(Encode::encode).collect(),
 		);
-		if *request.header.extrinsics_root() == extrinsics_root {
+		if *request.header.extrinsics_root().hash() == hash {
 			Ok(body)
 		} else {
 			Err(ClientError::ExtrinsicRootInvalid {
-				received: request.header.extrinsics_root().to_string(),
-				expected: extrinsics_root.to_string(),
+				received: request.header.extrinsics_root().hash().to_string(),
+				expected: hash.to_string(),
 			})
 		}
 
