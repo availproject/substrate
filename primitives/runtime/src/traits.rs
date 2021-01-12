@@ -538,7 +538,7 @@ pub trait IsMember<MemberId> {
 }
 
 pub trait ExtrinsicsRoot:
-	Member + MaybeSerializeDeserialize + Default + Debug + Codec + MaybeMallocSizeOf + 'static
+	Member + MaybeSerializeDeserialize + Default + Debug + Codec + MaybeMallocSizeOf
 {
 	type HashOutput: Member + MaybeSerializeDeserialize + Debug + sp_std::hash::Hash + Ord
 		+ Copy + MaybeDisplay + Default + SimpleBitOps + Codec + AsRef<[u8]>
@@ -549,6 +549,11 @@ pub trait ExtrinsicsRoot:
 
 	fn new(
 		hash: Self::HashOutput
+	) -> Self;
+
+	fn newWithCommitment(
+		hash: Self::HashOutput,
+		commitment: Vec<u8>
 	) -> Self;
 }
 

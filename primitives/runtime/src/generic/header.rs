@@ -55,12 +55,22 @@ impl<HashOutput> traits::ExtrinsicsRoot for ExtrinsicsRoot<HashOutput> where
 	fn hash(&self) -> &Self::HashOutput { &self.hash }
 	fn commitment(&self) -> &Vec<u8> { &self.commitment }
 
-	fn new<>(
+	fn new(
 		hash: HashOutput
 	) -> Self {
 		Self {
 			hash,
-			commitment: vec![2,3,4,5]
+			commitment: Default::default()
+		}
+	}
+
+	fn newWithCommitment(
+		hash: HashOutput,
+		commitment: Vec<u8>
+	) -> Self {
+		Self {
+			hash,
+			commitment
 		}
 	}
 }
