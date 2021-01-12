@@ -37,7 +37,6 @@ use crate::{
 	AccountId, BlockNumber, Extrinsic, Transfer, H256 as Hash, Block, Header, Digest, AuthorityId
 };
 use sp_core::{storage::well_known_keys, ChangesTrieConfiguration};
-use sp_core::storage::well_known_keys::EXTRINSIC_INDEX;
 use sp_runtime::traits::ExtrinsicsRoot;
 
 const NONCE_OF: &[u8] = b"nonce:";

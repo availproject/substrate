@@ -125,7 +125,7 @@ use sp_runtime::{
 	generic::Digest, ApplyExtrinsicResult,
 	traits::{
 		self, Header, Zero, One, Checkable, Applyable, CheckEqual, ValidateUnsigned, NumberFor,
-		Block as BlockT, Dispatchable, Saturating,
+		Block as BlockT, Dispatchable, Saturating, ExtrinsicsRoot,
 	},
 	transaction_validity::{TransactionValidity, TransactionSource},
 };
@@ -385,6 +385,7 @@ where
 	fn final_checks(header: &System::Header) {
 		sp_tracing::enter_span!(sp_tracing::Level::TRACE, "final_checks");
 		// remove temporaries
+		// NOTE, building KC in finalize() is going to be a slow process, we need a way to skip it, and validate separately instead
 		let new_header = <frame_system::Module<System>>::finalize();
 
 		// check digest
@@ -405,9 +406,11 @@ where
 		assert!(header.state_root() == storage_root, "Storage root must match that calculated.");
 
 		assert!(
-			header.extrinsics_root() == new_header.extrinsics_root(),
+			header.extrinsics_root().hash() == new_header.extrinsics_root().hash(),
 			"Transaction trie root must be valid.",
 		);
+
+		// TODO, validate KC
 	}
 
 	/// Check a given signed transaction for validity. This doesn't execute any
