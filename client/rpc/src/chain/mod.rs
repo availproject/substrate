@@ -75,6 +75,12 @@ where
 	/// Get header and body of a relay chain block.
 	fn block(&self, hash: Option<Block::Hash>) -> FutureResult<Option<SignedBlock<Block>>>;
 
+	fn extrinsic_by_blockhash_and_index(
+		&self,
+		index: u16,
+		hash: Option<Block::Hash>,
+	) -> FutureResult<Option<Block::Extrinsic>>;
+
 	/// Get hash of the n-th block in the canon chain.
 	///
 	/// By default returns latest block hash.
