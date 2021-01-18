@@ -25,6 +25,7 @@ use jsonrpc_core::Result as RpcResult;
 use jsonrpc_derive::rpc;
 use jsonrpc_pubsub::{typed::Subscriber, SubscriptionId};
 use sp_rpc::{list::ListOrValue, number::NumberOrHex};
+use sp_runtime::traits::Extrinsic;
 
 pub use self::gen_client::Client as ChainClient;
 
