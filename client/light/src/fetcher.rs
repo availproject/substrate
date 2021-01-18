@@ -22,8 +22,6 @@ use std::sync::Arc;
 use std::collections::{BTreeMap, HashMap};
 use std::marker::PhantomData;
 
-use std::fmt;
-
 use hash_db::{HashDB, Hasher, EMPTY_PREFIX};
 use codec::{Decode, Encode};
 use sp_core::{convert_hash, traits::{CodeExecutor, SpawnNamed}, storage::{ChildInfo, ChildType}};
@@ -65,7 +63,7 @@ impl<E, H, B: BlockT, S: BlockchainStorage<B>> LightDataChecker<E, H, B, S> {
 		spawn_handle: Box<dyn SpawnNamed>,
 	) -> Self {
 
-		println!("Light Data Checker is here !!!")
+		println!("Light Data Checker is here !!!");
 
 		Self {
 			blockchain, executor, spawn_handle, _hasher: PhantomData
@@ -225,7 +223,7 @@ impl<E, Block, H, S> FetchChecker<Block> for LightDataChecker<E, H, Block, S>
 		remote_proof: StorageProof,
 	) -> ClientResult<Block::Header> {
 
-		println!("[+] Header proof check invoked")
+		println!("[+] Header proof check invoked");
 
 		let remote_header = remote_header.ok_or_else(||
 			ClientError::from(ClientError::InvalidCHTProof))?;
@@ -344,7 +342,7 @@ impl<'a, H, Number, Hash> ChangesTrieRootsStorage<H, Number> for RootsStorage<'a
 			}
 		};
 
-		println!("Generating root of trie")
+		println!("Generating root of trie");
 
 		Ok(root.map(|root| {
 			let mut hasher_root: H::Out = Default::default();
