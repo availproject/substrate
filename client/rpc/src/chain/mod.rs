@@ -256,7 +256,7 @@ where
 		&self,
 		index: u16,
 		hash: Option<Block::Hash>,
-	) -> FutureResult<Option<Extrinsic>> {
+	) -> FutureResult<Option<Block::Extrinsic>> {
 		self.block(hash).block.extrinsics[index]
 	}
 
