@@ -25,13 +25,12 @@ use jsonrpc_core::Result as RpcResult;
 use jsonrpc_derive::rpc;
 use jsonrpc_pubsub::{typed::Subscriber, SubscriptionId};
 use sp_rpc::{list::ListOrValue, number::NumberOrHex};
-use sp_runtime::traits::SignedExtension;
 
 pub use self::gen_client::Client as ChainClient;
 
 /// Substrate blockchain API
 #[rpc]
-pub trait ChainApi<Number, Hash, Header, SignedBlock, SignedExtension> {
+pub trait ChainApi<Number, Extrinsic, Hash, Header, SignedBlock> {
 	/// RPC metadata
 	type Metadata;
 
@@ -53,7 +52,7 @@ pub trait ChainApi<Number, Hash, Header, SignedBlock, SignedExtension> {
 		&self,
 		index: u16,
 		hash: Option<Hash>,
-	) -> FutureResult<Option<SignedExtension>>;
+	) -> FutureResult<Option<Extrinsic>>;
 
 	/// Get hash of the n-th block in the canon chain.
 	///

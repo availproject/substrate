@@ -236,7 +236,8 @@ pub struct Chain<Block: BlockT, Client> {
 	backend: Box<dyn ChainBackend<Client, Block>>,
 }
 
-impl<Block, Client> ChainApi<NumberFor<Block>, Block::Hash, Block::Header, SignedBlock<Block>>
+impl<Block, Client>
+	ChainApi<NumberFor<Block>, Block::Extrinsic, Block::Hash, Block::Header, SignedBlock<Block>>
 	for Chain<Block, Client>
 where
 	Block: BlockT + 'static,
@@ -257,7 +258,7 @@ where
 		index: u16,
 		hash: Option<Block::Hash>,
 	) -> FutureResult<Option<Block::Extrinsic>> {
-		self.block(hash).block.extrinsics[index]
+		self.backend.block(hash).extrinsics[index]
 	}
 
 	fn block_hash(
