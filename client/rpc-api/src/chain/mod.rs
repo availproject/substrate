@@ -48,10 +48,10 @@ pub trait ChainApi<Number, Hash, Header, SignedBlock> {
 	/// If no blockhash is provided with, latest block mined, will be
 	/// considered while responding to query
 	#[rpc(name = "chain_extrinsic_by_blockhash_and_index")]
-	fn extrinsicByIndex(
+	fn extrinsic_by_blockhash_and_index(
 		&self,
 		index: u16,
-		block_hash: Option<Hash>,
+		hash: Option<Hash>,
 	) -> FutureResult<Option<Extinsic>>;
 
 	/// Get hash of the n-th block in the canon chain.
