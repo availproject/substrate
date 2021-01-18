@@ -258,7 +258,7 @@ where
 		index: u16,
 		hash: Option<Block::Hash>,
 	) -> FutureResult<Option<Block::Extrinsic>> {
-		self.backend.client.block(&BlockId::Hash(self.unwrap_or_best(hash))).extrinsics[index]
+		self.backend.extrinsic_by_blockhash_and_index(index, hash)
 	}
 
 	fn block_hash(
