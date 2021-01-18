@@ -20,11 +20,11 @@
 
 pub mod error;
 
+use self::error::{FutureResult, Result};
 use jsonrpc_core::Result as RpcResult;
 use jsonrpc_derive::rpc;
 use jsonrpc_pubsub::{typed::Subscriber, SubscriptionId};
-use sp_rpc::{number::NumberOrHex, list::ListOrValue};
-use self::error::{FutureResult, Result};
+use sp_rpc::{list::ListOrValue, number::NumberOrHex};
 
 pub use self::gen_client::Client as ChainClient;
 
@@ -42,6 +42,18 @@ pub trait ChainApi<Number, Hash, Header, SignedBlock> {
 	#[rpc(name = "chain_getBlock")]
 	fn block(&self, hash: Option<Hash>) -> FutureResult<Option<SignedBlock>>;
 
+	/// Returns extrinsic information given blockhash and index of extrinsic
+	/// in block
+	///
+	/// If no blockhash is provided with, latest block mined, will be
+	/// considered while responding to query
+	#[rpc(name = "chain_extrinsic_by_blockhash_and_index")]
+	fn extrinsicByIndex(
+		&self,
+		index: u16,
+		block_hash: Option<Hash>,
+	) -> FutureResult<Option<Extinsic>>;
+
 	/// Get hash of the n-th block in the canon chain.
 	///
 	/// By default returns latest block hash.
@@ -56,11 +68,19 @@ pub trait ChainApi<Number, Hash, Header, SignedBlock> {
 	fn finalized_head(&self) -> Result<Hash>;
 
 	/// All head subscription
-	#[pubsub(subscription = "chain_allHead", subscribe, name = "chain_subscribeAllHeads")]
+	#[pubsub(
+		subscription = "chain_allHead",
+		subscribe,
+		name = "chain_subscribeAllHeads"
+	)]
 	fn subscribe_all_heads(&self, metadata: Self::Metadata, subscriber: Subscriber<Header>);
 
 	/// Unsubscribe from all head subscription.
-	#[pubsub(subscription = "chain_allHead", unsubscribe, name = "chain_unsubscribeAllHeads")]
+	#[pubsub(
+		subscription = "chain_allHead",
+		unsubscribe,
+		name = "chain_unsubscribeAllHeads"
+	)]
 	fn unsubscribe_all_heads(
 		&self,
 		metadata: Option<Self::Metadata>,
