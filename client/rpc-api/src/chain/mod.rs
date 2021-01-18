@@ -52,7 +52,7 @@ pub trait ChainApi<Number, Hash, Header, SignedBlock> {
 		&self,
 		index: u16,
 		hash: Option<Hash>,
-	) -> FutureResult<Option<Extinsic>>;
+	) -> FutureResult<Option<Extrinsic>>;
 
 	/// Get hash of the n-th block in the canon chain.
 	///
