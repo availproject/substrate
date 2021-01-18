@@ -40,7 +40,7 @@ use sc_client_api::{
 use sp_rpc::{list::ListOrValue, number::NumberOrHex};
 use sp_runtime::{
 	generic::{BlockId, SignedBlock},
-	traits::{Block as BlockT, Extrinsic, Header, NumberFor},
+	traits::{Block as BlockT, Header, NumberFor},
 };
 
 use self::error::{Error, FutureResult, Result};
@@ -258,7 +258,7 @@ where
 		index: u16,
 		hash: Option<Block::Hash>,
 	) -> FutureResult<Option<Block::Extrinsic>> {
-		self.backend.block(hash).extrinsics[index]
+		self.backend.client.block(&BlockId::Hash(self.unwrap_or_best(hash))).extrinsics[index]
 	}
 
 	fn block_hash(
