@@ -259,14 +259,6 @@ where
 		self.backend.block(hash)
 	}
 
-	fn extrinsic_by_blockhash_and_index(
-		&self,
-		index: u16,
-		hash: Option<Block::Hash>,
-	) -> FutureResult<Option<Block::Extrinsic>> {
-		self.backend.extrinsic_by_blockhash_and_index(index, hash)
-	}
-
 	fn block_hash(
 		&self,
 		number: Option<ListOrValue<NumberOrHex>>,

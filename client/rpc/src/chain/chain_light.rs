@@ -120,34 +120,4 @@ where
 		Box::new(block)
 	}
 
-	fn extrinsic_by_blockhash_and_index(
-		&self,
-		index: u16,
-		hash: Option<Block::Hash>,
-	) -> FutureResult<Option<Block::Extrinsic>> {
-		let fetcher = self.fetcher.clone();
-		let block = self.header(hash).and_then(move |header| match header {
-			Some(header) => Either::A(
-				fetcher
-					.remote_body(RemoteBodyRequest {
-						header: header.clone(),
-						retry_count: Default::default(),
-					})
-					.boxed()
-					.compat()
-					.map(move |body| {
-						Some(SignedBlock {
-							block: Block::new(header, body),
-							justification: None,
-						})
-					})
-					.map_err(client_err),
-			),
-			None => Either::B(result(Ok(None))),
-		});
-
-		println!("{}", block);
-
-		Box::new(block)
-	}
 }

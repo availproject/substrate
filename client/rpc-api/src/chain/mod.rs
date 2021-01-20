@@ -42,18 +42,6 @@ pub trait ChainApi<Number, Extrinsic, Hash, Header, SignedBlock> {
 	#[rpc(name = "chain_getBlock")]
 	fn block(&self, hash: Option<Hash>) -> FutureResult<Option<SignedBlock>>;
 
-	/// Returns extrinsic information given blockhash and index of extrinsic
-	/// in block
-	///
-	/// If no blockhash is provided with, latest block mined, will be
-	/// considered while responding to query
-	#[rpc(name = "chain_extrinsic_by_blockhash_and_index")]
-	fn extrinsic_by_blockhash_and_index(
-		&self,
-		index: u16,
-		hash: Option<Hash>,
-	) -> FutureResult<Option<Extrinsic>>;
-
 	/// Get hash of the n-th block in the canon chain.
 	///
 	/// By default returns latest block hash.

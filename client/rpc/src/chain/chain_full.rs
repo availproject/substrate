@@ -82,15 +82,4 @@ where
 		))
 	}
 
-	fn extrinsic_by_blockhash_and_index(
-		&self,
-		index: u16,
-		hash: Option<Block::Hash>,
-	) -> FutureResult<Option<Block::Extrinsic>> {
-		let block = self.client.block(&BlockId::Hash(self.unwrap_or_best(hash)));
-
-		println!("{}", block);
-
-		Box::new(result(block.map_err(client_err),))
-	}
 }
