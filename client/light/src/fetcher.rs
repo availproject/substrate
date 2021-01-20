@@ -241,6 +241,9 @@ impl<E, Block, H, S> FetchChecker<Block> for LightDataChecker<E, H, Block, S>
 		request: &RemoteReadRequest<Block::Header>,
 		remote_proof: StorageProof,
 	) -> ClientResult<HashMap<Vec<u8>, Option<Vec<u8>>>> {
+
+		println!("[+] Read proof check invoked");
+
 		read_proof_check::<H, _>(
 			convert_hash(request.header.state_root()),
 			remote_proof,
@@ -253,6 +256,9 @@ impl<E, Block, H, S> FetchChecker<Block> for LightDataChecker<E, H, Block, S>
 		request: &RemoteReadChildRequest<Block::Header>,
 		remote_proof: StorageProof,
 	) -> ClientResult<HashMap<Vec<u8>, Option<Vec<u8>>>> {
+
+		println!("[+] Read child proof check invoked");
+
 		let child_info = match ChildType::from_prefixed_key(&request.storage_key) {
 			Some((ChildType::ParentKeyId, storage_key)) => ChildInfo::new_default(storage_key),
 			None => return Err(ClientError::InvalidChildType),
@@ -270,6 +276,9 @@ impl<E, Block, H, S> FetchChecker<Block> for LightDataChecker<E, H, Block, S>
 		request: &RemoteCallRequest<Block::Header>,
 		remote_proof: StorageProof,
 	) -> ClientResult<Vec<u8>> {
+
+		println!("[+] Execution proof check invoked");
+
 		check_execution_proof::<_, _, H>(
 			&self.executor,
 			self.spawn_handle.clone(),
@@ -283,6 +292,9 @@ impl<E, Block, H, S> FetchChecker<Block> for LightDataChecker<E, H, Block, S>
 		request: &RemoteChangesRequest<Block::Header>,
 		remote_proof: ChangesProof<Block::Header>
 	) -> ClientResult<Vec<(NumberFor<Block>, u32)>> {
+
+		println!("[+] Changes proof check invoked");
+
 		self.check_changes_proof_with_cht_size(request, remote_proof, cht::size())
 	}
 
@@ -291,6 +303,9 @@ impl<E, Block, H, S> FetchChecker<Block> for LightDataChecker<E, H, Block, S>
 		request: &RemoteBodyRequest<Block::Header>,
 		body: Vec<Block::Extrinsic>
 	) -> ClientResult<Vec<Block::Extrinsic>> {
+
+		println!("[+] Body proof check invoked");
+
 		// TODO: #2621
 		let extrinsics_root = HashFor::<Block>::ordered_trie_root(
 			body.iter().map(Encode::encode).collect(),
