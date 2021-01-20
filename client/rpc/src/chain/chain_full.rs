@@ -89,8 +89,8 @@ where
 	) -> FutureResult<Option<Block::Extrinsic>> {
 		let block = self.client.block(&BlockId::Hash(self.unwrap_or_best(hash)));
 
-		println!(block);
+		println!("{}", block);
 
-		Box::new(result(block))
+		Box::new(result(block.map_err(client_err),))
 	}
 }

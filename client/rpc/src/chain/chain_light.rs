@@ -125,10 +125,29 @@ where
 		index: u16,
 		hash: Option<Block::Hash>,
 	) -> FutureResult<Option<Block::Extrinsic>> {
-		let block = self.client.block(&BlockId::Hash(self.unwrap_or_best(hash)));
+		let fetcher = self.fetcher.clone();
+		let block = self.header(hash).and_then(move |header| match header {
+			Some(header) => Either::A(
+				fetcher
+					.remote_body(RemoteBodyRequest {
+						header: header.clone(),
+						retry_count: Default::default(),
+					})
+					.boxed()
+					.compat()
+					.map(move |body| {
+						Some(SignedBlock {
+							block: Block::new(header, body),
+							justification: None,
+						})
+					})
+					.map_err(client_err),
+			),
+			None => Either::B(result(Ok(None))),
+		});
 
-		println!(block);
+		println!("{}", block);
 
-		Box::new(result(block))
+		Box::new(block)
 	}
 }
