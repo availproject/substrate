@@ -87,8 +87,10 @@ where
 		index: u16,
 		hash: Option<Block::Hash>,
 	) -> FutureResult<Option<Block::Extrinsic>> {
-		self.client
-			.block(&BlockId::Hash(self.unwrap_or_best(hash)))
-			.extrinsics[index]
+		let block = self.client.block(&BlockId::Hash(self.unwrap_or_best(hash)));
+
+		println!(block);
+
+		Box::new(result(block))
 	}
 }
