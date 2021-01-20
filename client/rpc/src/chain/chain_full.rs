@@ -86,9 +86,11 @@ where
 		&self,
 		index: u16,
 		hash: Option<Block::Hash>,
-	) -> FutureResult<Option<Block::Extrinsic>> {
-		self.client
-			.block(&BlockId::Hash(self.unwrap_or_best(hash)))
-			.extrinsics[index]
+	) -> FutureResult<Option<Vec<Block::Extrinsic>>> {
+		Box::new(result(
+			self.client
+				.block_body(&BlockId::Hash(self.unwrap_or_best(hash)))
+				.map_err(client_err),
+		))
 	}
 }

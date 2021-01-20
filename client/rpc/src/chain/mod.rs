@@ -79,7 +79,7 @@ where
 		&self,
 		index: u16,
 		hash: Option<Block::Hash>,
-	) -> FutureResult<Option<Block::Extrinsic>>;
+	) -> FutureResult<Option<Vec<Block::Extrinsic>>>;
 
 	/// Get hash of the n-th block in the canon chain.
 	///
@@ -263,7 +263,7 @@ where
 		&self,
 		index: u16,
 		hash: Option<Block::Hash>,
-	) -> FutureResult<Option<Block::Extrinsic>> {
+	) -> FutureResult<Option<Vec<Block::Extrinsic>>> {
 		self.backend.extrinsic_by_blockhash_and_index(index, hash)
 	}
 
