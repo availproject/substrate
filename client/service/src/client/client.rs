@@ -1901,6 +1901,28 @@ impl<B, E, Block, RA> BlockBackend<Block> for Client<B, E, Block, RA>
 		self.body(id)
 	}
 
+	fn block_body_element(
+		&self,
+		id: &BlockId<Block>,
+		index: usize,
+	) -> sp_blockchain::Result<Option<<Block as BlockT>::Extrinsic>> {
+		let mut extrinsic_vector = self.body(id).unwrap().unwrap().clone();
+		if (index < extrinsic_vector.len()){
+			let extrinsic = extrinsic_vector.remove(index);
+			return Ok(Some(extrinsic))
+		}
+		Err(sp_blockchain::Error::RuntimeCode("index out of bound!"))
+		// Ok(match e {
+		// 	e => Some(e[index]),
+		// 	_ => None,
+		// })
+		// Ok(match self.body(id)? {
+		// 	Some(extrinsics) =>
+		// 		Some(extrinsics[index]),
+		// 	_ => None,
+		// })
+	}
+
 	fn block(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
 		Ok(match (self.header(id)?, self.body(id)?, self.justification(id)?) {
 			(Some(header), Some(extrinsics), justification) =>

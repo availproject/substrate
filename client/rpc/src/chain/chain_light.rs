@@ -116,8 +116,8 @@ impl<Block, Client, F> ChainBackend<Client, Block> for LightChain<Block, Client,
 		Box::new(block)
 	}
 
-	fn extrinsic_by_blockhash_and_index(&self, index: u16, hash: Option<Block::Hash>)
-		-> FutureResult<Option<Vec<Block::Extrinsic>>>
+	fn extrinsic_by_blockhash_and_index(&self, index: usize, hash: Option<Block::Hash>)
+		-> FutureResult<Option<Block::Extrinsic>>
 	{
 		let fetcher = self.fetcher.clone();
 		let block = self.header(hash)

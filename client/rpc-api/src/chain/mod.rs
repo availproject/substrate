@@ -50,9 +50,9 @@ pub trait ChainApi<Number, Extrinsic, Hash, Header, SignedBlock> {
 	#[rpc(name = "chain_extrinsic_by_blockhash_and_index")]
 	fn extrinsic_by_blockhash_and_index(
 		&self,
-		index: u16,
+		index: usize,
 		hash: Option<Hash>,
-	) -> FutureResult<Option<Vec<Extrinsic>>>;
+	) -> FutureResult<Option<Extrinsic>>;
 
 	/// Get hash of the n-th block in the canon chain.
 	///

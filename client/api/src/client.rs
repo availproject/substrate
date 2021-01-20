@@ -84,6 +84,12 @@ pub trait BlockBackend<Block: BlockT> {
 		id: &BlockId<Block>
 	) -> sp_blockchain::Result<Option<Vec<<Block as BlockT>::Extrinsic>>>;
 
+	fn block_body_element(
+		&self,
+		id: &BlockId<Block>,
+		index: usize
+	) -> sp_blockchain::Result<Option<<Block as BlockT>::Extrinsic>>;
+
 	/// Get full block by id.
 	fn block(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<SignedBlock<Block>>>;
 

@@ -84,12 +84,12 @@ where
 
 	fn extrinsic_by_blockhash_and_index(
 		&self,
-		index: u16,
+		index: usize,
 		hash: Option<Block::Hash>,
-	) -> FutureResult<Option<Vec<Block::Extrinsic>>> {
+	) -> FutureResult<Option<Block::Extrinsic>> {
 		Box::new(result(
 			self.client
-				.block_body(&BlockId::Hash(self.unwrap_or_best(hash)))
+				.block_body_element(&BlockId::Hash(self.unwrap_or_best(hash)), index)
 				.map_err(client_err),
 		))
 	}
