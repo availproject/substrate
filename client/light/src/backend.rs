@@ -150,6 +150,9 @@ impl<S, Block> ClientBackend<Block> for Backend<S, HashFor<Block>>
 		&self,
 		mut operation: Self::BlockImportOperation,
 	) -> ClientResult<()> {
+
+		println!("[+] Light client commit operation began");
+
 		if !operation.finalized_blocks.is_empty() {
 			for block in operation.finalized_blocks {
 				self.blockchain.storage().finalize_header(block)?;

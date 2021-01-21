@@ -273,6 +273,9 @@ impl<Block: BlockT> Blockchain<Block> {
 	}
 
 	fn finalize_header(&self, id: BlockId<Block>, justification: Option<Justification>) -> sp_blockchain::Result<()> {
+
+		println!("[+] Header finalization invoked");
+
 		let hash = match self.header(id)? {
 			Some(h) => h.hash(),
 			None => return Err(sp_blockchain::Error::UnknownBlock(format!("{}", id))),

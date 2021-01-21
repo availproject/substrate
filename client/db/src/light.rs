@@ -524,6 +524,9 @@ impl<Block> Storage<Block> for LightStorage<Block>
 	}
 
 	fn finalize_header(&self, id: BlockId<Block>) -> ClientResult<()> {
+		
+		println!("[+] Light client invoked header finalization");
+		
 		if let Some(header) = self.header(id)? {
 			let mut transaction = Transaction::new();
 			let hash = header.hash();
