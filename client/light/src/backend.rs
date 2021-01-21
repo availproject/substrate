@@ -157,6 +157,9 @@ impl<S, Block> ClientBackend<Block> for Backend<S, HashFor<Block>>
 			for block in operation.finalized_blocks {
 				self.blockchain.storage().finalize_header(block)?;
 			}
+
+			println!("Light client finalized some header\n");
+
 		}
 
 		if let Some(header) = operation.header {
