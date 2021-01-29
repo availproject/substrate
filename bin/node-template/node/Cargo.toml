@@ -17,6 +17,7 @@ name = "node-template"
 
 [dependencies]
 structopt = "0.3.8"
+rand = "0.8.2"
 
 sc-cli = { version = "0.8.0", path = "../../../client/cli", features = ["wasmtime"] }
 sp-core = { version = "2.0.0", path = "../../../primitives/core" }
@@ -34,6 +35,9 @@ sc-finality-grandpa = { version = "0.8.0", path = "../../../client/finality-gran
 sp-finality-grandpa = { version = "2.0.0", path = "../../../primitives/finality-grandpa" }
 sc-client-api = { version = "2.0.0", path = "../../../client/api" }
 sp-runtime = { version = "2.0.0", path = "../../../primitives/runtime" }
+sp-std = { version = "2.0.0", default-features = false, path = "../../../primitives/std" }
+dusk-plonk = { path = "../../../client/plonk" }
+
 
 # These dependencies are used for the node template's RPCs
 jsonrpc-core = "15.1.0"

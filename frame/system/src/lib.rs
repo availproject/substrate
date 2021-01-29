@@ -141,6 +141,7 @@ pub mod weights;
 #[cfg(test)]
 mod tests;
 
+// use kate::build_kc;
 
 pub use extensions::{
 	check_mortality::CheckMortality, check_genesis::CheckGenesis, check_nonce::CheckNonce,
@@ -452,12 +453,14 @@ decl_storage! {
 		config(changes_trie_config): Option<ChangesTrieConfiguration>;
 		#[serde(with = "sp_core::bytes")]
 		config(code): Vec<u8>;
+		config(kc_public_params): Vec<u8>;
 
 		build(|config: &GenesisConfig| {
 			use codec::Encode;
 
 			sp_io::storage::set(well_known_keys::CODE, &config.code);
 			sp_io::storage::set(well_known_keys::EXTRINSIC_INDEX, &0u32.encode());
+			sp_io::storage::set(well_known_keys::KATE_PUBLIC_PARAMS, &config.kc_public_params);
 
 			if let Some(ref changes_trie_config) = config.changes_trie_config {
 				sp_io::storage::set(
@@ -1075,6 +1078,11 @@ impl<T: Config> Module<T> {
 			);
 			digest.push(item);
 		}
+
+		let kc_public_params: Vec<u8> = storage::unhashed::take(well_known_keys::KATE_PUBLIC_PARAMS)
+			.unwrap_or_default();
+
+		// kate::build_kc(&kc_public_params);
 
 		let extrinsics_root = <T::Header as traits::Header>::Root::new(root_hash);
 
