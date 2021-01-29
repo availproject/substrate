@@ -172,6 +172,9 @@ pub mod well_known_keys {
 	/// Prefix of the default child storage keys in the top trie.
 	pub const DEFAULT_CHILD_STORAGE_KEY_PREFIX: &'static [u8] = b":child_storage:default:";
 
+	/// Public params used to generate Kate commitment
+	pub const KATE_PUBLIC_PARAMS: &'static [u8] = b":kate_public_params:";
+
 	/// Whether a key is a child storage key.
 	///
 	/// This is convenience function which basically checks if the given `key` starts

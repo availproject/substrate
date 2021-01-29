@@ -249,6 +249,7 @@ pub fn testnet_genesis(
 		frame_system: Some(SystemConfig {
 			code: wasm_binary_unwrap().to_vec(),
 			changes_trie_config: Default::default(),
+			kc_public_params: vec![],
 		}),
 		pallet_balances: Some(BalancesConfig {
 			balances: endowed_accounts.iter().cloned()
