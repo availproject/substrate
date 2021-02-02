@@ -108,6 +108,9 @@ impl Commitment {
     pub fn empty() -> Self {
         Commitment(G1Affine::identity())
     }
+
+	/// Converts to bytes
+	pub fn to_bytes(&self) -> [u8; 48] { self.0.to_compressed() }
 }
 
 impl Default for Commitment {

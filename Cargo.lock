@@ -462,8 +462,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f5011ffc90248764d7005b0e10c7294f5aa1bd87d9dd7248f4ad475b347c294d"
 dependencies = [
  "funty",
- "radium",
- "tap",
+ "radium 0.3.0",
+]
+
+[[package]]
+name = "bitvec"
+version = "0.18.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d2838fdd79e8776dbe07a106c784b0f8dda571a21b2750a092cc4cbaa653c8e"
+dependencies = [
+ "funty",
+ "radium 0.4.1",
  "wyz",
 ]
 
@@ -598,6 +607,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bls12_381"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4caf0101205582491f772d60a6fcb6bcec19963e68209cb631851eeadb01421f"
+dependencies = [
+ "bitvec 0.18.4",
+ "ff",
+ "group",
+ "pairing",
+ "rand_core 0.5.1",
+ "subtle 2.3.0",
+]
+
+[[package]]
 name = "bs58"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -686,6 +709,18 @@ dependencies = [
  "arrayvec 0.5.2",
  "blake2b_simd 0.3.1",
  "cfg-if 1.0.0",
+]
+
+[[package]]
+name = "canonical_derive"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "561682cd179c09f847cac77b06337bf990d523aea57a1ddd5d24abdf4e7e8e32"
+dependencies = [
+ "canonical",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1393,9 +1428,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a508bb2fece7b19a8cd95cca4d1ec7465aa2f5784286bbdb006ec853918b80f9"
 dependencies = [
  "byteorder",
+ "canonical",
+ "canonical_derive",
  "rand_core 0.5.1",
  "rayon",
  "serde",
+ "subtle 2.3.0",
+]
+
+[[package]]
+name = "dusk-bls12_381"
+version = "0.4.0"
+source = "git+https://github.com/dusk-network/bls12_381?tag=v0.4.0#b5d4d2fd0fb0e728399c5cfad837ff381748d7d1"
+dependencies = [
+ "byteorder",
+ "canonical",
+ "canonical_derive",
+ "rand_core 0.6.1",
+ "rayon",
  "subtle 2.3.0",
 ]
 
@@ -1406,7 +1456,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b7572d18c38b1f00be3a17e89e5ec094e5c60197d2baedf5d45899e3116fea28"
 dependencies = [
  "blake2",
- "dusk-bls12_381",
+ "canonical",
+ "canonical_derive",
+ "dusk-bls12_381 0.3.0",
  "rand_core 0.5.1",
  "subtle 2.3.0",
 ]
@@ -1417,10 +1469,10 @@ version = "0.3.6"
 dependencies = [
  "anyhow",
  "canonical",
- "dusk-bls12_381",
+ "dusk-bls12_381 0.4.0",
  "dusk-jubjub",
  "itertools 0.9.0",
- "merlin",
+ "merlin 3.0.0",
  "rand 0.7.3",
  "rand_chacha 0.2.2",
  "rand_core 0.6.1",
@@ -1633,6 +1685,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c4c9e43643f5a3be4ca5b67d26b98031ff9db6806c3440ae32e02e3ceac3f1b"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "ff"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01646e077d4ebda82b73f1bca002ea1e91561a77df2431a9e79729bcc31950ef"
+dependencies = [
+ "bitvec 0.18.4",
+ "rand_core 0.5.1",
+ "subtle 2.3.0",
 ]
 
 [[package]]
@@ -1875,6 +1938,7 @@ dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "kate",
+ "log",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -2237,6 +2301,18 @@ dependencies = [
  "js-sys",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "group"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc11f9f5fbf1943b48ae7c2bf6846e7d827a512d1be4f23af708f5ca5d01dde1"
+dependencies = [
+ "byteorder",
+ "ff",
+ "rand_core 0.5.1",
+ "subtle 2.3.0",
 ]
 
 [[package]]
@@ -2862,9 +2938,12 @@ dependencies = [
 name = "kate"
 version = "0.1.0"
 dependencies = [
+ "bls12_381",
  "dusk-plonk",
  "frame-support",
  "getrandom 0.2.1",
+ "log",
+ "rand 0.7.3",
  "sp-std",
 ]
 
@@ -3645,6 +3724,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "merlin"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58c38e2799fc0978b65dfff8023ec7843e2330bb462f19198840b34b6582397d"
+dependencies = [
+ "byteorder",
+ "keccak",
+ "rand_core 0.6.1",
+ "zeroize",
+]
+
+[[package]]
 name = "minicbor"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4197,6 +4288,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "jsonrpc-core",
+ "log",
  "node-template-runtime",
  "pallet-transaction-payment-rpc",
  "rand 0.8.2",
@@ -4459,6 +4551,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ff55baddef9e4ad00f88b6c743a2a8062d4c6ade126c2a528644b8e444d52ce"
 dependencies = [
  "stable_deref_trait",
+]
+
+[[package]]
+name = "pairing"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f702cdbee9e0a6272452c20dec82465bc821116598b4eeb63e9a71a69dbf7fd"
+dependencies = [
+ "ff",
+ "group",
 ]
 
 [[package]]
@@ -5443,7 +5545,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75c823fdae1bb5ff5708ee61a62697e6296175dc671710876871c853f48592b3"
 dependencies = [
  "arrayvec 0.5.2",
- "bitvec",
+ "bitvec 0.17.4",
  "byte-slice-cast",
  "parity-scale-codec-derive",
  "serde",
@@ -6134,6 +6236,12 @@ name = "radium"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "643f8f41a8ebc4c5dc4515c82bb8abd397b527fc20fd681b7c011c2aee5d44fb"
+
+[[package]]
+name = "radium"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64de9a0c5361e034f1aefc9f71a86871ec870e766fe31a009734a989b329286a"
 
 [[package]]
 name = "rand"
@@ -6888,7 +6996,7 @@ dependencies = [
  "futures 0.3.12",
  "futures-timer 3.0.2",
  "log",
- "merlin",
+ "merlin 2.0.0",
  "num-bigint",
  "num-rational",
  "num-traits",
@@ -7283,7 +7391,7 @@ dependencies = [
  "futures 0.3.12",
  "futures-util",
  "hex",
- "merlin",
+ "merlin 2.0.0",
  "parking_lot 0.11.1",
  "rand 0.7.3",
  "serde_json",
@@ -7844,7 +7952,7 @@ dependencies = [
  "arrayvec 0.5.2",
  "curve25519-dalek 2.1.2",
  "getrandom 0.1.16",
- "merlin",
+ "merlin 2.0.0",
  "rand 0.7.3",
  "rand_core 0.5.1",
  "serde",
@@ -8411,7 +8519,7 @@ dependencies = [
 name = "sp-consensus-babe"
 version = "0.9.0"
 dependencies = [
- "merlin",
+ "merlin 2.0.0",
  "parity-scale-codec",
  "sp-api",
  "sp-application-crypto",
@@ -8476,7 +8584,7 @@ dependencies = [
  "lazy_static",
  "libsecp256k1",
  "log",
- "merlin",
+ "merlin 2.0.0",
  "num-traits",
  "parity-scale-codec",
  "parity-util-mem",
@@ -8611,7 +8719,7 @@ dependencies = [
  "async-trait",
  "derive_more",
  "futures 0.3.12",
- "merlin",
+ "merlin 2.0.0",
  "parity-scale-codec",
  "parking_lot 0.11.1",
  "rand 0.7.3",
@@ -10674,6 +10782,12 @@ dependencies = [
  "winapi 0.2.8",
  "winapi-build",
 ]
+
+[[package]]
+name = "wyz"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85e60b0d1b5f99db2556934e21937020776a5d31520bf169e851ac44e6420214"
 
 [[package]]
 name = "wyz"

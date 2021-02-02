@@ -551,7 +551,7 @@ pub trait ExtrinsicsRoot:
 		hash: Self::HashOutput
 	) -> Self;
 
-	fn newWithCommitment(
+	fn new_with_commitment(
 		hash: Self::HashOutput,
 		commitment: Vec<u8>
 	) -> Self;

@@ -22,7 +22,8 @@ sp-runtime = { version = "3.0.0", default-features = false, path = "../../primit
 sp-version = { version = "3.0.0", default-features = false, path = "../../primitives/version" }
 frame-support = { version = "3.0.0", default-features = false, path = "../support" }
 impl-trait-for-tuples = "0.2.1"
-kate = { path = "../../client/kate" }
+kate = { path = "../../client/kate", default-features = false }
+log = "0.4.8"
 
 [dev-dependencies]
 criterion = "0.3.3"
@@ -32,7 +33,7 @@ substrate-test-runtime-client = { version = "2.0.0", path = "../../test-utils/ru
 [features]
 default = ["std"]
 std = [
-#	"kate/std",
+	"kate/std",
 	"serde",
 	"codec/std",
 	"sp-core/std",
