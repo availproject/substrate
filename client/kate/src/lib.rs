@@ -12,13 +12,15 @@ use frame_support::traits::Len;
 use std::convert::TryInto;
 
 pub mod config {
-	pub const NUM_BLOBS: usize = 32;
-	pub const NUM_CHUNKS_IN_BLOB: usize = 64;
-
+	pub const NUM_BLOBS: usize = 128;
+	pub const NUM_CHUNKS_IN_BLOB: usize = 256;
 	/// in bytes
 	pub const CHUNK_SIZE: usize = 64;
 
 	pub const MAX_BLOCK_SIZE: usize = NUM_BLOBS * NUM_CHUNKS_IN_BLOB * CHUNK_SIZE;
+
+	pub const SCALAR_SIZE: usize = 64;
+	pub const EXTENSION_FACTOR: usize = 2;
 }
 
 #[inline]
@@ -113,77 +115,98 @@ fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>) -> Vec<u8> {
 }
 
 pub fn build_kc(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>) -> Vec<u8> {
-	let no_of_blobs = config::NUM_BLOBS;
-	let no_of_chunks_in_blob = config::NUM_CHUNKS_IN_BLOB;
+	let rows_num = config::NUM_BLOBS;
+	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
+	let cols_num = config::NUM_CHUNKS_IN_BLOB;
 	let no_of_bytes_in_chunk = config::CHUNK_SIZE;
 
-	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
-	let (prover_key, verifier_key) = public_params.trim(no_of_chunks_in_blob).unwrap();
-	let row_eval_domain = EvaluationDomain::new(no_of_chunks_in_blob).unwrap();
-	let column_eval_domain = EvaluationDomain::new(no_of_blobs*2).unwrap();
-
-	// Generate all the x-axis points of the domain on which all the column polynomials reside
-	let mut col_dom_x_pts = Vec::new();
-	let mut pt_it = column_eval_domain.elements();
-	for _ in 0..column_eval_domain.size() {
-		col_dom_x_pts.push(pt_it.next().unwrap());
-	}
-
-	// Generate all the x-axis points of the domain on which all the row polynomials reside
-	let mut row_dom_x_pts = Vec::new();
-	let mut pt_it = row_eval_domain.elements();
-	for _ in 0..row_eval_domain.size() {
-		row_dom_x_pts.push(pt_it.next().unwrap());
-	}
-
-	// Generate polynomials representing data blobs - each having 64 elements
-	// Generate commitment to each data blob - C1, .. , Cn
+	// generate data matrix first
 	let mut block = flatten_and_pad_block(extrinsics);
-	let mut blob_polynomials = Vec::new();
-	let mut blob_elements = Vec::new();
-	let mut blob_commits = Vec::new();
-	for i in 0..no_of_blobs {
-		let mut chunk = block[i*no_of_chunks_in_blob*no_of_bytes_in_chunk..(i+1)*no_of_chunks_in_blob*no_of_bytes_in_chunk].chunks_exact(64);
-		let mut chunk_elements = Vec::new();
-		for _ in 0..no_of_chunks_in_blob {
-			// from_bytes_wide expects [u8;64]
-			chunk_elements.push(dusk_plonk::prelude::BlsScalar::from_bytes_wide(chunk.next().unwrap().try_into().expect("slice with incorrect length")));
-		}
-		blob_elements.push(chunk_elements.clone());
-		blob_polynomials.push(Evaluations::from_vec_and_domain(chunk_elements, row_eval_domain).interpolate());
-		// blob_polynomials.push(Polynomial::from_coefficients_vec(chunk_elements));
-		blob_commits.push(prover_key.commit(&blob_polynomials[i]).unwrap());
+	let mut chunk_elements = Vec::new();
+
+	// prepare extended size
+	chunk_elements.reserve_exact(extended_rows_num * cols_num);
+
+	// force vector of desired size
+	unsafe {
+		chunk_elements.set_len(extended_rows_num * cols_num);
 	}
 
-	// PROOFS
+	// generate column by column and pack into extended array of scalars
+	let chunk_bytes_offset = rows_num * no_of_bytes_in_chunk;
+	let mut offset = 0;
+	for i in 0..cols_num {
+		let mut chunk = block[i * chunk_bytes_offset..(i+1) * chunk_bytes_offset].chunks_exact(config::SCALAR_SIZE);
+		for _ in 0..rows_num {
+			// from_bytes_wide expects [u8;64]
+			chunk_elements[offset] = dusk_plonk::prelude::BlsScalar::from_bytes_wide(chunk.next().unwrap().try_into().expect("slice with incorrect length"));
+			offset += 1;
+		}
 
-	// Take commitments C1 to Cn and extend to C{n+1} to C{2n}
-	// Ignoring the sampling before extending commitment set
-	// let blob_commits = group_fft(group_fft(blob_commits, column_eval_domain, true), column_eval_domain, false);
+		// offset extra rows
+		offset += rows_num;
+	}
 
-	// The blob/block producer can cache the proof for each chunk to save redundant work
-	// This is the worst case approach. In practice, the proof is computed and cached when a chunk is queried the first time
-	// let mut proofs = Vec::new();
-	// for i in 0..no_of_blobs {
-	// 	let mut proof_row = Vec::new();
-	// 	for j in 0..no_of_chunks_in_blob {
-	// 		proof_row.push(prover_key.open_single(&blob_polynomials[i], &blob_elements[i][j], &row_dom_x_pts[j]).unwrap())
-	// 	}
-	// 	proofs.push(proof_row);
-	// }
+	// extend data matrix, column by column
+	let column_eval_domain = EvaluationDomain::new(extended_rows_num).unwrap();
+	info!(
+		target: "system",
+		"SIZE {:#?}",
+		column_eval_domain.size()
+	);
 
-	// Serialize and flatten
-	let bytes_commitments = blob_commits
-		.iter()
-		.map(|it| { it.to_bytes() })
-		.collect::<Vec<[u8; 48]>>();
+	for i in 0..cols_num {
+		let mut slice = &mut chunk_elements[i * extended_rows_num..(i+1) * extended_rows_num];
 
+		// slice.into_iter().for_each(|it| {
+		// 	info!(
+		// 		target: "system",
+		// 		"BEFORE {:#?}",
+		// 		it
+		// 	);
+		// });
+
+		let mut v = slice.to_vec();
+
+		column_eval_domain.ifft_in_place(&mut v);
+		column_eval_domain.fft_in_place(&mut v);
+
+		// v.into_iter().for_each(|it| {
+		// 	info!(
+		// 		target: "system",
+		// 		"AFTER {:#?}",
+		// 		it
+		// 	);
+		// });
+
+		break;
+	}
+
+	// construct commitments
+	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
+	let (prover_key, verifier_key) = public_params.trim(cols_num).unwrap();
+	let row_eval_domain = EvaluationDomain::new(cols_num).unwrap();
 	let mut result_bytes: Vec<u8> = Vec::new();
-	result_bytes.reserve_exact(48 * bytes_commitments.len());
+	result_bytes.reserve_exact(48 * extended_rows_num);
 
-	bytes_commitments.iter().for_each(|it| {
-		result_bytes.extend_from_slice(it);
-	});
+	for i in 0..extended_rows_num {
+		let mut row = Vec::new();
+
+		for j in 0..cols_num {
+			row.push(chunk_elements[i + j * extended_rows_num]);
+		}
+
+		let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
+		result_bytes.extend_from_slice(&prover_key.commit(&polynomial).unwrap().to_bytes());
+	}
+
+	// // Generate all the x-axis points of the domain on which all the column polynomials reside
+	// let mut col_dom_x_pts = Vec::with_capacity(column_eval_domain.size());
+	// col_dom_x_pts.extend(column_eval_domain.elements());
+	//
+	// // Generate all the x-axis points of the domain on which all the row polynomials reside
+	// let mut row_dom_x_pts = Vec::with_capacity(row_eval_domain.size());
+	// row_dom_x_pts.extend(row_eval_domain.elements());
 
 	result_bytes
 }
