@@ -141,6 +141,7 @@ pub mod weights;
 #[cfg(test)]
 mod tests;
 
+use kate::build_kc;
 
 pub use extensions::{
 	check_mortality::CheckMortality, check_genesis::CheckGenesis, check_nonce::CheckNonce,
@@ -452,12 +453,14 @@ decl_storage! {
 		config(changes_trie_config): Option<ChangesTrieConfiguration>;
 		#[serde(with = "sp_core::bytes")]
 		config(code): Vec<u8>;
+		config(kc_public_params): Vec<u8>;
 
 		build(|config: &GenesisConfig| {
 			use codec::Encode;
 
 			sp_io::storage::set(well_known_keys::CODE, &config.code);
 			sp_io::storage::set(well_known_keys::EXTRINSIC_INDEX, &0u32.encode());
+			sp_io::storage::set(well_known_keys::KATE_PUBLIC_PARAMS, &config.kc_public_params);
 
 			if let Some(ref changes_trie_config) = config.changes_trie_config {
 				sp_io::storage::set(
@@ -1051,6 +1054,12 @@ impl<T: Config> Module<T> {
 		let extrinsics = (0..ExtrinsicCount::take().unwrap_or_default())
 			.map(ExtrinsicData::take)
 			.collect();
+
+		let kc_public_params: Vec<u8> = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
+			.unwrap_or_default();
+
+		let kate_commitment = kate::build_kc(&kc_public_params, &extrinsics);
+
 		let root_hash = extrinsics_data_root::<T::Hashing>(extrinsics);
 
 		// move block hash pruning window by one block
@@ -1076,7 +1085,7 @@ impl<T: Config> Module<T> {
 			digest.push(item);
 		}
 
-		let extrinsics_root = <T::Header as traits::Header>::Root::new(root_hash);
+		let extrinsics_root = <T::Header as traits::Header>::Root::new_with_commitment(root_hash, kate_commitment);
 
 		<T::Header as traits::Header>::new(number, extrinsics_root, storage_root, parent_hash, digest)
 	}
