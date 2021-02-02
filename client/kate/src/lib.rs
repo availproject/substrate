@@ -17,6 +17,8 @@ pub mod config {
 
 	/// in bytes
 	pub const CHUNK_SIZE: usize = 64;
+
+	pub const MAX_BLOCK_SIZE: usize = NUM_BLOBS * NUM_CHUNKS_IN_BLOB * CHUNK_SIZE;
 }
 
 #[inline]
@@ -94,7 +96,7 @@ fn group_fft (a: Vec<kzg10::Commitment>, eval_dom: EvaluationDomain, inverse: bo
 }
 
 fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>) -> Vec<u8> {
-	let max_block_size = config::NUM_BLOBS*config::NUM_CHUNKS_IN_BLOB*config::CHUNK_SIZE;
+	let max_block_size = config::MAX_BLOCK_SIZE;
 	let mut block:Vec<u8> = extrinsics.clone().into_iter().flatten().collect::<Vec<u8>>(); // TODO probably can be done more efficiently
 
 	if block.len() < max_block_size {
