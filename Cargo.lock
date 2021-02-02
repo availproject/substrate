@@ -4199,6 +4199,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "jsonrpc-core",
+ "kate",
  "log",
  "node-template-runtime",
  "pallet-transaction-payment-rpc",

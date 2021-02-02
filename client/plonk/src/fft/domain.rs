@@ -112,6 +112,11 @@ impl EvaluationDomain {
         best_fft(coeffs, self.group_gen, self.log_size_of_group)
     }
 
+	/// Compute a FFT, modifying the slice in place.
+	pub fn fft_slice(&self, coeffs: &mut [BlsScalar]) {
+		best_fft(coeffs, self.group_gen, self.log_size_of_group)
+	}
+
     /// Compute an IFFT.
     pub fn ifft(&self, evals: &[BlsScalar]) -> Vec<BlsScalar> {
         let mut evals = evals.to_vec();
@@ -127,6 +132,13 @@ impl EvaluationDomain {
         // cfg_iter_mut!(evals).for_each(|val| *val *= &self.size_inv);
         evals.par_iter_mut().for_each(|val| *val *= &self.size_inv);
     }
+
+	/// Compute an IFFT, modifying the slice in place.
+	#[inline]
+	pub fn ifft_slice(&self, evals: &mut [BlsScalar]) {
+		best_fft(evals, self.group_gen_inv, self.log_size_of_group);
+		evals.par_iter_mut().for_each(|val| *val *= &self.size_inv);
+	}
 
     fn distribute_powers(coeffs: &mut [BlsScalar], g: BlsScalar) {
         let mut pow = BlsScalar::one();
