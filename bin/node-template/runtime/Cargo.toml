@@ -35,6 +35,7 @@ sp-std = { version = "3.0.0", default-features = false, path = "../../../primiti
 sp-transaction-pool = { version = "3.0.0", default-features = false, path = "../../../primitives/transaction-pool" }
 sp-version = { version = "3.0.0", default-features = false, path = "../../../primitives/version" }
 #getrandom = { version = "0.2.1", features = ["js"] }
+kate = { path = "../../../client/kate" }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { version = "3.0.0", default-features = false, path = "../../../frame/system/rpc/runtime-api/" }
