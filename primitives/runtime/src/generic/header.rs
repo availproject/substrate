@@ -64,7 +64,7 @@ impl<HashOutput> traits::ExtrinsicsRoot for ExtrinsicsRoot<HashOutput> where
 		}
 	}
 
-	fn newWithCommitment(
+	fn new_with_commitment(
 		hash: HashOutput,
 		commitment: Vec<u8>
 	) -> Self {

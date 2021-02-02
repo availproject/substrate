@@ -4,11 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(feature = "nightly", feature(external_doc))]
-#![doc(
-    html_logo_url = "https://lh3.googleusercontent.com/SmwswGxtgIANTbDrCOn5EKcRBnVdHjmYsHYxLq2HZNXWCQ9-fZyaea-bNgdX9eR0XGSqiMFi=w128-h128-e365"
-)]
-#![doc(html_favicon_url = "https://dusk.network/lib/img/favicon-16x16.png")]
+// #![cfg_attr(feature = "nightly", feature(external_doc))]
+// #![doc(
+//     html_logo_url = "https://lh3.googleusercontent.com/SmwswGxtgIANTbDrCOn5EKcRBnVdHjmYsHYxLq2HZNXWCQ9-fZyaea-bNgdX9eR0XGSqiMFi=w128-h128-e365"
+// )]
+// #![doc(html_favicon_url = "https://dusk.network/lib/img/favicon-16x16.png")]
 //!<a href="https://codecov.io/gh/dusk-network/plonk">
 //!  <img src="https://codecov.io/gh/dusk-network/plonk/branch/master/graph/badge.svg" />
 //!</a>
@@ -53,6 +53,13 @@
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
+
+// #![no_std]
+// mod std {
+// 	pub mod error {
+// 		pub use core_error::Error;
+// 	}
+// }
 
 #[macro_use]
 mod macros;
