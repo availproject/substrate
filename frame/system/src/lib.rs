@@ -115,8 +115,6 @@ mod tests;
 #[cfg(feature = "std")]
 pub mod mocking;
 
-use kate::build_kc;
-
 pub use extensions::{
 	check_mortality::CheckMortality, check_genesis::CheckGenesis, check_nonce::CheckNonce,
 	check_spec_version::CheckSpecVersion, check_tx_version::CheckTxVersion,
@@ -1240,7 +1238,8 @@ impl<T: Config> Module<T> {
 		let kc_public_params: Vec<u8> = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
 			.unwrap_or_default();
 
-		let kate_commitment = kate::build_kc(&kc_public_params, &extrinsics);
+		#[cfg(feature = "std")]
+		let kate_commitment = kate::com::build_kc(&kc_public_params, &extrinsics);
 
 		let root_hash = extrinsics_data_root::<T::Hashing>(extrinsics);
 
@@ -1267,7 +1266,11 @@ impl<T: Config> Module<T> {
 			digest.push(item);
 		}
 
+		#[cfg(feature = "std")]
 		let extrinsics_root = <T::Header as traits::Header>::Root::new_with_commitment(root_hash, kate_commitment);
+
+		#[cfg(not(feature = "std"))]
+			let extrinsics_root = <T::Header as traits::Header>::Root::new(root_hash);
 
 		<T::Header as traits::Header>::new(number, extrinsics_root, storage_root, parent_hash, digest)
 	}

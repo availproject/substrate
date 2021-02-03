@@ -3,8 +3,8 @@
 #![recursion_limit="256"]
 
 // Make the WASM binary available.
-// #[cfg(feature = "std")]
-// include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_std::prelude::*;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -135,7 +135,7 @@ parameter_types! {
 	pub BlockWeights: frame_system::limits::BlockWeights = frame_system::limits::BlockWeights
 		::with_sensible_defaults(2 * WEIGHT_PER_SECOND, NORMAL_DISPATCH_RATIO);
 	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
-		::max_with_normal_ratio(kate::config::MAX_BLOCK_SIZE as u32, NORMAL_DISPATCH_RATIO);
+		::max_with_normal_ratio(256*128*64, NORMAL_DISPATCH_RATIO);
 	pub const SS58Prefix: u8 = 42;
 }
 
