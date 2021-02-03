@@ -54,6 +54,7 @@ pallet-transaction-payment-rpc = { version = "2.0.0", path = "../../../frame/tra
 frame-benchmarking = { version = "2.0.0", path = "../../../frame/benchmarking" }
 frame-benchmarking-cli = { version = "2.0.0", path = "../../../utils/frame/benchmarking-cli" }
 
+dummy-wasm = { version = "2.0.0", path = "../dummy_wasm" }
 node-template-runtime = { version = "2.0.0", path = "../runtime" }
 
 [build-dependencies]

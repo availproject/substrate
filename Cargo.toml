@@ -1,5 +1,6 @@
 [workspace]
 members = [
+	"bin/node-template/dummy_wasm",
 	"bin/node-template/node",
 	"bin/node-template/pallets/template",
 	"bin/node-template/runtime",
