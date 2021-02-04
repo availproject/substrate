@@ -142,7 +142,7 @@ fn testnet_genesis(
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
 			changes_trie_config: Default::default(),
-			kc_public_params: kzg10::PublicParameters::setup(256, &mut rand::thread_rng()).unwrap().into_bytes(),
+			kc_public_params: kzg10::PublicParameters::setup(kate::config::NUM_CHUNKS_IN_BLOB, &mut rand::thread_rng()).unwrap().into_bytes(),
 		}),
 		pallet_balances: Some(BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
