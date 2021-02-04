@@ -136,36 +136,43 @@ pub fn build_kc(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>) -> Vec<
 	}
 
 	// extend data matrix, column by column
-	let column_eval_domain = EvaluationDomain::new(extended_rows_num).unwrap();
+	let extended_column_eval_domain = EvaluationDomain::new(extended_rows_num).unwrap();
+	let column_eval_domain = EvaluationDomain::new(rows_num).unwrap();
 	info!(
 		target: "system",
-		"SIZE {:#?}",
-		column_eval_domain.size()
+		"ORIGINAL SIZE {:#?}, EXTENDED SIZE {:#?}",
+		column_eval_domain.size(), extended_column_eval_domain.size()
 	);
 
 	for i in 0..cols_num {
 		let mut slice = &mut chunk_elements[i * extended_rows_num..(i+1) * extended_rows_num];
+		
+		let slice_edited = &slice[0..slice.len() / 2];
 
-		// slice.into_iter().for_each(|it| {
-		// 	info!(
-		// 		target: "system",
-		// 		"BEFORE {:#?}",
-		// 		it
-		// 	);
-		// });
+		slice_edited.into_iter().for_each(|it| {
+			info!(
+				target: "system",
+				"BEFORE {:#?}",
+				it
+			);
+		});
 
-		let mut v = slice.to_vec();
+		let mut v = slice_edited.to_vec();
+
+		info!(target: "system", "BEFORE {:#?}", v.len());
 
 		column_eval_domain.ifft_in_place(&mut v);
-		column_eval_domain.fft_in_place(&mut v);
+		extended_column_eval_domain.fft_in_place(&mut v);
 
-		// v.into_iter().for_each(|it| {
-		// 	info!(
-		// 		target: "system",
-		// 		"AFTER {:#?}",
-		// 		it
-		// 	);
-		// });
+		info!(target: "system", "AFTER {:#?}", v.len());
+
+		v.into_iter().for_each(|it| {
+			info!(
+				target: "system",
+				"AFTER {:#?}",
+				it
+			);
+		});
 
 		break;
 	}
