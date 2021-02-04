@@ -7,18 +7,22 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dusk-plonk = { path = "../plonk", default-features = false }
-bls12_381 = "0.3.1"
-sp-std = { version = "2.0.0", default-features = false, path = "../../primitives/std" }
-getrandom = { version = "0.2", features = ["js"] }
-frame-support = { version = "2.0.1", default-features = false, path = "../../frame/support" }
-rand = { version = "0.7", default-features = false }
-log = "0.4.8"
+dusk-plonk = { path = "../plonk", default-features = false, optional = true }
+bls12_381 = { version = "0.3.1", optional = true   }
+sp-std = { version = "2.0.0", default-features = false, path = "../../primitives/std", optional = true }
+getrandom = { version = "0.2", features = ["js"], optional = true }
+frame-support = { version = "2.0.1", default-features = false, path = "../../frame/support", optional = true }
+rand = { version = "0.7", default-features = false, optional = true }
+log = { version = "0.4.8", optional = true }
 
 [features]
 default = ["std"]
 
 std = [
+	"bls12_381",
+	"getrandom",
+	"rand",
+	"log",
 	"dusk-plonk/std",
 	"sp-std/std",
 	"getrandom/std",

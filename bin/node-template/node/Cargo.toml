@@ -36,7 +36,7 @@ sp-finality-grandpa = { version = "3.0.0", path = "../../../primitives/finality-
 sc-client-api = { version = "3.0.0", path = "../../../client/api" }
 sp-std = { version = "2.0.0", default-features = false, path = "../../../primitives/std" }
 dusk-plonk = { path = "../../../client/plonk" }
-#kate = { path = "../../../client/kate" }
+kate = { path = "../../../client/kate", default-features = false }
 log = "0.4.8"
 
 # These dependencies are used for the node template's RPCs

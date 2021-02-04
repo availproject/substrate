@@ -11,7 +11,7 @@ repository = "https://github.com/paritytech/substrate/"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-#kate = { path = "../../../client/kate" }
+kate = { path = "../../../client/kate", default-features = false }
 pallet-aura = { version = "3.0.0", default-features = false, path = "../../../frame/aura" }
 pallet-balances = { version = "3.0.0", default-features = false, path = "../../../frame/balances" }
 frame-support = { version = "3.0.0", default-features = false, path = "../../../frame/support" }
