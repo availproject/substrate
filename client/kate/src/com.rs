@@ -3,13 +3,14 @@ use dusk_plonk::fft::{EvaluationDomain,Evaluations};
 use bls12_381::{G1Affine,G1Projective,Scalar};
 use std::ops::MulAssign;
 use frame_support::debug;
-use std::vec;
+use std::{vec, thread};
+use std::time::{Instant};
 use std::iter;
 use log::{info};
-use frame_support::traits::Len;
 use std::convert::TryInto;
 
 use super::*;
+use rayon::prelude::*;
 
 #[inline]
 fn bitreverse(mut n: u32, l: u32) -> u32 {
@@ -92,8 +93,11 @@ fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>) -> Vec<u8> {
 	if block.len() < max_block_size {
 		let more_elems = max_block_size - block.len();
 		block.reserve_exact(more_elems);
+		let mut byte_index = 0;
 		for i in 0..more_elems {
-			block.push((i % 256) as u8);
+			// pseudo random values
+			block.push((((byte_index as f32).sin().round() as u32) % 256) as u8);
+			byte_index += 1;
 		}
 	} else if block.len() > max_block_size {
 		panic!("block is too big, must not happen!");
@@ -138,62 +142,68 @@ pub fn build_kc(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>) -> Vec<
 	// extend data matrix, column by column
 	let extended_column_eval_domain = EvaluationDomain::new(extended_rows_num).unwrap();
 	let column_eval_domain = EvaluationDomain::new(rows_num).unwrap();
-	info!(
-		target: "system",
-		"ORIGINAL SIZE {:#?}, EXTENDED SIZE {:#?}",
-		column_eval_domain.size(), extended_column_eval_domain.size()
-	);
 
 	for i in 0..cols_num {
-		let mut slice = &mut chunk_elements[i * extended_rows_num..(i+1) * extended_rows_num];
-		
-		let slice_edited = &slice[0..slice.len() / 2];
+		let mut original_column = &mut chunk_elements[i * extended_rows_num..(i+1) * extended_rows_num - extended_rows_num / config::EXTENSION_FACTOR];
+		column_eval_domain.ifft_slice(original_column);
 
-		slice_edited.into_iter().for_each(|it| {
-			info!(
-				target: "system",
-				"BEFORE {:#?}",
-				it
-			);
-		});
-
-		let mut v = slice_edited.to_vec();
-
-		info!(target: "system", "BEFORE {:#?}", v.len());
-
-		column_eval_domain.ifft_in_place(&mut v);
-		extended_column_eval_domain.fft_in_place(&mut v);
-
-		info!(target: "system", "AFTER {:#?}", v.len());
-
-		v.into_iter().for_each(|it| {
-			info!(
-				target: "system",
-				"AFTER {:#?}",
-				it
-			);
-		});
-
-		break;
+		let mut extended_column = &mut chunk_elements[i * extended_rows_num..(i+1) * extended_rows_num];
+		extended_column_eval_domain.fft_slice(extended_column);
 	}
 
-	// construct commitments
+	// construct commitments in parallel
 	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
 	let (prover_key, verifier_key) = public_params.trim(cols_num).unwrap();
 	let row_eval_domain = EvaluationDomain::new(cols_num).unwrap();
+
 	let mut result_bytes: Vec<u8> = Vec::new();
-	result_bytes.reserve_exact(48 * extended_rows_num);
-
-	for i in 0..extended_rows_num {
-		let mut row = Vec::new();
-
-		for j in 0..cols_num {
-			row.push(chunk_elements[i + j * extended_rows_num]);
-		}
-
-		let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
-		result_bytes.extend_from_slice(&prover_key.commit(&polynomial).unwrap().to_bytes());
+	result_bytes.reserve_exact(config::PROVER_KEY_SIZE * extended_rows_num);
+	unsafe {
+		result_bytes.set_len(config::PROVER_KEY_SIZE * extended_rows_num);
 	}
+
+	let prover_key = &prover_key;
+	let chunk_elements = &chunk_elements;
+
+	info!(
+		target: "system",
+		"Number of CPU cores: {:#?}",
+		num_cpus::get()
+	);
+
+	let start= Instant::now();
+	let worker_pool = rayon::ThreadPoolBuilder::new().num_threads(num_cpus::get()).build().unwrap();
+	worker_pool.scope(|scope| {
+		let chunks = result_bytes.chunks_mut(config::PROVER_KEY_SIZE);
+		info!(
+			target: "system",
+			"Number of chunks: {:#?}",
+			chunks.len()
+		);
+
+		for (i, slice) in Iterator::enumerate(chunks) {
+			scope.spawn(move |_| {
+				let mut row = Vec::new();
+
+				for j in 0..cols_num {
+					row.push(chunk_elements[i + j * extended_rows_num]);
+				}
+
+				let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
+				let key_bytes = &prover_key.commit(&polynomial).unwrap().to_bytes();
+
+				unsafe {
+					std::ptr::copy(key_bytes.as_ptr(), slice.as_mut_ptr(), config::PROVER_KEY_SIZE);
+				}
+			});
+		}
+	});
+
+	info!(
+		target: "system",
+		"Time to build a commitment {:?}",
+		start.elapsed()
+	);
 
 	// // Generate all the x-axis points of the domain on which all the column polynomials reside
 	// let mut col_dom_x_pts = Vec::with_capacity(column_eval_domain.size());

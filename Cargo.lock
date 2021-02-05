@@ -2943,7 +2943,9 @@ dependencies = [
  "frame-support",
  "getrandom 0.2.1",
  "log",
+ "num_cpus",
  "rand 0.7.3",
+ "rayon",
  "sp-std",
 ]
 
