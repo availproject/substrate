@@ -2946,6 +2946,7 @@ dependencies = [
  "num_cpus",
  "rand 0.7.3",
  "rayon",
+ "serde",
  "sp-std",
 ]
 
@@ -3601,9 +3602,9 @@ dependencies = [
 
 [[package]]
 name = "lru"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3aae342b73d57ad0b8b364bd12584819f2c1fe9114285dfcf8b0722607671635"
+checksum = "fe2382d8ed3918ea4ba70d98d5b74e47a168e0331965f3f17cdbc748bdebc5a3"
 dependencies = [
  "hashbrown",
 ]
@@ -4290,11 +4291,16 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
  "kate",
  "log",
+ "lru",
  "node-template-runtime",
  "pallet-transaction-payment-rpc",
+ "parity-scale-codec",
  "rand 0.8.2",
+ "rayon",
  "sc-basic-authorship",
  "sc-cli",
  "sc-client-api",
@@ -4316,6 +4322,8 @@ dependencies = [
  "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
+ "sp-io",
+ "sp-rpc",
  "sp-runtime",
  "sp-std",
  "sp-transaction-pool",

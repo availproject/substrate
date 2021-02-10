@@ -8,9 +8,16 @@ use std::time::{Instant};
 use std::iter;
 use log::{info};
 use std::convert::TryInto;
+use serde::{Serialize, Deserialize};
 
 use super::*;
 use rayon::prelude::*;
+
+#[derive(Serialize, Deserialize)]
+pub struct Cell {
+	pub row: u32,
+	pub col: u32,
+}
 
 #[inline]
 fn bitreverse(mut n: u32, l: u32) -> u32 {
@@ -106,14 +113,11 @@ fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>) -> Vec<u8> {
 	block
 }
 
-pub fn build_kc(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>) -> Vec<u8> {
+fn extend_data_matrix(block: &Vec<u8>) -> Vec<dusk_plonk::prelude::BlsScalar> {
 	let rows_num = config::NUM_BLOBS;
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
 	let cols_num = config::NUM_CHUNKS_IN_BLOB;
-	let no_of_bytes_in_chunk = config::CHUNK_SIZE;
 
-	// generate data matrix first
-	let mut block = flatten_and_pad_block(extrinsics);
 	let mut chunk_elements = Vec::new();
 
 	// prepare extended size
@@ -125,7 +129,7 @@ pub fn build_kc(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>) -> Vec<
 	}
 
 	// generate column by column and pack into extended array of scalars
-	let chunk_bytes_offset = rows_num * no_of_bytes_in_chunk;
+	let chunk_bytes_offset = rows_num * config::CHUNK_SIZE;
 	let mut offset = 0;
 	for i in 0..cols_num {
 		let mut chunk = block[i * chunk_bytes_offset..(i+1) * chunk_bytes_offset].chunks_exact(config::SCALAR_SIZE);
@@ -151,6 +155,100 @@ pub fn build_kc(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>) -> Vec<
 		extended_column_eval_domain.fft_slice(extended_column);
 	}
 
+	chunk_elements
+}
+
+//TODO cache extended data matrix
+//TODO explore faster Variable Base Multi Scalar Multiplication
+pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cells: Vec<Cell>) -> Option<Vec<u8>> {
+	let rows_num = config::NUM_BLOBS;
+	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
+	let cols_num = config::NUM_CHUNKS_IN_BLOB;
+
+	if cells.len() > config::MAX_PROOFS_REQUEST {
+		()
+	}
+
+	let block = flatten_and_pad_block(extrinsics);
+	let ext_data_matrix = extend_data_matrix(&block);
+
+	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
+	let (prover_key, _) = public_params.trim(cols_num).unwrap();
+
+	// Generate all the x-axis points of the domain on which all the row polynomials reside
+	let row_eval_domain = EvaluationDomain::new(cols_num).unwrap();
+	let mut row_dom_x_pts = Vec::with_capacity(row_eval_domain.size());
+	row_dom_x_pts.extend(row_eval_domain.elements());
+
+	let mut result_bytes: Vec<u8> = Vec::new();
+	result_bytes.reserve_exact(config::PROOF_SIZE * cells.len());
+	unsafe {
+		result_bytes.set_len(config::PROOF_SIZE * cells.len());
+	}
+
+	let prover_key = &prover_key;
+	let ext_data_matrix = &ext_data_matrix;
+	let row_dom_x_pts = &row_dom_x_pts;
+
+	info!(
+		target: "system",
+		"Number of CPU cores: {:#?}",
+		num_cpus::get()
+	);
+	// generate proof only for requested cells
+	let total_start= Instant::now();
+	Iterator::enumerate(cells.iter()).for_each(|(index, cell)| {
+		let rowIndex = cell.row as usize;
+		let colIndex = cell.col as usize;
+
+		if rowIndex < extended_rows_num && colIndex < cols_num {
+			// construct polynomial per extended matrix row
+			let mut row = Vec::with_capacity(cols_num);
+
+			for j in 0..cols_num {
+				row.push(ext_data_matrix[rowIndex + j * extended_rows_num]);
+			}
+
+			let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
+			let witness = prover_key.compute_single_witness(&polynomial, &row_dom_x_pts[colIndex]);
+			let proof = prover_key.commit(&witness).unwrap();
+
+			unsafe {
+				std::ptr::copy(
+					proof.to_bytes().as_ptr(),
+					result_bytes.as_mut_ptr().add(index * config::PROOF_SIZE),
+					config::PROOF_SIZE
+				);
+			}
+		}
+	});
+
+	info!(
+		target: "system",
+		"Time to build 1 row of proof {:?}",
+		total_start.elapsed()
+	);
+
+	Some(result_bytes)
+}
+
+pub fn build_commitments(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>) -> Vec<u8> {
+	let rows_num = config::NUM_BLOBS;
+	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
+	let cols_num = config::NUM_CHUNKS_IN_BLOB;
+
+	let start= Instant::now();
+
+	// generate data matrix first
+	let block = flatten_and_pad_block(extrinsics);
+	let ext_data_matrix = extend_data_matrix(&block);
+
+	info!(
+		target: "system",
+		"Time to prepare {:?}",
+		start.elapsed()
+	);
+
 	// construct commitments in parallel
 	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
 	let (prover_key, verifier_key) = public_params.trim(cols_num).unwrap();
@@ -162,56 +260,37 @@ pub fn build_kc(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>) -> Vec<
 		result_bytes.set_len(config::PROVER_KEY_SIZE * extended_rows_num);
 	}
 
-	let prover_key = &prover_key;
-	let chunk_elements = &chunk_elements;
-
 	info!(
 		target: "system",
 		"Number of CPU cores: {:#?}",
 		num_cpus::get()
 	);
 
-	let start= Instant::now();
-	let worker_pool = rayon::ThreadPoolBuilder::new().num_threads(num_cpus::get()).build().unwrap();
-	worker_pool.scope(|scope| {
-		let chunks = result_bytes.chunks_mut(config::PROVER_KEY_SIZE);
-		info!(
-			target: "system",
-			"Number of chunks: {:#?}",
-			chunks.len()
-		);
+	let start = Instant::now();
+	for i in 0..extended_rows_num {
+		let mut row = Vec::with_capacity(cols_num);
 
-		for (i, slice) in Iterator::enumerate(chunks) {
-			scope.spawn(move |_| {
-				let mut row = Vec::new();
-
-				for j in 0..cols_num {
-					row.push(chunk_elements[i + j * extended_rows_num]);
-				}
-
-				let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
-				let key_bytes = &prover_key.commit(&polynomial).unwrap().to_bytes();
-
-				unsafe {
-					std::ptr::copy(key_bytes.as_ptr(), slice.as_mut_ptr(), config::PROVER_KEY_SIZE);
-				}
-			});
+		for j in 0..cols_num {
+			row.push(ext_data_matrix[i + j * extended_rows_num]);
 		}
-	});
+
+		let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
+		let key_bytes = &prover_key.commit(&polynomial).unwrap().to_bytes();
+
+		unsafe {
+			std::ptr::copy(
+				key_bytes.as_ptr(),
+				result_bytes.as_mut_ptr().add(i * config::PROVER_KEY_SIZE),
+				config::PROVER_KEY_SIZE
+			);
+		}
+	}
 
 	info!(
 		target: "system",
 		"Time to build a commitment {:?}",
 		start.elapsed()
 	);
-
-	// // Generate all the x-axis points of the domain on which all the column polynomials reside
-	// let mut col_dom_x_pts = Vec::with_capacity(column_eval_domain.size());
-	// col_dom_x_pts.extend(column_eval_domain.elements());
-	//
-	// // Generate all the x-axis points of the domain on which all the row polynomials reside
-	// let mut row_dom_x_pts = Vec::with_capacity(row_eval_domain.size());
-	// row_dom_x_pts.extend(row_eval_domain.elements());
 
 	result_bytes
 }

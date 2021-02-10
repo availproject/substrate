@@ -11,6 +11,8 @@ pub mod config {
 	pub const SCALAR_SIZE: usize = 64;
 	pub const EXTENSION_FACTOR: usize = 2;
 	pub const PROVER_KEY_SIZE: usize = 48;
+	pub const PROOF_SIZE: usize = 48;
+	pub const MAX_PROOFS_REQUEST: usize = 30;
 }
 
 #[cfg(feature = "std")]

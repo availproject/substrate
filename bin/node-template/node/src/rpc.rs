@@ -6,14 +6,13 @@
 #![warn(missing_docs)]
 
 use std::sync::Arc;
-
+use sc_client_api::BlockBackend;
 use node_template_runtime::{opaque::Block, AccountId, Balance, Index};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
 use sp_block_builder::BlockBuilder;
 pub use sc_rpc_api::DenyUnsafe;
 use sp_transaction_pool::TransactionPool;
-
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -29,7 +28,7 @@ pub struct FullDeps<C, P> {
 pub fn create_full<C, P>(
 	deps: FullDeps<C, P>,
 ) -> jsonrpc_core::IoHandler<sc_rpc::Metadata> where
-	C: ProvideRuntimeApi<Block>,
+	C: ProvideRuntimeApi<Block> + BlockBackend<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error=BlockChainError> + 'static,
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
@@ -53,6 +52,10 @@ pub fn create_full<C, P>(
 
 	io.extend_with(
 		TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone()))
+	);
+
+	io.extend_with(
+		crate::kate_rpc::KateRpcApi::to_delegate(crate::kate_rpc::KateRpc::new(client.clone()))
 	);
 
 	// Extend this RPC with a custom API by using the following syntax.
