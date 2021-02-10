@@ -10,7 +10,6 @@ use sc_service::ChainType;
 
 // Kate
 use dusk_plonk::commitment_scheme::kzg10;
-use rand::Rng;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";

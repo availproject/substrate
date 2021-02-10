@@ -15,6 +15,7 @@ use dusk_bls12_381::{
 };
 use merlin::Transcript;
 use sp_std::prelude::*;
+use dusk_jubjub::Scalar;
 
 /// Opening Key is used to verify opening proofs made about a committed polynomial.
 #[derive(Clone, Debug)]
