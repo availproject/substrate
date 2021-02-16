@@ -1244,8 +1244,8 @@ impl<T: Config> Module<T> {
 		#[cfg(feature = "std")]
 		{
 			let mut cells = Vec::new();
-			for i in 0..9 {
-				for j in 0..2 {
+			for i in 0..10 {
+				for j in 0..3 {
 					cells.push(kate::com::Cell{ row: j, col: i });
 				}
 			}

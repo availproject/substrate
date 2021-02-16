@@ -198,19 +198,19 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 	// generate proof only for requested cells
 	let total_start= Instant::now();
 	Iterator::enumerate(cells.iter()).for_each(|(index, cell)| {
-		let rowIndex = cell.row as usize;
-		let colIndex = cell.col as usize;
+		let row_index = cell.row as usize;
+		let col_index = cell.col as usize;
 
-		if rowIndex < extended_rows_num && colIndex < cols_num {
+		if row_index < extended_rows_num && col_index < cols_num {
 			// construct polynomial per extended matrix row
 			let mut row = Vec::with_capacity(cols_num);
 
 			for j in 0..cols_num {
-				row.push(ext_data_matrix[rowIndex + j * extended_rows_num]);
+				row.push(ext_data_matrix[row_index + j * extended_rows_num]);
 			}
 
 			let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
-			let witness = prover_key.compute_single_witness(&polynomial, &row_dom_x_pts[colIndex]);
+			let witness = prover_key.compute_single_witness(&polynomial, &row_dom_x_pts[col_index]);
 			let proof = prover_key.commit(&witness).unwrap();
 
 			unsafe {
@@ -251,7 +251,7 @@ pub fn build_commitments(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>
 
 	// construct commitments in parallel
 	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
-	let (prover_key, verifier_key) = public_params.trim(cols_num).unwrap();
+	let (prover_key, _) = public_params.trim(cols_num).unwrap();
 	let row_eval_domain = EvaluationDomain::new(cols_num).unwrap();
 
 	let mut result_bytes: Vec<u8> = Vec::new();

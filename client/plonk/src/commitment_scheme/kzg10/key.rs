@@ -11,7 +11,7 @@ use super::{errors::KZG10Errors, AggregateProof, Commitment, Proof};
 use crate::{fft::Polynomial, transcript::TranscriptProtocol, util};
 use anyhow::{Error, Result};
 use dusk_bls12_381::{
-    multiscalar_mul::msm_variable_base, BlsScalar, G1Affine, G1Projective, G2Affine, G2Prepared,
+    multiscalar_mul::{msm_variable_base, msm_variable_base_fast}, BlsScalar, G1Affine, G1Projective, G2Affine, G2Prepared,
 };
 use merlin::Transcript;
 use sp_std::prelude::*;
@@ -114,7 +114,7 @@ impl CommitKey {
         self.check_commit_degree_is_within_bounds(polynomial.degree())?;
 
         // Compute commitment
-        let commitment = msm_variable_base(&self.powers_of_g, &polynomial.coeffs);
+        let commitment = msm_variable_base_fast(&self.powers_of_g, &polynomial.coeffs);
         Ok(Commitment::from_projective(commitment))
     }
 

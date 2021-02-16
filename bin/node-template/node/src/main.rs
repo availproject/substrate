@@ -7,8 +7,8 @@ mod chain_spec;
 mod service;
 mod cli;
 mod command;
-mod kate_rpc;
 mod rpc;
+mod kate_rpc;
 
 fn main() -> sc_cli::Result<()> {
 	command::run()

@@ -34,7 +34,8 @@ sp-session = { version = "3.0.0", default-features = false, path = "../../../pri
 sp-std = { version = "3.0.0", default-features = false, path = "../../../primitives/std" }
 sp-transaction-pool = { version = "3.0.0", default-features = false, path = "../../../primitives/transaction-pool" }
 sp-version = { version = "3.0.0", default-features = false, path = "../../../primitives/version" }
-#getrandom = { version = "0.2.1", features = ["js"] }
+kate-rpc-runtime-api = { path = "../pallets/kate-rpc-runtime-api", default-features = false }
+sp-io = { version = "2.0.0", path = "../../../primitives/io", default-features = false }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { version = "3.0.0", default-features = false, path = "../../../frame/system/rpc/runtime-api/" }
@@ -53,6 +54,8 @@ substrate-wasm-builder = { version = "4.0.0", path = "../../../utils/wasm-builde
 [features]
 default = ["std"]
 std = [
+	"kate-rpc-runtime-api/std",
+	"sp-io/std",
 	"codec/std",
 	"frame-executive/std",
 	"frame-support/std",

@@ -15,6 +15,8 @@ use sp_runtime::{
 use sp_runtime::traits::{
 	BlakeTwo256, Block as BlockT, AccountIdLookup, Verify, IdentifyAccount, NumberFor,
 };
+
+use sp_core::storage::well_known_keys;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
@@ -478,6 +480,12 @@ impl_runtime_apis! {
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
+		}
+	}
+
+	impl kate_rpc_runtime_api::KateParamsGetter<Block> for Runtime {
+		fn get_public_params() -> Vec<u8> {
+			sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS).unwrap_or_default()
 		}
 	}
 }

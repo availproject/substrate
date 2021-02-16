@@ -25,7 +25,8 @@ merlin = { version = "3.0.0", default-features = false }
 rand_core = { version = "0.6", default-features = false }
 
 # Built by default with "std", "alloc", "pairing", "groups" and "endo" features.
-dusk-bls12_381 = { git = "https://github.com/dusk-network/bls12_381", tag = "v0.4.0" }
+dusk-bls12_381 = { git = "https://github.com/imyourm8/bls12_381", branch = "fast_commit" }
+#dusk-bls12_381 = { path = "../../../bls12_381" }
 itertools = {version = "0.9", default-features = false }
 rayon = {version = "1.3", default-features = false }
 anyhow = {version = "1.0", default-features = false }
