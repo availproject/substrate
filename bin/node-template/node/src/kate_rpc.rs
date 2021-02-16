@@ -2,8 +2,7 @@ use std::sync::Arc;
 use jsonrpc_core::{Result, Error as RpcError, ErrorCode};
 use jsonrpc_derive::rpc;
 use lru::LruCache;
-
-use sp_core::storage::well_known_keys;
+use sp_blockchain::HeaderBackend;
 use sc_client_api::BlockBackend;
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::{generic::BlockId, traits::{Block as BlockT}};
@@ -11,23 +10,24 @@ use sp_runtime::traits::{NumberFor, Header};
 use sp_rpc::number::NumberOrHex;
 use std::sync::RwLock;
 use codec::{Encode};
+use kate_rpc_runtime_api::KateParamsGetter;
 
 #[rpc]
-pub trait KateRpcApi<C, B> {
+pub trait KateApi {
 	#[rpc(name = "kate_queryProof")]
 	fn query_proof(
 		&self,
-		num_or_hex: NumberOrHex,
+		block_number: NumberOrHex,
 		cells: Vec<kate::com::Cell>,
 	) -> Result<Vec<u8>>;
 }
 
-pub struct KateRpc<Client, Block: BlockT> {
+pub struct Kate<Client, Block: BlockT> {
 	client: Arc<Client>,
 	cache: RwLock<LruCache<Block::Hash, Vec<u8>>>,
 }
 
-impl<Client, Block> KateRpc<Client, Block> where Block: BlockT {
+impl<Client, Block> Kate<Client, Block> where Block: BlockT {
 	pub fn new(client: Arc<Client>) -> Self {
 		Self {
 			client,
@@ -53,21 +53,24 @@ impl From<Error> for i64 {
 	}
 }
 
-impl<Client, Block> KateRpcApi<Client, Block> for KateRpc<Client, Block> where
+impl<Client, Block> KateApi for Kate<Client, Block> where
 	Block: BlockT,
-	Client: Send + Sync + 'static + ProvideRuntimeApi<Block> + BlockBackend<Block>,
+	Client: Send + Sync + 'static,
+	Client: HeaderBackend<Block> + ProvideRuntimeApi<Block> + BlockBackend<Block>,
+	Client::Api: KateParamsGetter<Block>,
 {
+	//TODO allocate static thread pool, just for RPC related work, to free up resources, for the block producing processes.
 	fn query_proof(
 		&self,
-		num_or_hex: NumberOrHex,
+		block_number: NumberOrHex,
 		cells: Vec<kate::com::Cell>,
 	) -> Result<Vec<u8>> {
 		use std::convert::TryInto;
-		let block_num: u32 = num_or_hex.try_into().map_err(|_| RpcError {
+		let block_num: u32 = block_number.try_into().map_err(|_| RpcError {
 			code: ErrorCode::ServerError(Error::DecodeError.into()),
 			message: format!(
 				"`{:?}` > u32::max_value(), the max block number is u32.",
-				num_or_hex
+				block_number
 			).into(),
 			data: None,
 		})?;
@@ -94,8 +97,13 @@ impl<Client, Block> KateRpcApi<Client, Block> for KateRpc<Client, Block> where
 			let data: Vec<Vec<u8>> = block.block.extrinsics().into_iter().map(|e|{
 				e.encode()
 			}).collect();
-			let kc_public_params: Vec<u8> = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
-				.unwrap_or_default();
+
+			let kc_public_params = self.client.runtime_api().get_public_params(&BlockId::hash(self.client.info().best_hash)).map_err(|e| RpcError {
+				code: ErrorCode::ServerError(9876),
+				message: "Something wrong".into(),
+				data: Some(format!("{:?}", e).into()),
+			}).unwrap();
+
 			let proof = kate::com::build_proof(&kc_public_params, &data, cells);
 
 			return Ok(proof.unwrap());

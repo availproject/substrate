@@ -13,6 +13,7 @@ use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
 use sp_block_builder::BlockBuilder;
 pub use sc_rpc_api::DenyUnsafe;
 use sp_transaction_pool::TransactionPool;
+use kate_rpc_runtime_api::KateParamsGetter;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -34,6 +35,7 @@ pub fn create_full<C, P>(
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BlockBuilder<Block>,
+	C::Api: KateParamsGetter<Block>,
 	P: TransactionPool + 'static,
 {
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
@@ -55,7 +57,7 @@ pub fn create_full<C, P>(
 	);
 
 	io.extend_with(
-		crate::kate_rpc::KateRpcApi::to_delegate(crate::kate_rpc::KateRpc::new(client.clone()))
+		crate::kate_rpc::KateApi::to_delegate(crate::kate_rpc::Kate::new(client.clone()))
 	);
 
 	// Extend this RPC with a custom API by using the following syntax.
