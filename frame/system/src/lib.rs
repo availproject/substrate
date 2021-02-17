@@ -1240,19 +1240,8 @@ impl<T: Config> Module<T> {
 		let kc_public_params: Vec<u8> = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
 			.unwrap_or_default();
 
-		let kate_commitment: Vec<u8>;
 		#[cfg(feature = "std")]
-		{
-			let mut cells = Vec::new();
-			for i in 0..10 {
-				for j in 0..3 {
-					cells.push(kate::com::Cell{ row: j, col: i });
-				}
-			}
-			// kate_commitment = kate::com::build_proof(&kc_public_params, &extrinsics, cells).unwrap();
-			kate_commitment = kate::com::build_commitments(&kc_public_params, &extrinsics);
-		}
-
+		let kate_commitment = kate::com::build_commitments(&kc_public_params, &extrinsics);
 
 		let root_hash = extrinsics_data_root::<T::Hashing>(extrinsics);
 
