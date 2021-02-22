@@ -132,7 +132,7 @@ fn extend_data_matrix(block: &Vec<u8>) -> Vec<dusk_plonk::prelude::BlsScalar> {
 	let chunk_bytes_offset = rows_num * config::CHUNK_SIZE;
 	let mut offset = 0;
 	for i in 0..cols_num {
-		let mut chunk = block[i * chunk_bytes_offset..(i+1) * chunk_bytes_offset].chunks_exact(config::SCALAR_SIZE);
+		let mut chunk = block[i * chunk_bytes_offset..(i+1) * chunk_bytes_offset].chunks_exact(config::SCALAR_SIZE_WIDE);
 		for _ in 0..rows_num {
 			// from_bytes_wide expects [u8;64]
 			chunk_elements[offset] = dusk_plonk::prelude::BlsScalar::from_bytes_wide(chunk.next().unwrap().try_into().expect("slice with incorrect length"));
@@ -181,9 +181,10 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 	row_dom_x_pts.extend(row_eval_domain.elements());
 
 	let mut result_bytes: Vec<u8> = Vec::new();
-	result_bytes.reserve_exact(config::PROOF_SIZE * cells.len());
+	let serialized_proof_size = config::SCALAR_SIZE + config::PROOF_SIZE;
+	result_bytes.reserve_exact(serialized_proof_size * cells.len());
 	unsafe {
-		result_bytes.set_len(config::PROOF_SIZE * cells.len());
+		result_bytes.set_len(serialized_proof_size * cells.len());
 	}
 
 	let prover_key = &prover_key;
@@ -212,12 +213,20 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 			let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
 			let witness = prover_key.compute_single_witness(&polynomial, &row_dom_x_pts[col_index]);
 			let proof = prover_key.commit(&witness).unwrap();
+			let evaluated_point = ext_data_matrix[row_index + col_index * extended_rows_num];
+
 
 			unsafe {
 				std::ptr::copy(
 					proof.to_bytes().as_ptr(),
-					result_bytes.as_mut_ptr().add(index * config::PROOF_SIZE),
+					result_bytes.as_mut_ptr().add(index * serialized_proof_size),
 					config::PROOF_SIZE
+				);
+
+				std::ptr::copy(
+					evaluated_point.to_bytes().as_ptr(),
+					result_bytes.as_mut_ptr().add(index * serialized_proof_size + config::PROOF_SIZE),
+					config::SCALAR_SIZE
 				);
 			}
 		}
@@ -225,7 +234,7 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 
 	info!(
 		target: "system",
-		"Time to build 1 row of proof {:?}",
+		"Time to build 1 row of proofs {:?}",
 		total_start.elapsed()
 	);
 
