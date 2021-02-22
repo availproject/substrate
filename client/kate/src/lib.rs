@@ -8,7 +8,8 @@ pub mod config {
 
 	pub const MAX_BLOCK_SIZE: usize = NUM_BLOBS * NUM_CHUNKS_IN_BLOB * CHUNK_SIZE;
 
-	pub const SCALAR_SIZE: usize = 64;
+	pub const SCALAR_SIZE_WIDE: usize = 64;
+	pub const SCALAR_SIZE: usize = 32;
 	pub const EXTENSION_FACTOR: usize = 2;
 	pub const PROVER_KEY_SIZE: usize = 48;
 	pub const PROOF_SIZE: usize = 48;
