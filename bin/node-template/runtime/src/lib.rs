@@ -128,7 +128,7 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(100);
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(95);
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
