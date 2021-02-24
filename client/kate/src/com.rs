@@ -113,6 +113,7 @@ fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>) -> Vec<u8> {
 	block
 }
 
+/// build extended data matrix, by columns
 fn extend_data_matrix(block: &Vec<u8>) -> Vec<dusk_plonk::prelude::BlsScalar> {
 	let rows_num = config::NUM_BLOBS;
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
@@ -173,7 +174,7 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 	let ext_data_matrix = extend_data_matrix(&block);
 
 	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
-	let (prover_key, _) = public_params.trim(cols_num).unwrap();
+	let (prover_key, verifier_key) = public_params.trim(cols_num).unwrap();
 
 	// Generate all the x-axis points of the domain on which all the row polynomials reside
 	let row_eval_domain = EvaluationDomain::new(cols_num).unwrap();
@@ -212,13 +213,12 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 
 			let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
 			let witness = prover_key.compute_single_witness(&polynomial, &row_dom_x_pts[col_index]);
-			let proof = prover_key.commit(&witness).unwrap();
+			let commitment_to_witness = prover_key.commit(&witness).unwrap();
 			let evaluated_point = ext_data_matrix[row_index + col_index * extended_rows_num];
-
 
 			unsafe {
 				std::ptr::copy(
-					proof.to_bytes().as_ptr(),
+					commitment_to_witness.to_bytes().as_ptr(),
 					result_bytes.as_mut_ptr().add(index * serialized_proof_size),
 					config::PROOF_SIZE
 				);
