@@ -212,37 +212,23 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 			}
 
 			let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
-			// let witness = prover_key.compute_single_witness(&polynomial, &row_dom_x_pts[col_index]);
-			// let commitment_to_witness = prover_key.commit(&witness).unwrap();
+			let witness = prover_key.compute_single_witness(&polynomial, &row_dom_x_pts[col_index]);
+			let commitment_to_witness = prover_key.commit(&witness).unwrap();
 			let evaluated_point = ext_data_matrix[row_index + col_index * extended_rows_num];
 
-			// let _proof = kzg10::Proof {
-			// 	commitment_to_witness,
-			// 	evaluated_point,
-			// 	commitment_to_polynomial: prover_key.commit(&polynomial).unwrap()
-			// };
-			info!(
-				target: "system",
-				"ASsertring polynomial"
-			);
-			assert_eq!(polynomial.evaluate(&row_dom_x_pts[col_index]), evaluated_point, "polynomial evaluation failed!");
+			unsafe {
+				std::ptr::copy(
+					commitment_to_witness.to_bytes().as_ptr(),
+					result_bytes.as_mut_ptr().add(index * serialized_proof_size),
+					config::PROOF_SIZE
+				);
 
-			let proof = prover_key.open_single(&polynomial, &evaluated_point, &row_dom_x_pts[col_index]).unwrap();
-			assert!(verifier_key.check(row_dom_x_pts[col_index], proof));
-
-			// unsafe {
-			// 	std::ptr::copy(
-			// 		commitment_to_witness.to_bytes().as_ptr(),
-			// 		result_bytes.as_mut_ptr().add(index * serialized_proof_size),
-			// 		config::PROOF_SIZE
-			// 	);
-			//
-			// 	std::ptr::copy(
-			// 		evaluated_point.to_bytes().as_ptr(),
-			// 		result_bytes.as_mut_ptr().add(index * serialized_proof_size + config::PROOF_SIZE),
-			// 		config::SCALAR_SIZE
-			// 	);
-			// }
+				std::ptr::copy(
+					evaluated_point.to_bytes().as_ptr(),
+					result_bytes.as_mut_ptr().add(index * serialized_proof_size + config::PROOF_SIZE),
+					config::SCALAR_SIZE
+				);
+			}
 		}
 	});
 
