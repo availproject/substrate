@@ -24,14 +24,14 @@ pub trait KateApi {
 
 pub struct Kate<Client, Block: BlockT> {
 	client: Arc<Client>,
-	cache: RwLock<LruCache<Block::Hash, Vec<u8>>>,
+	block_ext_cache: RwLock<LruCache<Block::Hash, Vec<dusk_plonk::prelude::BlsScalar>>>,
 }
 
 impl<Client, Block> Kate<Client, Block> where Block: BlockT {
 	pub fn new(client: Arc<Client>) -> Self {
 		Self {
 			client,
-			cache: RwLock::new(LruCache::new(333)) // 3145728 bytes per proof, ~1Gb max size
+			block_ext_cache: RwLock::new(LruCache::new(2048)) // 524288 bytes per block, ~1Gb max size
 		}
 	}
 }
@@ -74,41 +74,32 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 			).into(),
 			data: None,
 		})?;
-		let block_num = <NumberFor<Block>>::from(block_num);
 
+		let block_num = <NumberFor<Block>>::from(block_num);
 		let block = self.client.block(&BlockId::number(block_num)).unwrap();
-		// let mut cache = self.cache.write().unwrap();
+		let mut block_ext_cache = self.block_ext_cache.write().unwrap();
 
 		if !block.is_none() {
 			let block = block.unwrap();
-			// let block_hash = block.block.header().hash();
-			// if !cache.contains(&block_hash) {
-			// 	// let serializer = Serializer::
-			// 	// build proof and cache it
-			// 	let data: Vec<Vec<u8>> = block.block.extrinsics().into_iter().map(|e|{
-			// 		e.encode()
-			// 	}).collect();
-			// 	let kc_public_params: Vec<u8> = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
-			// 		.unwrap_or_default();
-			// 	let proof = kate::com::build_proof(&kc_public_params, &data, cells);
-			// 	cache.put(block_hash, proof);
-			// }
+			let block_hash = block.block.header().hash();
+			if !block_ext_cache.contains(&block_hash) {
+				// build block data extension and cache it
+				let data: Vec<Vec<u8>> = block.block.extrinsics().into_iter().map(|e|{
+					e.encode()
+				}).collect();
 
-			let data: Vec<Vec<u8>> = block.block.extrinsics().into_iter().map(|e|{
-				e.encode()
-			}).collect();
+				let data = kate::com::extend_data_matrix(&kate::com::flatten_and_pad_block(&data, block.block.header().parent_hash().as_ref()));
+				block_ext_cache.put(block_hash, data);
+			}
 
+			let ext_data = block_ext_cache.get(&block_hash).unwrap();
 			let kc_public_params = self.client.runtime_api().get_public_params(&BlockId::hash(self.client.info().best_hash)).map_err(|e| RpcError {
 				code: ErrorCode::ServerError(9876),
 				message: "Something wrong".into(),
 				data: Some(format!("{:?}", e).into()),
 			}).unwrap();
-			log::info!(
-				target: "system",
-				"RPC block.header.hash {:#?}",
-				block.block.header().parent_hash()
-			);
-			let proof = kate::com::build_proof(&kc_public_params, &data, cells, block.block.header().parent_hash().as_ref());
+
+			let proof = kate::com::build_proof(&kc_public_params, &ext_data, cells);
 
 			return Ok(proof.unwrap());
 		}
