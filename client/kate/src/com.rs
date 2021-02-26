@@ -19,81 +19,7 @@ pub struct Cell {
 	pub col: u32,
 }
 
-#[inline]
-fn bitreverse(mut n: u32, l: u32) -> u32 {
-	let mut r = 0;
-	for _ in 0..l {
-		r = (r << 1) | (n & 1);
-		n >>= 1;
-	}
-	r
-}
-
-fn serial_fft(a: &mut [G1Projective], omega: Scalar, log_n: u32) {
-	let n = a.len() as u32;
-	assert_eq!(n, 1 << log_n);
-
-	for k in 0..n {
-		let rk = bitreverse(k, log_n);
-		if k < rk {
-			a.swap(rk as usize, k as usize);
-		}
-	}
-
-	let mut m = 1;
-	for _ in 0..log_n {
-		let w_m = omega.pow(&[(n / (2 * m)) as u64, 0, 0, 0]);
-
-		let mut k = 0;
-		while k < n {
-			let mut w = Scalar::one();
-			for j in 0..m {
-				let mut t = a[(k + j + m) as usize];
-				t = t * &w;
-				let mut tmp = a[(k + j) as usize];
-				tmp = tmp - &t;
-				a[(k + j + m) as usize] = tmp;
-				a[(k + j) as usize] += &t;
-				w.mul_assign(&w_m);
-			}
-
-			k += 2 * m;
-		}
-
-		m *= 2;
-	}
-}
-
-// function to perform FFT/IFFT on commitments on the given evaluation domain- depending on inverse flag
-fn group_fft (a: Vec<kzg10::Commitment>, eval_dom: EvaluationDomain, inverse: bool) -> Vec<kzg10::Commitment>{
-	// Convert Commitments to G1Affine elements
-	let mut commits = Vec::new();
-	for i in 0..a.len() {
-		commits.push(G1Projective::from( G1Affine::from_uncompressed(&a[i].0.to_uncompressed()).unwrap()));
-	}
-	commits.resize(eval_dom.size(), G1Projective::identity());
-
-	if inverse {
-		// Perform IFFT
-		serial_fft(&mut commits, Scalar::from_bytes(&eval_dom.group_gen_inv.to_bytes()).unwrap(), eval_dom.log_size_of_group);
-		commits.iter_mut().for_each(|val| *val *= Scalar::from_bytes(&eval_dom.size_inv.to_bytes()).unwrap());
-	}
-	else {
-		// Perform FFT
-		serial_fft(&mut commits, Scalar::from_bytes(&eval_dom.group_gen.to_bytes()).unwrap(), eval_dom.log_size_of_group);
-	}
-
-	// let mut affine_from_projective = vec![G1Affine::identity(); eval_dom.size()];
-	// G1Projective::batch_normalize(&commits, &mut affine_from_projective);
-
-	let mut modified_commits = Vec::new();
-	// for i in 0..commits.len() {
-	// 	modified_commits.push(kzg10::Commitment::from_affine(dusk_plonk::bls12_381::G1Affine::from_uncompressed(&affine_from_projective[i].to_uncompressed()).unwrap()));
-	// }
-	modified_commits
-}
-
-fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>, header_hash: &[u8]) -> Vec<u8> {
+pub fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>, header_hash: &[u8]) -> Vec<u8> {
 	let max_block_size = config::MAX_BLOCK_SIZE;
 	let mut block:Vec<u8> = extrinsics.clone().into_iter().flatten().collect::<Vec<u8>>(); // TODO probably can be done more efficiently
 
@@ -107,8 +33,6 @@ fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>, header_hash: &[u8]) -> Vec<u
 			block.push(rng.gen::<u8>());
 			byte_index += 1;
 		}
-
-		info!(target: "system", "flatten_and_pad_block last rng.gen::<u8>(): {:#?} {:#?} {:#?}", rng.gen::<u8>(), rng.gen::<u8>(), rng.gen::<u8>());
 	} else if block.len() > max_block_size {
 		panic!("block is too big, must not happen!");
 	}
@@ -117,7 +41,8 @@ fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>, header_hash: &[u8]) -> Vec<u
 }
 
 /// build extended data matrix, by columns
-fn extend_data_matrix(block: &Vec<u8>) -> Vec<dusk_plonk::prelude::BlsScalar> {
+pub fn extend_data_matrix(block: &Vec<u8>) -> Vec<BlsScalar> {
+	let start = Instant::now();
 	let rows_num = config::NUM_BLOBS;
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
 	let cols_num = config::NUM_CHUNKS_IN_BLOB;
@@ -147,12 +72,6 @@ fn extend_data_matrix(block: &Vec<u8>) -> Vec<dusk_plonk::prelude::BlsScalar> {
 		offset += rows_num;
 	}
 
-	info!(
-		target: "system",
-		"extend_data_matrix {:#?}",
-		chunk_elements[0],
-	);
-
 	let copy = chunk_elements[0];
 
 	// extend data matrix, column by column
@@ -171,8 +90,8 @@ fn extend_data_matrix(block: &Vec<u8>) -> Vec<dusk_plonk::prelude::BlsScalar> {
 
 	info!(
 		target: "system",
-		"extend_data_matrix 2 {:#?}",
-		chunk_elements[0],
+		"Time to extend block {:?}",
+		start.elapsed()
 	);
 
 	chunk_elements
@@ -180,7 +99,7 @@ fn extend_data_matrix(block: &Vec<u8>) -> Vec<dusk_plonk::prelude::BlsScalar> {
 
 //TODO cache extended data matrix
 //TODO explore faster Variable Base Multi Scalar Multiplication
-pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cells: Vec<Cell>, header_hash: &[u8]) -> Option<Vec<u8>> {
+pub fn build_proof(public_params_data: &Vec<u8>, ext_data_matrix: &Vec<BlsScalar>, cells: Vec<Cell>) -> Option<Vec<u8>> {
 	let rows_num = config::NUM_BLOBS;
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
 	let cols_num = config::NUM_CHUNKS_IN_BLOB;
@@ -189,8 +108,8 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 		()
 	}
 
-	let block = flatten_and_pad_block(extrinsics, header_hash);
-	let ext_data_matrix = extend_data_matrix(&block);
+	// let block = flatten_and_pad_block(extrinsics, header_hash);
+	// let ext_data_matrix = extend_data_matrix(&block);
 
 	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
 	let (prover_key, verifier_key) = public_params.trim(cols_num).unwrap();
