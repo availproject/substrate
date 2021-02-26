@@ -103,8 +103,12 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 				message: "Something wrong".into(),
 				data: Some(format!("{:?}", e).into()),
 			}).unwrap();
-
-			let proof = kate::com::build_proof(&kc_public_params, &data, cells);
+			log::info!(
+				target: "system",
+				"RPC block.header.hash {:#?}",
+				block.block.header().parent_hash()
+			);
+			let proof = kate::com::build_proof(&kc_public_params, &data, cells, block.block.header().parent_hash().as_ref());
 
 			return Ok(proof.unwrap());
 		}

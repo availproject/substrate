@@ -7,11 +7,11 @@ use std::{vec, thread};
 use std::time::{Instant};
 use std::iter;
 use log::{info};
-use std::convert::TryInto;
+use std::convert::{TryInto, TryFrom};
 use serde::{Serialize, Deserialize};
-
+use rand::{SeedableRng, rngs::StdRng, Rng};
 use super::*;
-use rayon::prelude::*;
+use dusk_plonk::prelude::BlsScalar;
 
 #[derive(Serialize, Deserialize)]
 pub struct Cell {
@@ -93,19 +93,22 @@ fn group_fft (a: Vec<kzg10::Commitment>, eval_dom: EvaluationDomain, inverse: bo
 	modified_commits
 }
 
-fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>) -> Vec<u8> {
+fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>, header_hash: &[u8]) -> Vec<u8> {
 	let max_block_size = config::MAX_BLOCK_SIZE;
 	let mut block:Vec<u8> = extrinsics.clone().into_iter().flatten().collect::<Vec<u8>>(); // TODO probably can be done more efficiently
 
 	if block.len() < max_block_size {
 		let more_elems = max_block_size - block.len();
 		block.reserve_exact(more_elems);
+		let mut rng:StdRng = rand::SeedableRng::from_seed(<[u8; 32]>::try_from(header_hash).unwrap());
 		let mut byte_index = 0;
 		for i in 0..more_elems {
 			// pseudo random values
-			block.push((((byte_index as f32).sin().round() as u32) % 256) as u8);
+			block.push(rng.gen::<u8>());
 			byte_index += 1;
 		}
+
+		info!(target: "system", "flatten_and_pad_block last rng.gen::<u8>(): {:#?} {:#?} {:#?}", rng.gen::<u8>(), rng.gen::<u8>(), rng.gen::<u8>());
 	} else if block.len() > max_block_size {
 		panic!("block is too big, must not happen!");
 	}
@@ -122,12 +125,12 @@ fn extend_data_matrix(block: &Vec<u8>) -> Vec<dusk_plonk::prelude::BlsScalar> {
 	let mut chunk_elements = Vec::new();
 
 	// prepare extended size
-	chunk_elements.reserve_exact(extended_rows_num * cols_num);
+	chunk_elements.resize(extended_rows_num * cols_num, BlsScalar::zero());
 
 	// force vector of desired size
-	unsafe {
-		chunk_elements.set_len(extended_rows_num * cols_num);
-	}
+	// unsafe {
+	// 	chunk_elements.set_len(extended_rows_num * cols_num);
+	// }
 
 	// generate column by column and pack into extended array of scalars
 	let chunk_bytes_offset = rows_num * config::CHUNK_SIZE;
@@ -136,13 +139,21 @@ fn extend_data_matrix(block: &Vec<u8>) -> Vec<dusk_plonk::prelude::BlsScalar> {
 		let mut chunk = block[i * chunk_bytes_offset..(i+1) * chunk_bytes_offset].chunks_exact(config::SCALAR_SIZE_WIDE);
 		for _ in 0..rows_num {
 			// from_bytes_wide expects [u8;64]
-			chunk_elements[offset] = dusk_plonk::prelude::BlsScalar::from_bytes_wide(chunk.next().unwrap().try_into().expect("slice with incorrect length"));
+			chunk_elements[offset] = BlsScalar::from_bytes_wide(chunk.next().unwrap().try_into().expect("slice with incorrect length"));
 			offset += 1;
 		}
 
 		// offset extra rows
 		offset += rows_num;
 	}
+
+	info!(
+		target: "system",
+		"extend_data_matrix {:#?}",
+		chunk_elements[0],
+	);
+
+	let copy = chunk_elements[0];
 
 	// extend data matrix, column by column
 	let extended_column_eval_domain = EvaluationDomain::new(extended_rows_num).unwrap();
@@ -156,12 +167,20 @@ fn extend_data_matrix(block: &Vec<u8>) -> Vec<dusk_plonk::prelude::BlsScalar> {
 		extended_column_eval_domain.fft_slice(extended_column);
 	}
 
+	assert_eq!(copy, chunk_elements[0]);
+
+	info!(
+		target: "system",
+		"extend_data_matrix 2 {:#?}",
+		chunk_elements[0],
+	);
+
 	chunk_elements
 }
 
 //TODO cache extended data matrix
 //TODO explore faster Variable Base Multi Scalar Multiplication
-pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cells: Vec<Cell>) -> Option<Vec<u8>> {
+pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cells: Vec<Cell>, header_hash: &[u8]) -> Option<Vec<u8>> {
 	let rows_num = config::NUM_BLOBS;
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
 	let cols_num = config::NUM_CHUNKS_IN_BLOB;
@@ -170,7 +189,7 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 		()
 	}
 
-	let block = flatten_and_pad_block(extrinsics);
+	let block = flatten_and_pad_block(extrinsics, header_hash);
 	let ext_data_matrix = extend_data_matrix(&block);
 
 	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
@@ -216,6 +235,16 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 			let commitment_to_witness = prover_key.commit(&witness).unwrap();
 			let evaluated_point = ext_data_matrix[row_index + col_index * extended_rows_num];
 
+			info!(
+				target: "system",
+				"commitment_to_witness {:#?}\n evaluated_point {:#?}\n polynomial: {:#?} {:?} {:?}",
+				commitment_to_witness,
+				evaluated_point,
+				prover_key.commit(&polynomial).unwrap(),
+				row_index,
+				col_index,
+			);
+
 			unsafe {
 				std::ptr::copy(
 					commitment_to_witness.to_bytes().as_ptr(),
@@ -241,7 +270,7 @@ pub fn build_proof(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, cell
 	Some(result_bytes)
 }
 
-pub fn build_commitments(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>) -> Vec<u8> {
+pub fn build_commitments(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, header_hash: &[u8]) -> Vec<u8> {
 	let rows_num = config::NUM_BLOBS;
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
 	let cols_num = config::NUM_CHUNKS_IN_BLOB;
@@ -249,7 +278,7 @@ pub fn build_commitments(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>
 	let start= Instant::now();
 
 	// generate data matrix first
-	let block = flatten_and_pad_block(extrinsics);
+	let block = flatten_and_pad_block(extrinsics, header_hash);
 	let ext_data_matrix = extend_data_matrix(&block);
 
 	info!(
