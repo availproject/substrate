@@ -400,7 +400,7 @@ pub trait Hash: 'static + MaybeSerializeDeserialize + Debug + Clone + Eq + Parti
 	}
 
 	/// The ordered Patricia tree root of the given `input`.
-	fn ordered_trie_root(input: Vec<Vec<u8>>) -> Self::Output;
+	fn ordered_trie_root(input: &Vec<Vec<u8>>) -> Self::Output;
 
 	/// The Patricia tree root of the given mapping.
 	fn trie_root(input: Vec<(Vec<u8>, Vec<u8>)>) -> Self::Output;
@@ -428,7 +428,7 @@ impl Hash for BlakeTwo256 {
 		sp_io::trie::blake2_256_root(input)
 	}
 
-	fn ordered_trie_root(input: Vec<Vec<u8>>) -> Self::Output {
+	fn ordered_trie_root(input: &Vec<Vec<u8>>) -> Self::Output {
 		sp_io::trie::blake2_256_ordered_root(input)
 	}
 }
@@ -455,7 +455,7 @@ impl Hash for Keccak256 {
 		sp_io::trie::keccak_256_root(input)
 	}
 
-	fn ordered_trie_root(input: Vec<Vec<u8>>) -> Self::Output {
+	fn ordered_trie_root(input: &Vec<Vec<u8>>) -> Self::Output {
 		sp_io::trie::keccak_256_ordered_root(input)
 	}
 }

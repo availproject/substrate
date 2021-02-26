@@ -126,11 +126,11 @@ pub use weights::WeightInfo;
 
 /// Compute the trie root of a list of extrinsics.
 pub fn extrinsics_root<H: Hash, E: codec::Encode>(extrinsics: &[E]) -> H::Output {
-	extrinsics_data_root::<H>(extrinsics.iter().map(codec::Encode::encode).collect())
+	extrinsics_data_root::<H>(&extrinsics.iter().map(codec::Encode::encode).collect())
 }
 
 /// Compute the trie root of a list of extrinsics.
-pub fn extrinsics_data_root<H: Hash>(xts: Vec<Vec<u8>>) -> H::Output {
+pub fn extrinsics_data_root<H: Hash>(xts: &Vec<Vec<u8>>) -> H::Output {
 	H::ordered_trie_root(xts)
 }
 
@@ -1240,10 +1240,10 @@ impl<T: Config> Module<T> {
 		let kc_public_params: Vec<u8> = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
 			.unwrap_or_default();
 
-		#[cfg(feature = "std")]
-		let kate_commitment = kate::com::build_commitments(&kc_public_params, &extrinsics);
+		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
 
-		let root_hash = extrinsics_data_root::<T::Hashing>(extrinsics);
+		#[cfg(feature = "std")]
+		let kate_commitment = kate::com::build_commitments(&kc_public_params, &extrinsics, parent_hash.as_ref());
 
 		// move block hash pruning window by one block
 		let block_hash_count = T::BlockHashCount::get();
