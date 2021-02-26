@@ -28,7 +28,7 @@ pub fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>, header_hash: &[u8]) -> V
 		block.reserve_exact(more_elems);
 		let mut rng:StdRng = rand::SeedableRng::from_seed(<[u8; 32]>::try_from(header_hash).unwrap());
 		let mut byte_index = 0;
-		for i in 0..more_elems {
+		for _ in 0..more_elems {
 			// pseudo random values
 			block.push(rng.gen::<u8>());
 			byte_index += 1;
@@ -51,11 +51,6 @@ pub fn extend_data_matrix(block: &Vec<u8>) -> Vec<BlsScalar> {
 
 	// prepare extended size
 	chunk_elements.resize(extended_rows_num * cols_num, BlsScalar::zero());
-
-	// force vector of desired size
-	// unsafe {
-	// 	chunk_elements.set_len(extended_rows_num * cols_num);
-	// }
 
 	// generate column by column and pack into extended array of scalars
 	let chunk_bytes_offset = rows_num * config::CHUNK_SIZE;
@@ -108,9 +103,6 @@ pub fn build_proof(public_params_data: &Vec<u8>, ext_data_matrix: &Vec<BlsScalar
 		()
 	}
 
-	// let block = flatten_and_pad_block(extrinsics, header_hash);
-	// let ext_data_matrix = extend_data_matrix(&block);
-
 	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
 	let (prover_key, verifier_key) = public_params.trim(cols_num).unwrap();
 
@@ -153,16 +145,6 @@ pub fn build_proof(public_params_data: &Vec<u8>, ext_data_matrix: &Vec<BlsScalar
 			let witness = prover_key.compute_single_witness(&polynomial, &row_dom_x_pts[col_index]);
 			let commitment_to_witness = prover_key.commit(&witness).unwrap();
 			let evaluated_point = ext_data_matrix[row_index + col_index * extended_rows_num];
-
-			info!(
-				target: "system",
-				"commitment_to_witness {:#?}\n evaluated_point {:#?}\n polynomial: {:#?} {:?} {:?}",
-				commitment_to_witness,
-				evaluated_point,
-				prover_key.commit(&polynomial).unwrap(),
-				row_index,
-				col_index,
-			);
 
 			unsafe {
 				std::ptr::copy(
