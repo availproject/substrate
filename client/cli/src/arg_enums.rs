@@ -190,13 +190,13 @@ arg_enum! {
 }
 
 /// Default value for the `--execution-syncing` parameter.
-pub const DEFAULT_EXECUTION_SYNCING: ExecutionStrategy = ExecutionStrategy::NativeElseWasm;
+pub const DEFAULT_EXECUTION_SYNCING: ExecutionStrategy = ExecutionStrategy::Native;
 /// Default value for the `--execution-import-block` parameter.
-pub const DEFAULT_EXECUTION_IMPORT_BLOCK: ExecutionStrategy = ExecutionStrategy::NativeElseWasm;
+pub const DEFAULT_EXECUTION_IMPORT_BLOCK: ExecutionStrategy = ExecutionStrategy::Native;
 /// Default value for the `--execution-import-block` parameter when the node is a validator.
-pub const DEFAULT_EXECUTION_IMPORT_BLOCK_VALIDATOR: ExecutionStrategy = ExecutionStrategy::Wasm;
+pub const DEFAULT_EXECUTION_IMPORT_BLOCK_VALIDATOR: ExecutionStrategy = ExecutionStrategy::Native;
 /// Default value for the `--execution-block-construction` parameter.
-pub const DEFAULT_EXECUTION_BLOCK_CONSTRUCTION: ExecutionStrategy = ExecutionStrategy::Wasm;
+pub const DEFAULT_EXECUTION_BLOCK_CONSTRUCTION: ExecutionStrategy = ExecutionStrategy::Native;
 /// Default value for the `--execution-offchain-worker` parameter.
 pub const DEFAULT_EXECUTION_OFFCHAIN_WORKER: ExecutionStrategy = ExecutionStrategy::Native;
 /// Default value for the `--execution-other` parameter.
