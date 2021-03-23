@@ -33,8 +33,8 @@ pub trait Config: frame_system::Config {
 // The pallet's runtime storage items.
 // https://substrate.dev/docs/en/knowledgebase/runtime/storage
 decl_storage! {
-	trait Store for Module<T: Config> as TemplateModule {
-		HashToBytes: map hasher(blake2_128_concat) Vec<u8> => (T::AccountId, T::BlockNumber);
+	trait Store for Module<T: Config> as DataAvailability {
+		HashToBytes: map hasher(blake2_128_concat) (T::AccountId, Vec<u8>) => Vec<u8>;
 	}
 }
 
@@ -42,8 +42,8 @@ decl_storage! {
 // https://substrate.dev/docs/en/knowledgebase/runtime/events
 decl_event!(
 	pub enum Event<T> where AccountId = <T as frame_system::Config>::AccountId {
-		/// Event emitted when a data has been submitted. [who, data]
-        DataSubmitted(AccountId, Vec<u8>),
+		/// Event emitted when a data has been submitted. [who, key, value]
+        DataSubmitted(AccountId, Vec<u8>, Vec<u8>),
 	}
 );
 
@@ -51,7 +51,9 @@ decl_event!(
 decl_error! {
 	pub enum Error for Module<T: Config> {
 		/// The data has already been submitted.
-        DataAlreadySubmitted,
+		KeyAlreadyExists,
+		/// The queried key does not exist
+		KeyDoesNotExist,
 	}
 }
 
@@ -66,28 +68,22 @@ decl_module! {
 		// Events must be initialized if they are used by the pallet.
 		fn deposit_event() = default;
 
-		/// Allow a user to submit new data.
-        #[weight = 10_000]
-        fn submit_data(origin, data: Vec<u8>) {
+		/// Allow a user to submit new data. 
+        #[weight = 10_000] 		// TODO: Make weight = f(data size)
+        fn submit_data(origin, key: Vec<u8>, value: Vec<u8>) {
             // Check that the extrinsic was signed and get the signer.
             // This function will return an error if the extrinsic is not signed.
             // https://substrate.dev/docs/en/knowledgebase/runtime/origin
             let sender = ensure_signed(origin)?;
 
             // Verify that the given data has not already been submitted.
-            ensure!(!HashToBytes::<T>::contains_key(&data), Error::<T>::DataAlreadySubmitted);
-
-            // Get the block number from the FRAME System module.
-            let current_block = <frame_system::Module<T>>::block_number();
+            ensure!(!HashToBytes::<T>::contains_key((&sender, &key)), Error::<T>::KeyAlreadyExists);
 
             // Store the data with the sender and block number.
-            HashToBytes::<T>::insert(&data, (&sender, current_block));
+            HashToBytes::<T>::insert((&sender, &key), &value);
 
             // Emit an event that the claim was created.
-            Self::deposit_event(RawEvent::DataSubmitted(sender, data));
-        }
-
-
-
+            Self::deposit_event(RawEvent::DataSubmitted(sender, key, value));
+		}
 	}
 }
