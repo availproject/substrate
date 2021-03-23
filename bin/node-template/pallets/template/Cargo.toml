@@ -1,12 +1,12 @@
 [package]
-authors = ['Anonymous']
+authors = ['Polygon']
 edition = '2018'
-name = 'pallet-template'
+name = 'polygon-data-availability'
 version = "2.0.0"
 license = "Unlicense"
 homepage = "https://substrate.dev"
-repository = "https://github.com/paritytech/substrate/"
-description = "FRAME pallet template for defining custom runtime logic."
+repository = "https://github.com/maticnetwork/substrate/"
+description = "FRAME pallet to submit arbitrary data into the Polygon DA layer"
 readme = "README.md"
 
 [package.metadata.docs.rs]
