@@ -46,10 +46,10 @@ pub fn development_config() -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"Polygon-DA-Node",
+		"Polygon-DA-Dev",
 		// ID
 		"dev",
-		ChainType::Custom("Polygon".to_string()),
+		ChainType::Development,
 		move || testnet_genesis(
 			wasm_binary,
 			// Initial PoA authorities
@@ -85,7 +85,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"Polygon",
+		"Polygon-DA-Testnet",
 		// ID
 		"local_testnet",
 		ChainType::Local,
