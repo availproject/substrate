@@ -413,7 +413,7 @@ where
 		// check commitments.
 		let new_kc = new_header.extrinsics_root().commitment();
 		let kc = header.extrinsics_root().commitment();
-		assert_eq!(kc.len(), new_kc.len(), "Commitments length do not much.");
+		assert_eq!(kc.len(), new_kc.len(), "Commitments length do not match.");
 		let matched_elems = new_kc.iter().zip(kc).filter(|&(a, b)| a == b).count();
 		assert_eq!(matched_elems, new_kc.len(), "Commitments do not match.");
 	}

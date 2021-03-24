@@ -1272,7 +1272,7 @@ impl<T: Config> Module<T> {
 		let extrinsics_root = <T::Header as traits::Header>::Root::new_with_commitment(root_hash, kate_commitment);
 
 		#[cfg(not(feature = "std"))]
-			let extrinsics_root = <T::Header as traits::Header>::Root::new(root_hash);
+		let extrinsics_root = <T::Header as traits::Header>::Root::new(root_hash);
 
 		<T::Header as traits::Header>::new(number, extrinsics_root, storage_root, parent_hash, digest)
 	}
