@@ -1,5 +1,5 @@
 [package]
-name = "polygon-da-node"
+name = "node-template"
 version = "2.0.0"
 authors = ["Anonymous"]
 description = "Polygon Data Avilability Node."
@@ -13,7 +13,7 @@ repository = "https://github.com/maticnetwork/substrate/"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [[bin]]
-name = "polygon-da-node"
+name = "node-template"
 
 [dependencies]
 structopt = "0.3.8"
