@@ -1060,8 +1060,8 @@ impl<T: Config> Module<T> {
 
 		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
 
-		#[cfg(feature = "std")]
-		let kate_commitment = kate::com::build_commitments(&kc_public_params, &extrinsics, parent_hash.as_ref());
+		// #[cfg(feature = "std")]
+		// let kate_commitment = kate::com::build_commitments(&kc_public_params, &extrinsics, parent_hash.as_ref());
 
 		// move block hash pruning window by one block
 		let block_hash_count = T::BlockHashCount::get();
