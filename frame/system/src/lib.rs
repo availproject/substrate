@@ -1060,8 +1060,8 @@ impl<T: Config> Module<T> {
 
 		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
 
-		// #[cfg(feature = "std")]
-		// let kate_commitment = kate::com::build_commitments(&kc_public_params, &extrinsics, parent_hash.as_ref());
+		#[cfg(feature = "std")]
+		let kate_commitment = kate::com::build_commitments(&kc_public_params, &extrinsics, parent_hash.as_ref());
 
 		// move block hash pruning window by one block
 		let block_hash_count = T::BlockHashCount::get();
@@ -1086,10 +1086,10 @@ impl<T: Config> Module<T> {
 			digest.push(item);
 		}
 
-		// #[cfg(feature = "std")]
-		// let extrinsics_root = <T::Header as traits::Header>::Root::new_with_commitment(root_hash, kate_commitment);
+		#[cfg(feature = "std")]
+		let extrinsics_root = <T::Header as traits::Header>::Root::new_with_commitment(root_hash, kate_commitment);
 
-		// #[cfg(not(feature = "std"))]
+		#[cfg(not(feature = "std"))]
 		let extrinsics_root = <T::Header as traits::Header>::Root::new(root_hash);
 
 		<T::Header as traits::Header>::new(number, extrinsics_root, storage_root, parent_hash, digest)
