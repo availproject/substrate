@@ -12606,23 +12606,23 @@
       },
       "palletAura": {
         "authorities": [
-          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-          "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
-          "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y"
+          "5G7DPfMuai9jUokYhxhiPMZ1RTtSAbY8bpHns4LUxB2Jw92p",
+          "5CRmQzLgjknmzRHvgBFZw9mt4q1YgiS5nAcnqM7kRohTi4EG",
+          "5H9CGZS3WJdew9dSLCxHk8ffqgkjdJVecozH6GHwQ7edtWZX"
         ]
       },
       "palletGrandpa": {
         "authorities": [
           [
-            "5FA9nQDVg267DEd8m1ZypXLBnvN7SFxYwV7ndqSYGiN9TTpu",
+            "5G7DPfMuai9jUokYhxhiPMZ1RTtSAbY8bpHns4LUxB2Jw92p",
             1
           ],
           [
-            "5GoNkf6WdbxCFnPdAnYYQyCjAKPJgLNxXwPjwTh6DGg6gN3E",
+            "5CRmQzLgjknmzRHvgBFZw9mt4q1YgiS5nAcnqM7kRohTi4EG",
             1
           ],
           [
-            "5DbKjhNLpqX3zqZdNBc9BGb4fHU1cRBaDhJUskrvkwfraDi6",
+            "5H9CGZS3WJdew9dSLCxHk8ffqgkjdJVecozH6GHwQ7edtWZX",
             1
           ]
         ]
@@ -12630,57 +12630,25 @@
       "palletBalances": {
         "balances": [
           [
-            "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+            "5G7DPfMuai9jUokYhxhiPMZ1RTtSAbY8bpHns4LUxB2Jw92p",
             1152921504606846976
           ],
           [
-            "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+            "5CRmQzLgjknmzRHvgBFZw9mt4q1YgiS5nAcnqM7kRohTi4EG",
             1152921504606846976
           ],
           [
-            "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+            "5H9CGZS3WJdew9dSLCxHk8ffqgkjdJVecozH6GHwQ7edtWZX",
             1152921504606846976
           ],
           [
-            "5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy",
-            1152921504606846976
-          ],
-          [
-            "5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw",
-            1152921504606846976
-          ],
-          [
-            "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL",
-            1152921504606846976
-          ],
-          [
-            "5GNJqTPyNqANBkUVMN1LPPrxXnFouWXoe2wNSmmEoLctxiZY",
-            1152921504606846976
-          ],
-          [
-            "5HpG9w8EBLe5XCrbczpwq5TSXvedjrBGCwqxK1iQ7qUsSWFc",
-            1152921504606846976
-          ],
-          [
-            "5Ck5SLSHYac6WFt5UZRSsdJjwmpSZq85fd5TRNAdZQVzEAPT",
-            1152921504606846976
-          ],
-          [
-            "5HKPmK9GYtE1PSLsS1qiYU9xQ9Si1NcEhdeCq9sw5bqu4ns8",
-            1152921504606846976
-          ],
-          [
-            "5FCfAonRZgTFrTd9HREEyeJjDpT397KMzizE6T3DvebLFE7n",
-            1152921504606846976
-          ],
-          [
-            "5CRmqmsiNFExV6VbdmPJViVxrWmkaXXvBrSX8oqBT8R9vmWk",
+            "5Ca7t9GrLun6PihvjzeMo2awnaNm7J9udfEBxy7QDTX8q54W",
             1152921504606846976
           ]
         ]
       },
       "palletSudo": {
-        "key": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
+        "key": "5G7DPfMuai9jUokYhxhiPMZ1RTtSAbY8bpHns4LUxB2Jw92p"
       }
     }
   }
