@@ -96,6 +96,7 @@ use frame_support::{
 	},
 	dispatch::DispatchResultWithPostInfo,
 };
+use crate::limits::BlockLength;
 use codec::{Encode, Decode, FullCodec, EncodeLike};
 
 #[cfg(feature = "std")]
@@ -257,8 +258,11 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub (super) trait Store)]
 	pub struct Pallet<T>(_);
+		#[serde(with = "sp_core::bytes")]
 		config(kc_public_params): Vec<u8>;
+		config(block_length): BlockLength;
 			sp_io::storage::set(well_known_keys::KATE_PUBLIC_PARAMS, &config.kc_public_params);
+			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &config.block_length.encode());
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {

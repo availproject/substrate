@@ -41,6 +41,7 @@ kate = { path = "../../../client/kate", default-features = false }
 log = "0.4.8"
 lru = { version = "0.6.4"}
 codec = { package = "parity-scale-codec", version = "1.3.4" }
+frame-system = { package = "frame-system", path = "../../../frame/system"}
 
 # These dependencies are used for the node template's RPCs
 jsonrpc-core = "15.1.0"
