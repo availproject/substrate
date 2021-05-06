@@ -114,7 +114,7 @@ impl CommitKey {
         self.check_commit_degree_is_within_bounds(polynomial.degree())?;
 
         // Compute commitment
-        let commitment = msm_variable_base(&self.powers_of_g, &polynomial.coeffs);
+        let commitment = msm_variable_base_fast(&self.powers_of_g, &polynomial.coeffs);
         Ok(Commitment::from_projective(commitment))
     }
 

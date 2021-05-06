@@ -126,6 +126,7 @@ use frame_support::{
 	},
 	dispatch::DispatchResultWithPostInfo,
 };
+use crate::limits::BlockLength;
 use codec::{Encode, Decode, FullCodec, EncodeLike};
 
 #[cfg(any(feature = "std", test))]
@@ -173,7 +174,7 @@ pub trait Config: 'static + Eq + Clone {
 	type BlockWeights: Get<limits::BlockWeights>;
 
 	/// The maximum length of a block (in bytes).
-	type BlockLength: Get<limits::BlockLength>;
+	// type BlockLength: Get<limits::BlockLength>;
 
 	/// The `Origin` type used by dispatchable calls.
 	type Origin:
@@ -451,7 +452,9 @@ decl_storage! {
 		config(changes_trie_config): Option<ChangesTrieConfiguration>;
 		#[serde(with = "sp_core::bytes")]
 		config(code): Vec<u8>;
+		#[serde(with = "sp_core::bytes")]
 		config(kc_public_params): Vec<u8>;
+		config(block_length): BlockLength;
 
 		build(|config: &GenesisConfig| {
 			use codec::Encode;
@@ -459,6 +462,7 @@ decl_storage! {
 			sp_io::storage::set(well_known_keys::CODE, &config.code);
 			sp_io::storage::set(well_known_keys::EXTRINSIC_INDEX, &0u32.encode());
 			sp_io::storage::set(well_known_keys::KATE_PUBLIC_PARAMS, &config.kc_public_params);
+			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &config.block_length.encode());
 
 			if let Some(ref changes_trie_config) = config.changes_trie_config {
 				sp_io::storage::set(

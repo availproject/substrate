@@ -6,7 +6,9 @@ use node_template_runtime::{
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{Verify, IdentifyAccount};
+use sp_runtime::Perbill;
 use sc_service::ChainType;
+use frame_system::limits::BlockLength;
 
 // Kate
 use dusk_plonk::commitment_scheme::kzg10;
@@ -144,6 +146,7 @@ fn testnet_genesis(
 			code: wasm_binary.to_vec(),
 			changes_trie_config: Default::default(),
 			kc_public_params: params,
+			block_length: BlockLength::with_normal_ratio(128, 256, 64, Perbill::from_percent(95)),
 		}),
 		pallet_balances: Some(BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.

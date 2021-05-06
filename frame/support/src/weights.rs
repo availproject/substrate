@@ -733,6 +733,7 @@ impl<T> WeightToFeePolynomial for IdentityFee<T> where
 }
 
 /// A struct holding value for each `DispatchClass`.
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Clone, Eq, PartialEq, Default, RuntimeDebug, Encode, Decode)]
 pub struct PerDispatchClass<T> {
 	/// Value for `Normal` extrinsics.
