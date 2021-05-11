@@ -10,13 +10,15 @@ use frame_support::{
 	decl_event,
 	decl_error,
 	dispatch,
-	traits::Get,
+	traits::{ Get },
 	ensure,
 	StorageMap,
 };
-
-use frame_system::ensure_signed;
+use codec::{Encode};
+use frame_system::{ ensure_signed, limits::BlockLength };
 use sp_std::vec::Vec;
+use sp_core::storage::well_known_keys;
+use sp_runtime::Perbill;
 
 #[cfg(test)]
 mod mock;
@@ -35,6 +37,8 @@ pub trait Config: frame_system::Config {
 decl_storage! {
 	trait Store for Module<T: Config> as DataAvailability {
 		HashToBytes: map hasher(blake2_128_concat) (T::AccountId, Vec<u8>) => Vec<u8>;
+		BlockLengthProposalID: u32;
+		BlockLengthProposal: BlockLength;
 	}
 }
 
@@ -44,6 +48,8 @@ decl_event!(
 	pub enum Event<T> where AccountId = <T as frame_system::Config>::AccountId {
 		/// Event emitted when a data has been submitted. [who, key, value]
         DataSubmitted(AccountId, Vec<u8>, Vec<u8>),
+        /// Event emitted when block length proposal has been submitted. [who, proposal_id, rows, cols, chunk_size, ratio_percent]
+        BlockLengthProposalSubmitted(AccountId, u32, u32, u32, u32, u32),
 	}
 );
 
@@ -54,6 +60,8 @@ decl_error! {
 		KeyAlreadyExists,
 		/// The queried key does not exist
 		KeyDoesNotExist,
+		/// Block normal ratio is greater than 100%
+		RatioOutOfBounds,
 	}
 }
 
@@ -68,7 +76,7 @@ decl_module! {
 		// Events must be initialized if they are used by the pallet.
 		fn deposit_event() = default;
 
-		/// Allow a user to submit new data. 
+		/// Allow a user to submit new data.
         #[weight = 10_000] 		// TODO: Make weight = f(data size)
         fn submit_data(origin, key: Vec<u8>, value: Vec<u8>) {
             // Check that the extrinsic was signed and get the signer.
@@ -84,6 +92,26 @@ decl_module! {
 
             // Emit an event that the claim was created.
             Self::deposit_event(RawEvent::DataSubmitted(sender, key, value));
+		}
+
+		#[weight = 10_000]
+		fn vote_block_length_proposal(origin, proposal_id: u32) {
+			let sender = ensure_signed(origin)?;
+		}
+
+		#[weight = 10_000]
+		fn submit_block_length_proposal(origin, rows: u32, cols: u32, chunk_size: u32, ratio_percent: u32)  {
+			let sender = ensure_signed(origin)?;
+			ensure!(ratio_percent <= 100, Error::<T>::RatioOutOfBounds);
+
+			let block_length = BlockLength::with_normal_ratio(rows, cols, chunk_size, Perbill::from_percent(ratio_percent));
+			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &block_length.encode());
+
+			// let proposalId = BlockLengthProposalID::get() + 1;
+			// BlockLengthProposalID::put(proposalId);
+			// BlockLengthProposal::put(BlockLength::with_normal_ratio(rows, cols, chunk_size, Perbill::from_percent(ratio_percent)));
+
+			// Self::deposit_event(RawEvent::BlockLengthProposalSubmitted(sender, proposalId, rows, cols, chunk_size, ratio_percent));
 		}
 	}
 }
