@@ -13,6 +13,7 @@ use frame_support::{
 	traits::{ Get },
 	ensure,
 	StorageMap,
+	weights::{DispatchClass, Pays, Weight},
 };
 use codec::{Encode};
 use frame_system::{ ensure_signed, limits::BlockLength };
@@ -78,7 +79,11 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Allow a user to submit new data.
-        #[weight = 10_000] 		// TODO: Make weight = f(data size)
+        #[weight = (
+		  (value.len().saturating_mul(10_000)) as Weight,
+		  DispatchClass::Normal,
+		  Pays::Yes
+		)]
         fn submit_data(origin, key: Vec<u8>, value: Vec<u8>) {
             // Check that the extrinsic was signed and get the signer.
             // This function will return an error if the extrinsic is not signed.

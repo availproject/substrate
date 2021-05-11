@@ -13,7 +13,7 @@ use codec::{Encode, Decode};
 use frame_system::limits::BlockLength;
 use sp_core::storage::well_known_keys;
 use kate_rpc_runtime_api::KateParamsGetter;
-use frame_benchmarking::frame_support::weights::DispatchClass;
+use frame_support::weights::DispatchClass;
 
 #[rpc]
 pub trait KateApi {
