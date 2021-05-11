@@ -1245,9 +1245,18 @@ impl<T: Config> Module<T> {
 			.unwrap_or_default();
 
 		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
+		let block_length: BlockLength = BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH)
+			.unwrap_or_default()[..]).unwrap();
 
 		#[cfg(feature = "std")]
-		let kate_commitment = kate::com::build_commitments(&kc_public_params, &extrinsics, parent_hash.as_ref());
+		let kate_commitment = kate::com::build_commitments(
+			&kc_public_params,
+			block_length.rows as usize,
+			block_length.cols  as usize,
+			block_length.chunk_size  as usize,
+			&extrinsics,
+			parent_hash.as_ref()
+		);
 
 		// move block hash pruning window by one block
 		let block_hash_count = T::BlockHashCount::get();

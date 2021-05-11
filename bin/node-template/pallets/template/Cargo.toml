@@ -34,12 +34,12 @@ default-features = false
 version = "3.0.0"
 path = "../../../../primitives/core"
 
-[dev-dependencies.sp-io]
+[dependencies.sp-io]
 default-features = false
 version = "3.0.0"
 path = "../../../../primitives/io"
 
-[dev-dependencies.sp-runtime]
+[dependencies.sp-runtime]
 default-features = false
 version = "3.0.0"
 path = "../../../../primitives/runtime"

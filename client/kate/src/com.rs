@@ -19,8 +19,11 @@ pub struct Cell {
 	pub col: u32,
 }
 
-pub fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>, header_hash: &[u8]) -> Vec<u8> {
-	let max_block_size = config::MAX_BLOCK_SIZE;
+pub fn flatten_and_pad_block(
+	max_block_size: usize,
+	extrinsics: &Vec<Vec<u8>>,
+	header_hash: &[u8]
+) -> Vec<u8> {
 	let mut block:Vec<u8> = extrinsics.clone().into_iter().flatten().collect::<Vec<u8>>(); // TODO probably can be done more efficiently
 
 	if block.len() < max_block_size {
@@ -41,11 +44,14 @@ pub fn flatten_and_pad_block(extrinsics: &Vec<Vec<u8>>, header_hash: &[u8]) -> V
 }
 
 /// build extended data matrix, by columns
-pub fn extend_data_matrix(block: &Vec<u8>) -> Vec<BlsScalar> {
+pub fn extend_data_matrix(
+	rows_num: usize,
+	cols_num: usize,
+	chunk_size: usize,
+	block: &Vec<u8>
+) -> Vec<BlsScalar> {
 	let start = Instant::now();
-	let rows_num = config::NUM_BLOBS;
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
-	let cols_num = config::NUM_CHUNKS_IN_BLOB;
 
 	let mut chunk_elements = Vec::new();
 
@@ -53,7 +59,7 @@ pub fn extend_data_matrix(block: &Vec<u8>) -> Vec<BlsScalar> {
 	chunk_elements.resize(extended_rows_num * cols_num, BlsScalar::zero());
 
 	// generate column by column and pack into extended array of scalars
-	let chunk_bytes_offset = rows_num * config::CHUNK_SIZE;
+	let chunk_bytes_offset = rows_num * chunk_size;
 	let mut offset = 0;
 	for i in 0..cols_num {
 		let mut chunk = block[i * chunk_bytes_offset..(i+1) * chunk_bytes_offset].chunks_exact(config::SCALAR_SIZE_WIDE);
@@ -94,10 +100,14 @@ pub fn extend_data_matrix(block: &Vec<u8>) -> Vec<BlsScalar> {
 
 //TODO cache extended data matrix
 //TODO explore faster Variable Base Multi Scalar Multiplication
-pub fn build_proof(public_params_data: &Vec<u8>, ext_data_matrix: &Vec<BlsScalar>, cells: Vec<Cell>) -> Option<Vec<u8>> {
-	let rows_num = config::NUM_BLOBS;
+pub fn build_proof(
+	public_params_data: &Vec<u8>,
+	rows_num: usize,
+	cols_num: usize,
+	ext_data_matrix: &Vec<BlsScalar>,
+	cells: Vec<Cell>
+) -> Option<Vec<u8>> {
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
-	let cols_num = config::NUM_CHUNKS_IN_BLOB;
 
 	if cells.len() > config::MAX_PROOFS_REQUEST {
 		()
@@ -171,16 +181,29 @@ pub fn build_proof(public_params_data: &Vec<u8>, ext_data_matrix: &Vec<BlsScalar
 	Some(result_bytes)
 }
 
-pub fn build_commitments(public_params_data: &Vec<u8>, extrinsics: &Vec<Vec<u8>>, header_hash: &[u8]) -> Vec<u8> {
-	let rows_num = config::NUM_BLOBS;
+pub fn build_commitments(
+	public_params_data: &Vec<u8>,
+	rows_num: usize,
+	cols_num: usize,
+	chunk_size: usize,
+	extrinsics: &Vec<Vec<u8>>,
+	header_hash: &[u8]
+) -> Vec<u8> {
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
-	let cols_num = config::NUM_CHUNKS_IN_BLOB;
-
 	let start= Instant::now();
 
 	// generate data matrix first
-	let block = flatten_and_pad_block(extrinsics, header_hash);
-	let ext_data_matrix = extend_data_matrix(&block);
+	let block = flatten_and_pad_block(
+		rows_num * cols_num * chunk_size,
+		extrinsics,
+		header_hash
+	);
+	let ext_data_matrix = extend_data_matrix(
+		rows_num,
+		cols_num,
+		chunk_size,
+		&block
+	);
 
 	info!(
 		target: "system",

@@ -39,6 +39,9 @@ pub struct BlockLength {
 	/// In the worst case, the total block length is going to be:
 	/// `MAX(max)`
 	pub max: PerDispatchClass<u32>,
+	pub cols: u32,
+	pub rows: u32,
+	pub chunk_size: u32,
 }
 
 impl Default for BlockLength {
@@ -55,6 +58,9 @@ impl BlockLength {
 	pub fn max(max: u32) -> Self {
 		Self {
 			max: PerDispatchClass::new(|_| max),
+			cols: 0,
+			rows: 0,
+			chunk_size: 0,
 		}
 	}
 
@@ -63,6 +69,9 @@ impl BlockLength {
 	pub fn with_normal_ratio(rows: u32, cols: u32, chunk_size: u32, normal: Perbill) -> Self {
 		let max = cols*rows*chunk_size;
 		Self {
+			cols,
+			rows,
+			chunk_size,
 			max: PerDispatchClass::new(|class| if class == DispatchClass::Normal {
 				normal * max
 			} else {
@@ -75,6 +84,9 @@ impl BlockLength {
 	/// and `normal * max` for `Normal`.
 	pub fn max_with_normal_ratio(max: u32, normal: Perbill) -> Self {
 		Self {
+			cols: 0,
+			rows: 0,
+			chunk_size: 0,
 			max: PerDispatchClass::new(|class| if class == DispatchClass::Normal {
 				normal * max
 			} else {
