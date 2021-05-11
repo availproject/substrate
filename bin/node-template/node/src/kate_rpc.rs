@@ -9,8 +9,11 @@ use sp_runtime::{generic::BlockId, traits::{Block as BlockT}};
 use sp_runtime::traits::{NumberFor, Header};
 use sp_rpc::number::NumberOrHex;
 use std::sync::RwLock;
-use codec::{Encode};
+use codec::{Encode, Decode};
+use frame_system::limits::BlockLength;
+use sp_core::storage::well_known_keys;
 use kate_rpc_runtime_api::KateParamsGetter;
+use frame_benchmarking::frame_support::weights::DispatchClass;
 
 #[rpc]
 pub trait KateApi {
@@ -80,6 +83,9 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 		let mut block_ext_cache = self.block_ext_cache.write().unwrap();
 
 		if !block.is_none() {
+			let block_length: BlockLength = BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH)
+				.unwrap_or_default()[..]).unwrap();
+
 			let block = block.unwrap();
 			let block_hash = block.block.header().hash();
 			if !block_ext_cache.contains(&block_hash) {
@@ -88,7 +94,16 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 					e.encode()
 				}).collect();
 
-				let data = kate::com::extend_data_matrix(&kate::com::flatten_and_pad_block(&data, block.block.header().parent_hash().as_ref()));
+				let data = kate::com::extend_data_matrix(
+					block_length.rows as usize,
+					block_length.cols as usize,
+					block_length.chunk_size as usize,
+					&kate::com::flatten_and_pad_block(
+						*block_length.max.get(DispatchClass::Mandatory) as usize,
+						&data,
+						block.block.header().parent_hash().as_ref()
+					)
+				);
 				block_ext_cache.put(block_hash, data);
 			}
 
@@ -99,7 +114,13 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 				data: Some(format!("{:?}", e).into()),
 			}).unwrap();
 
-			let proof = kate::com::build_proof(&kc_public_params, &ext_data, cells);
+			let proof = kate::com::build_proof(
+				&kc_public_params,
+				block_length.rows as usize,
+				block_length.cols as usize,
+				&ext_data,
+				cells
+			);
 
 			return Ok(proof.unwrap());
 		}

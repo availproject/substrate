@@ -126,6 +126,7 @@ use frame_support::{
 	},
 	dispatch::DispatchResultWithPostInfo,
 };
+use crate::limits::BlockLength;
 use codec::{Encode, Decode, FullCodec, EncodeLike};
 
 #[cfg(any(feature = "std", test))]
@@ -173,7 +174,7 @@ pub trait Config: 'static + Eq + Clone {
 	type BlockWeights: Get<limits::BlockWeights>;
 
 	/// The maximum length of a block (in bytes).
-	type BlockLength: Get<limits::BlockLength>;
+	// type BlockLength: Get<limits::BlockLength>;
 
 	/// The `Origin` type used by dispatchable calls.
 	type Origin:
@@ -451,7 +452,9 @@ decl_storage! {
 		config(changes_trie_config): Option<ChangesTrieConfiguration>;
 		#[serde(with = "sp_core::bytes")]
 		config(code): Vec<u8>;
+		#[serde(with = "sp_core::bytes")]
 		config(kc_public_params): Vec<u8>;
+		config(block_length): BlockLength;
 
 		build(|config: &GenesisConfig| {
 			use codec::Encode;
@@ -459,6 +462,7 @@ decl_storage! {
 			sp_io::storage::set(well_known_keys::CODE, &config.code);
 			sp_io::storage::set(well_known_keys::EXTRINSIC_INDEX, &0u32.encode());
 			sp_io::storage::set(well_known_keys::KATE_PUBLIC_PARAMS, &config.kc_public_params);
+			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &config.block_length.encode());
 
 			if let Some(ref changes_trie_config) = config.changes_trie_config {
 				sp_io::storage::set(
@@ -1059,9 +1063,18 @@ impl<T: Config> Module<T> {
 			.unwrap_or_default();
 
 		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
+		let block_length: BlockLength = BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH)
+			.unwrap_or_default()[..]).unwrap();
 
 		#[cfg(feature = "std")]
-		let kate_commitment = kate::com::build_commitments(&kc_public_params, &extrinsics, parent_hash.as_ref());
+		let kate_commitment = kate::com::build_commitments(
+			&kc_public_params,
+			block_length.rows as usize,
+			block_length.cols  as usize,
+			block_length.chunk_size  as usize,
+			&extrinsics,
+			parent_hash.as_ref()
+		);
 
 		// move block hash pruning window by one block
 		let block_hash_count = T::BlockHashCount::get();

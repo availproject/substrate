@@ -27,15 +27,22 @@
 
 use frame_support::weights::{Weight, DispatchClass, constants, PerDispatchClass, OneOrMany};
 use sp_runtime::{RuntimeDebug, Perbill};
+#[cfg(feature = "std")]
+use serde::{Serialize, Deserialize};
+use codec::{Encode, Decode};
 
 /// Block length limit configuration.
-#[derive(RuntimeDebug, Clone)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(RuntimeDebug, Clone, Encode, Decode)]
 pub struct BlockLength {
 	/// Maximal total length in bytes for each extrinsic class.
 	///
 	/// In the worst case, the total block length is going to be:
 	/// `MAX(max)`
 	pub max: PerDispatchClass<u32>,
+	pub cols: u32,
+	pub rows: u32,
+	pub chunk_size: u32,
 }
 
 impl Default for BlockLength {
@@ -52,6 +59,25 @@ impl BlockLength {
 	pub fn max(max: u32) -> Self {
 		Self {
 			max: PerDispatchClass::new(|_| max),
+			cols: 0,
+			rows: 0,
+			chunk_size: 0,
+		}
+	}
+
+	/// Create enw `BlockLength` with `rows*cols*chunk_size` for `Operational` & `Mandatory`
+	/// and `normal * rows*cols*chunk_siz` for `Normal`.
+	pub fn with_normal_ratio(rows: u32, cols: u32, chunk_size: u32, normal: Perbill) -> Self {
+		let max = cols*rows*chunk_size;
+		Self {
+			cols,
+			rows,
+			chunk_size,
+			max: PerDispatchClass::new(|class| if class == DispatchClass::Normal {
+				normal * max
+			} else {
+				max
+			}),
 		}
 	}
 
@@ -59,6 +85,9 @@ impl BlockLength {
 	/// and `normal * max` for `Normal`.
 	pub fn max_with_normal_ratio(max: u32, normal: Perbill) -> Self {
 		Self {
+			cols: 0,
+			rows: 0,
+			chunk_size: 0,
 			max: PerDispatchClass::new(|class| if class == DispatchClass::Normal {
 				normal * max
 			} else {

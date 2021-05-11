@@ -175,6 +175,9 @@ pub mod well_known_keys {
 	/// Public params used to generate Kate commitment
 	pub const KATE_PUBLIC_PARAMS: &'static [u8] = b":kate_public_params:";
 
+	/// Max block length
+	pub const BLOCK_LENGTH: &'static [u8] = b":block_length:";
+
 	/// Whether a key is a child storage key.
 	///
 	/// This is convenience function which basically checks if the given `key` starts
