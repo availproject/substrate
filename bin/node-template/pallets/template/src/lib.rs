@@ -64,7 +64,11 @@ decl_error! {
 		KeyDoesNotExist,
 		/// Block normal ratio is greater than 100%
 		RatioOutOfBounds,
+		RatioTooSmall,
 		BlockDimensionsOutOfBounds,
+		BlockDimensionsTooSmall,
+		ChunkSizeOutOfBounds,
+		ChunkSizeToSmall,
 	}
 }
 
@@ -114,8 +118,18 @@ decl_module! {
 		#[weight = 10_000]
 		fn submit_block_length_proposal(origin, rows: u32, cols: u32, chunk_size: u32, ratio_percent: u32)  {
 			let sender = ensure_signed(origin)?;
-			ensure!(ratio_percent <= 100, Error::<T>::RatioOutOfBounds);
+
+			ensure!(rows <= 1024, Error::<T>::BlockDimensionsOutOfBounds);
+			ensure!(rows >= 32, Error::<T>::BlockDimensionsTooSmall);
+
 			ensure!(cols <= 256, Error::<T>::BlockDimensionsOutOfBounds);
+			ensure!(cols >= 32, Error::<T>::BlockDimensionsTooSmall);
+
+			ensure!(chunk_size <= 256>, Error::<T>::ChunkSizeOutOfBounds);
+			ensure!(chunk_size >= 32, Error::<T>::ChunkSizeToSmall);
+
+			ensure!(ratio_percent >= 50, Error::<T>::RatioTooSmall);
+			ensure!(ratio_percent <= 100, Error::<T>::RatioOutOfBounds);
 
 			let block_length = BlockLength::with_normal_ratio(rows, cols, chunk_size, Perbill::from_percent(ratio_percent));
 			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &block_length.encode());
