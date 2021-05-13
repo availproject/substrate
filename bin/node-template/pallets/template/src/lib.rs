@@ -20,6 +20,7 @@ use frame_system::{ ensure_signed, limits::BlockLength };
 use sp_std::vec::Vec;
 use sp_core::storage::well_known_keys;
 use sp_runtime::Perbill;
+use libm::ceil;
 
 #[cfg(test)]
 mod mock;
@@ -37,7 +38,7 @@ pub trait Config: frame_system::Config {
 // https://substrate.dev/docs/en/knowledgebase/runtime/storage
 decl_storage! {
 	trait Store for Module<T: Config> as DataAvailability {
-		HashToBytes: map hasher(blake2_128_concat) (T::AccountId, Vec<u8>) => Vec<u8>;
+		KeyToValue: map hasher(blake2_128_concat) (T::AccountId, Vec<u8>) => Vec<u8>;
 		BlockLengthProposalID: u32;
 		BlockLengthProposal: BlockLength;
 	}
@@ -79,10 +80,15 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Allow a user to submit new data.
-        #[weight = (
-		  (value.len().saturating_mul(10_000)) as Weight,
-		  DispatchClass::Normal,
-		  Pays::Yes
+		/// Weight = ceil(data_size / 200000)*db_write_cost + 1 db_read_cost
+		/// db_write_cost is calculated @ 200,000 items
+		#[weight = (
+			T::DbWeight::get().reads_writes(
+				1, 
+				ceil(key.len().saturating_add(value.len()) as f64 / 200_000 as f64) as u64
+			) as Weight,
+			DispatchClass::Normal,
+			Pays::Yes
 		)]
         fn submit_data(origin, key: Vec<u8>, value: Vec<u8>) {
             // Check that the extrinsic was signed and get the signer.
@@ -91,10 +97,10 @@ decl_module! {
             let sender = ensure_signed(origin)?;
 
             // Verify that the given data has not already been submitted.
-            ensure!(!HashToBytes::<T>::contains_key((&sender, &key)), Error::<T>::KeyAlreadyExists);
+            ensure!(!KeyToValue::<T>::contains_key((&sender, &key)), Error::<T>::KeyAlreadyExists);
 
             // Store the data with the sender and block number.
-            HashToBytes::<T>::insert((&sender, &key), &value);
+            KeyToValue::<T>::insert((&sender, &key), &value);
 
             // Emit an event that the claim was created.
             Self::deposit_event(RawEvent::DataSubmitted(sender, key, value));
