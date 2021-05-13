@@ -89,7 +89,7 @@ decl_module! {
 		#[weight = (
 			T::DbWeight::get().reads_writes(
 				1, 
-				ceil(key.len().saturating_add(value.len()) as f64 / 200_000 as f64) as u64
+				ceil(value.len() as f64 / 200_000 as f64) as u64
 			) as Weight,
 			DispatchClass::Normal,
 			Pays::Yes
@@ -125,7 +125,7 @@ decl_module! {
 			ensure!(cols <= 256, Error::<T>::BlockDimensionsOutOfBounds);
 			ensure!(cols >= 32, Error::<T>::BlockDimensionsTooSmall);
 
-			ensure!(chunk_size <= 256>, Error::<T>::ChunkSizeOutOfBounds);
+			ensure!(chunk_size <= 256, Error::<T>::ChunkSizeOutOfBounds);
 			ensure!(chunk_size >= 32, Error::<T>::ChunkSizeToSmall);
 
 			ensure!(ratio_percent >= 50, Error::<T>::RatioTooSmall);
