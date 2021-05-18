@@ -146,7 +146,7 @@ fn testnet_genesis(
 			code: wasm_binary.to_vec(),
 			changes_trie_config: Default::default(),
 			kc_public_params: params,
-			block_length: BlockLength::with_normal_ratio(128, 256, 64, Perbill::from_percent(95)),
+			block_length: BlockLength::with_normal_ratio(128, 256, 64, Perbill::from_percent(90)),
 		}),
 		pallet_balances: Some(BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.

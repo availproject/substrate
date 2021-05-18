@@ -5926,6 +5926,7 @@ version = "2.0.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "libm",
  "parity-scale-codec",
  "sp-core",
  "sp-io",
