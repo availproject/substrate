@@ -128,14 +128,12 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(90);
-
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const BlockHashCount: BlockNumber = 2400;
 	/// We allow for 2 seconds of compute with a 6 second average block time.
 	pub BlockWeights: frame_system::limits::BlockWeights = frame_system::limits::BlockWeights
-		::with_sensible_defaults(2 * WEIGHT_PER_SECOND, NORMAL_DISPATCH_RATIO);
+		::with_sensible_defaults(2 * WEIGHT_PER_SECOND, da::NORMAL_DISPATCH_RATIO);
 	// pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
 	// 	::max_with_normal_ratio(kate::config::MAX_BLOCK_SIZE as u32, NORMAL_DISPATCH_RATIO);
 	pub const SS58Prefix: u8 = 42;

@@ -34,6 +34,9 @@ pub trait Config: frame_system::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 }
 
+pub const BLOCK_CHUNK_SIZE: u32 = 64;
+pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(90);
+
 // The pallet's runtime storage items.
 // https://substrate.dev/docs/en/knowledgebase/runtime/storage
 decl_storage! {
@@ -50,8 +53,8 @@ decl_event!(
 	pub enum Event<T> where AccountId = <T as frame_system::Config>::AccountId {
 		/// Event emitted when a data has been submitted. [who, key, value]
         DataSubmitted(AccountId, Vec<u8>, Vec<u8>),
-        /// Event emitted when block length proposal has been submitted. [who, proposal_id, rows, cols, chunk_size, ratio_percent]
-        BlockLengthProposalSubmitted(AccountId, u32, u32, u32, u32, u32),
+        /// Event emitted when block length proposal has been submitted. [who, rows, cols]
+        BlockLengthProposalSubmitted(AccountId, u32, u32),
 	}
 );
 
@@ -88,7 +91,7 @@ decl_module! {
 		/// db_write_cost is calculated @ 200,000 items
 		#[weight = (
 			T::DbWeight::get().reads_writes(
-				1, 
+				1,
 				ceil(value.len() as f64 / 200_000 as f64) as u64
 			) as Weight,
 			DispatchClass::Normal,
@@ -116,7 +119,7 @@ decl_module! {
 		// }
 
 		#[weight = 10_000]
-		fn submit_block_length_proposal(origin, rows: u32, cols: u32, chunk_size: u32, ratio_percent: u32)  {
+		fn submit_block_length_proposal(origin, rows: u32, cols: u32)  {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(rows <= 1024, Error::<T>::BlockDimensionsOutOfBounds);
@@ -125,20 +128,14 @@ decl_module! {
 			ensure!(cols <= 256, Error::<T>::BlockDimensionsOutOfBounds);
 			ensure!(cols >= 32, Error::<T>::BlockDimensionsTooSmall);
 
-			ensure!(chunk_size <= 256, Error::<T>::ChunkSizeOutOfBounds);
-			ensure!(chunk_size >= 32, Error::<T>::ChunkSizeToSmall);
-
-			ensure!(ratio_percent >= 50, Error::<T>::RatioTooSmall);
-			ensure!(ratio_percent <= 100, Error::<T>::RatioOutOfBounds);
-
-			let block_length = BlockLength::with_normal_ratio(rows, cols, chunk_size, Perbill::from_percent(ratio_percent));
+			let block_length = BlockLength::with_normal_ratio(rows, cols, BLOCK_CHUNK_SIZE, NORMAL_DISPATCH_RATIO);
 			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &block_length.encode());
 
 			// let proposalId = BlockLengthProposalID::get() + 1;
 			// BlockLengthProposalID::put(proposalId);
 			// BlockLengthProposal::put(BlockLength::with_normal_ratio(rows, cols, chunk_size, Perbill::from_percent(ratio_percent)));
 
-			// Self::deposit_event(RawEvent::BlockLengthProposalSubmitted(sender, proposalId, rows, cols, chunk_size, ratio_percent));
+			Self::deposit_event(RawEvent::BlockLengthProposalSubmitted(sender, rows, cols));
 		}
 	}
 }
