@@ -43,6 +43,8 @@ pub struct ExtrinsicsRoot<HashOutput>
 	/// The merkle root of the extrinsics.
 	pub hash: HashOutput,
 	pub commitment: Vec<u8>,
+	pub rows: u16,
+	pub cols: u16,
 }
 
 impl<HashOutput> traits::ExtrinsicsRoot for ExtrinsicsRoot<HashOutput> where
@@ -60,17 +62,23 @@ impl<HashOutput> traits::ExtrinsicsRoot for ExtrinsicsRoot<HashOutput> where
 	) -> Self {
 		Self {
 			hash,
-			commitment: Default::default()
+			commitment: Default::default(),
+			rows: 0,
+			cols: 0,
 		}
 	}
 
 	fn new_with_commitment(
 		hash: HashOutput,
-		commitment: Vec<u8>
+		commitment: Vec<u8>,
+		rows: u16,
+		cols: u16,
 	) -> Self {
 		Self {
 			hash,
-			commitment
+			commitment,
+			rows,
+			cols,
 		}
 	}
 }
@@ -92,6 +100,8 @@ impl<HashOutput> Decode for ExtrinsicsRoot<HashOutput> where
 		Ok(ExtrinsicsRoot {
 			hash: Decode::decode(input)?,
 			commitment: Decode::decode(input)?,
+			rows: Decode::decode(input)?,
+			cols: Decode::decode(input)?,
 		})
 	}
 }
@@ -102,6 +112,8 @@ impl<HashOutput> Encode for ExtrinsicsRoot<HashOutput> where
 	fn encode_to<T: Output>(&self, dest: &mut T) {
 		dest.push(&self.hash);
 		dest.push(&self.commitment);
+		dest.push(&self.rows);
+		dest.push(&self.cols);
 	}
 }
 
