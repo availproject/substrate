@@ -1249,7 +1249,7 @@ impl<T: Config> Module<T> {
 			.unwrap_or_default()[..]).unwrap();
 
 		#[cfg(feature = "std")]
-		let kate_commitment = kate::com::build_commitments(
+		let (kate_commitment, block_dims) = kate::com::build_commitments(
 			&kc_public_params,
 			block_length.rows as usize,
 			block_length.cols  as usize,
@@ -1282,7 +1282,7 @@ impl<T: Config> Module<T> {
 		}
 
 		#[cfg(feature = "std")]
-		let extrinsics_root = <T::Header as traits::Header>::Root::new_with_commitment(root_hash, kate_commitment);
+		let extrinsics_root = <T::Header as traits::Header>::Root::new_with_commitment(root_hash, kate_commitment, block_dims.rows as u16, block_dims.cols as u16);
 
 		#[cfg(not(feature = "std"))]
 		let extrinsics_root = <T::Header as traits::Header>::Root::new(root_hash);

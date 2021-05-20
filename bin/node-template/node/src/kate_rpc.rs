@@ -14,6 +14,7 @@ use frame_system::limits::BlockLength;
 use sp_core::storage::well_known_keys;
 use kate_rpc_runtime_api::KateParamsGetter;
 use frame_support::weights::DispatchClass;
+use kate::com::BlockDimensions;
 
 #[rpc]
 pub trait KateApi {
@@ -27,7 +28,7 @@ pub trait KateApi {
 
 pub struct Kate<Client, Block: BlockT> {
 	client: Arc<Client>,
-	block_ext_cache: RwLock<LruCache<Block::Hash, Vec<dusk_plonk::prelude::BlsScalar>>>,
+	block_ext_cache: RwLock<LruCache<Block::Hash, (Vec<dusk_plonk::prelude::BlsScalar>, BlockDimensions)>>,
 }
 
 impl<Client, Block> Kate<Client, Block> where Block: BlockT {
@@ -94,20 +95,22 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 					e.encode()
 				}).collect();
 
-				let data = kate::com::extend_data_matrix(
+				let (block, block_dims) = kate::com::flatten_and_pad_block(
 					block_length.rows as usize,
 					block_length.cols as usize,
 					block_length.chunk_size as usize,
-					&kate::com::flatten_and_pad_block(
-						*block_length.max.get(DispatchClass::Mandatory) as usize,
-						&data,
-						block.block.header().parent_hash().as_ref()
-					)
+					&data,
+					block.block.header().parent_hash().as_ref()
 				);
-				block_ext_cache.put(block_hash, data);
+
+				let data = kate::com::extend_data_matrix(
+					block_dims,
+					&block
+				);
+				block_ext_cache.put(block_hash, (data, block_dims));
 			}
 
-			let ext_data = block_ext_cache.get(&block_hash).unwrap();
+			let (ext_data, block_dims) = block_ext_cache.get(&block_hash).unwrap();
 			let kc_public_params = self.client.runtime_api().get_public_params(&BlockId::hash(self.client.info().best_hash)).map_err(|e| RpcError {
 				code: ErrorCode::ServerError(9876),
 				message: "Something wrong".into(),
@@ -116,8 +119,7 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 
 			let proof = kate::com::build_proof(
 				&kc_public_params,
-				block_length.rows as usize,
-				block_length.cols as usize,
+				*block_dims,
 				&ext_data,
 				cells
 			);

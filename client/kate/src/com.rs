@@ -19,15 +19,26 @@ pub struct Cell {
 	pub col: u32,
 }
 
+#[derive(Clone, Copy)]
+pub struct BlockDimensions {
+	pub rows: usize,
+	pub cols: usize,
+	pub size: usize,
+	pub chunk_size: usize,
+}
+
 pub fn flatten_and_pad_block(
-	max_block_size: usize,
+	rows_num: usize,
+	cols_num: usize,
+	chunk_size: usize,
 	extrinsics: &Vec<Vec<u8>>,
 	header_hash: &[u8]
-) -> Vec<u8> {
+) -> (Vec<u8>, BlockDimensions) {
 	let mut block:Vec<u8> = extrinsics.clone().into_iter().flatten().collect::<Vec<u8>>(); // TODO probably can be done more efficiently
+	let block_dims = get_block_dimensions(block.len(), rows_num, cols_num, chunk_size);
 
-	if block.len() < max_block_size {
-		let more_elems = max_block_size - block.len();
+	if block.len() < block_dims.size {
+		let more_elems = block_dims.size - block.len();
 		block.reserve_exact(more_elems);
 		let mut rng:StdRng = rand::SeedableRng::from_seed(<[u8; 32]>::try_from(header_hash).unwrap());
 		let mut byte_index = 0;
@@ -36,30 +47,67 @@ pub fn flatten_and_pad_block(
 			block.push(rng.gen::<u8>());
 			byte_index += 1;
 		}
-	} else if block.len() > max_block_size {
+	} else if block.len() > block_dims.size {
 		panic!("block is too big, must not happen!");
 	}
 
-	block
+	(block, block_dims)
+}
+
+pub fn get_block_dimensions(
+	block_size: usize,
+	rows_num: usize,
+	cols_num: usize,
+	chunk_size: usize
+) -> BlockDimensions {
+	let max_block_size = rows_num * cols_num * chunk_size;
+	let mut size = block_size;
+	let mut rows = rows_num;
+	let mut cols = cols_num;
+
+	if block_size < max_block_size {
+		let mut nearest_power_2_size = ((block_size as f32).log2().floor() as usize + 1);
+		if nearest_power_2_size < config::MINIMUM_BLOCK_SIZE {
+			nearest_power_2_size = config::MINIMUM_BLOCK_SIZE;
+		}
+		// we must minimize number of rows, to minimize header size (performance wise it doesn't matter)
+		let total_cells = (nearest_power_2_size as f32 / chunk_size as f32).ceil() as usize;
+		if total_cells > cols {
+			rows = total_cells / cols;
+		} else {
+			rows = 1;
+			cols = total_cells;
+		}
+
+		size = nearest_power_2_size;
+	} else if block_size > max_block_size {
+		panic!("block is too big, must not happen!");
+	}
+
+	return BlockDimensions{
+		cols,
+		rows,
+		size,
+		chunk_size
+	}
 }
 
 /// build extended data matrix, by columns
 pub fn extend_data_matrix(
-	rows_num: usize,
-	cols_num: usize,
-	chunk_size: usize,
+	block_dims: BlockDimensions,
 	block: &Vec<u8>
 ) -> Vec<BlsScalar> {
 	let start = Instant::now();
+	let rows_num = block_dims.rows;
+	let cols_num = block_dims.cols;
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
 
 	let mut chunk_elements = Vec::new();
-
 	// prepare extended size
 	chunk_elements.resize(extended_rows_num * cols_num, BlsScalar::zero());
 
 	// generate column by column and pack into extended array of scalars
-	let chunk_bytes_offset = rows_num * chunk_size;
+	let chunk_bytes_offset = rows_num * block_dims.chunk_size;
 	let mut offset = 0;
 	for i in 0..cols_num {
 		let mut chunk = block[i * chunk_bytes_offset..(i+1) * chunk_bytes_offset].chunks_exact(config::SCALAR_SIZE_WIDE);
@@ -73,8 +121,6 @@ pub fn extend_data_matrix(
 		offset += rows_num;
 	}
 
-	let copy = chunk_elements[0];
-
 	// extend data matrix, column by column
 	let extended_column_eval_domain = EvaluationDomain::new(extended_rows_num).unwrap();
 	let column_eval_domain = EvaluationDomain::new(rows_num).unwrap();
@@ -86,8 +132,6 @@ pub fn extend_data_matrix(
 		let mut extended_column = &mut chunk_elements[i * extended_rows_num..(i+1) * extended_rows_num];
 		extended_column_eval_domain.fft_slice(extended_column);
 	}
-
-	assert_eq!(copy, chunk_elements[0]);
 
 	info!(
 		target: "system",
@@ -102,11 +146,12 @@ pub fn extend_data_matrix(
 //TODO explore faster Variable Base Multi Scalar Multiplication
 pub fn build_proof(
 	public_params_data: &Vec<u8>,
-	rows_num: usize,
-	cols_num: usize,
+	block_dims: BlockDimensions,
 	ext_data_matrix: &Vec<BlsScalar>,
 	cells: Vec<Cell>
 ) -> Option<Vec<u8>> {
+	let rows_num = block_dims.rows;
+	let cols_num = block_dims.cols;
 	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
 
 	if cells.len() > config::MAX_PROOFS_REQUEST {
@@ -188,22 +233,31 @@ pub fn build_commitments(
 	chunk_size: usize,
 	extrinsics: &Vec<Vec<u8>>,
 	header_hash: &[u8]
-) -> Vec<u8> {
-	let extended_rows_num = rows_num * config::EXTENSION_FACTOR;
+) -> (Vec<u8>, BlockDimensions) {
 	let start= Instant::now();
 
 	// generate data matrix first
-	let block = flatten_and_pad_block(
-		rows_num * cols_num * chunk_size,
-		extrinsics,
-		header_hash
-	);
-	let ext_data_matrix = extend_data_matrix(
+	let (block, block_dims) = flatten_and_pad_block(
 		rows_num,
 		cols_num,
 		chunk_size,
+		extrinsics,
+		header_hash
+	);
+
+	info!(
+		target: "system",
+		"Rows: {:?} Cols: {:?} Size: {:?}",
+		block_dims.rows,
+		block_dims.cols,
+		block.len()
+	);
+
+	let ext_data_matrix = extend_data_matrix(
+		block_dims,
 		&block
 	);
+	let extended_rows_num = block_dims.rows * config::EXTENSION_FACTOR;
 
 	info!(
 		target: "system",
@@ -213,8 +267,8 @@ pub fn build_commitments(
 
 	// construct commitments in parallel
 	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
-	let (prover_key, _) = public_params.trim(cols_num).unwrap();
-	let row_eval_domain = EvaluationDomain::new(cols_num).unwrap();
+	let (prover_key, _) = public_params.trim(block_dims.cols).unwrap();
+	let row_eval_domain = EvaluationDomain::new(block_dims.cols).unwrap();
 
 	let mut result_bytes: Vec<u8> = Vec::new();
 	result_bytes.reserve_exact(config::PROVER_KEY_SIZE * extended_rows_num);
@@ -230,9 +284,9 @@ pub fn build_commitments(
 
 	let start = Instant::now();
 	for i in 0..extended_rows_num {
-		let mut row = Vec::with_capacity(cols_num);
+		let mut row = Vec::with_capacity(block_dims.cols);
 
-		for j in 0..cols_num {
+		for j in 0..block_dims.cols {
 			row.push(ext_data_matrix[i + j * extended_rows_num]);
 		}
 
@@ -254,5 +308,5 @@ pub fn build_commitments(
 		start.elapsed()
 	);
 
-	result_bytes
+	(result_bytes, block_dims)
 }
