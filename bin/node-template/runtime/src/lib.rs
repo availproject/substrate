@@ -15,7 +15,7 @@ use sp_runtime::{
 use sp_runtime::traits::{
 	BlakeTwo256, Block as BlockT, AccountIdLookup, Verify, IdentifyAccount, NumberFor,
 };
-
+use codec::{Decode};
 use sp_core::storage::well_known_keys;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -483,6 +483,10 @@ impl_runtime_apis! {
 	impl kate_rpc_runtime_api::KateParamsGetter<Block> for Runtime {
 		fn get_public_params() -> Vec<u8> {
 			sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS).unwrap_or_default()
+		}
+
+		fn get_block_length() -> frame_system::limits::BlockLength {
+			frame_system::limits::BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH).unwrap_or_default()[..]).unwrap()
 		}
 	}
 }
