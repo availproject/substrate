@@ -24,6 +24,11 @@ pub trait KateApi {
 		block_number: NumberOrHex,
 		cells: Vec<kate::com::Cell>,
 	) -> Result<Vec<u8>>;
+
+	#[rpc(name = "kate_blockLength")]
+	fn query_block_length(
+		&self,
+	) -> Result<BlockLength>;
 }
 
 pub struct Kate<Client, Block: BlockT> {
@@ -132,5 +137,13 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 			message: "".into(),
 			data: None
 		})
+	}
+
+	fn query_block_length(&self) -> Result<BlockLength> {
+		Ok(self.client.runtime_api().get_block_length(&BlockId::hash(self.client.info().best_hash)).map_err(|e| RpcError {
+			code: ErrorCode::ServerError(9877),
+			message: "Something wrong".into(),
+			data: Some(format!("{:?}", e).into()),
+		}).unwrap())
 	}
 }

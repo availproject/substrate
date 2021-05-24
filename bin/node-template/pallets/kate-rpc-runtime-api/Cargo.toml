@@ -9,10 +9,12 @@ edition = "2018"
 [dependencies]
 sp-api = { path = "../../../../primitives/api", default-features = false }
 sp-std = { path = "../../../../primitives/std", default-features = false }
+frame-system = { path = "../../../../frame/system", default-features = false }
 
 [features]
 default = ["std"]
 std = [
 	"sp-std/std",
 	"sp-api/std",
+	"frame-system/std",
 ]
