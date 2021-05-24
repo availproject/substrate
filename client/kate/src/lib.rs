@@ -7,6 +7,7 @@ pub mod config {
 	pub const PROVER_KEY_SIZE: usize = 48;
 	pub const PROOF_SIZE: usize = 48;
 	pub const MAX_PROOFS_REQUEST: usize = 30;
+	pub const MINIMUM_BLOCK_SIZE: usize = 128;
 }
 
 #[cfg(feature = "std")]
