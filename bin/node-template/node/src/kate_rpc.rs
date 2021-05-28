@@ -89,8 +89,12 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 		let mut block_ext_cache = self.block_ext_cache.write().unwrap();
 
 		if !block.is_none() {
-			let block_length: BlockLength = BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH)
-				.unwrap_or_default()[..]).unwrap();
+			let best_hash = BlockId::hash(self.client.info().best_hash);
+			let block_length: BlockLength = self.client.runtime_api().get_block_length(&best_hash).map_err(|e| RpcError {
+				code: ErrorCode::ServerError(9876),
+				message: "Something wrong".into(),
+				data: Some(format!("{:?}", e).into()),
+			}).unwrap();
 
 			let block = block.unwrap();
 			let block_hash = block.block.header().hash();
@@ -116,7 +120,7 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 			}
 
 			let (ext_data, block_dims) = block_ext_cache.get(&block_hash).unwrap();
-			let kc_public_params = self.client.runtime_api().get_public_params(&BlockId::hash(self.client.info().best_hash)).map_err(|e| RpcError {
+			let kc_public_params = self.client.runtime_api().get_public_params(&best_hash).map_err(|e| RpcError {
 				code: ErrorCode::ServerError(9876),
 				message: "Something wrong".into(),
 				data: Some(format!("{:?}", e).into()),
