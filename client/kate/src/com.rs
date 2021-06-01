@@ -70,16 +70,18 @@ pub fn get_block_dimensions(
 		if nearest_power_2_size < config::MINIMUM_BLOCK_SIZE {
 			nearest_power_2_size = config::MINIMUM_BLOCK_SIZE;
 		}
+
+		size = nearest_power_2_size;
+
 		// we must minimize number of rows, to minimize header size (performance wise it doesn't matter)
 		let total_cells = (nearest_power_2_size as f32 / chunk_size as f32).ceil() as usize;
 		if total_cells > cols {
 			rows = total_cells / cols;
+			size = rows * cols * chunk_size;
 		} else {
 			rows = 1;
 			cols = total_cells;
 		}
-
-		size = nearest_power_2_size;
 	} else if block_size > max_block_size {
 		panic!("block is too big, must not happen!");
 	}
@@ -159,7 +161,7 @@ pub fn build_proof(
 	}
 
 	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
-	let (prover_key, verifier_key) = public_params.trim(cols_num).unwrap();
+	let (prover_key, _) = public_params.trim(cols_num).unwrap();
 
 	// Generate all the x-axis points of the domain on which all the row polynomials reside
 	let row_eval_domain = EvaluationDomain::new(cols_num).unwrap();
@@ -195,7 +197,6 @@ pub fn build_proof(
 			for j in 0..cols_num {
 				row.push(ext_data_matrix[row_index + j * extended_rows_num]);
 			}
-
 			let polynomial = Evaluations::from_vec_and_domain(row, row_eval_domain).interpolate();
 			let witness = prover_key.compute_single_witness(&polynomial, &row_dom_x_pts[col_index]);
 			let commitment_to_witness = prover_key.commit(&witness).unwrap();
