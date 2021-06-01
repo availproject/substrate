@@ -178,6 +178,7 @@ pub fn build_proof(
 	let prover_key = &prover_key;
 	let ext_data_matrix = &ext_data_matrix;
 	let row_dom_x_pts = &row_dom_x_pts;
+	let mut cell_index = 0;
 
 	info!(
 		target: "system",
@@ -186,7 +187,7 @@ pub fn build_proof(
 	);
 	// generate proof only for requested cells
 	let total_start= Instant::now();
-	Iterator::enumerate(cells.iter()).for_each(|(index, cell)| {
+	Iterator::enumerate(cells.iter()).for_each(|(_, cell)| {
 		let row_index = cell.row as usize;
 		let col_index = cell.col as usize;
 
@@ -205,18 +206,24 @@ pub fn build_proof(
 			unsafe {
 				std::ptr::copy(
 					commitment_to_witness.to_bytes().as_ptr(),
-					result_bytes.as_mut_ptr().add(index * serialized_proof_size),
+					result_bytes.as_mut_ptr().add(cell_index * serialized_proof_size),
 					config::PROOF_SIZE
 				);
 
 				std::ptr::copy(
 					evaluated_point.to_bytes().as_ptr(),
-					result_bytes.as_mut_ptr().add(index * serialized_proof_size + config::PROOF_SIZE),
+					result_bytes.as_mut_ptr().add(cell_index * serialized_proof_size + config::PROOF_SIZE),
 					config::SCALAR_SIZE
 				);
 			}
+
+			cell_index += 1;
 		}
 	});
+
+	unsafe {
+		result_bytes.set_len(serialized_proof_size * cell_index);
+	}
 
 	info!(
 		target: "system",
