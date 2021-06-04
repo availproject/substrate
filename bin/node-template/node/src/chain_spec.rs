@@ -48,7 +48,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"Polygon-DA-Dev",
+		"Avail-Dev",
 		// ID
 		"dev",
 		ChainType::Development,
@@ -87,7 +87,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"Polygon-DA-Testnet",
+		"Avail-Testnet",
 		// ID
 		"local_testnet",
 		ChainType::Local,
