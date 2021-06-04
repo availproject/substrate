@@ -7,17 +7,33 @@ use sc_client_api::BlockBackend;
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::{generic::BlockId, traits::{Block as BlockT}};
 use sp_runtime::traits::{NumberFor, Header};
+use jsonrpc_core::futures::{
+	Sink, Future,
+	future::result,
+};
+use futures::{StreamExt as _, compat::Compat};
+use futures::future::{ready, FutureExt, TryFutureExt};
 use sp_rpc::number::NumberOrHex;
 use std::sync::RwLock;
 use codec::{Encode, Decode};
 use frame_system::limits::BlockLength;
-use sp_core::storage::well_known_keys;
+use sp_core::{Bytes, storage::well_known_keys};
 use kate_rpc_runtime_api::KateParamsGetter;
 use frame_benchmarking::frame_support::weights::DispatchClass;
 use kate::com::BlockDimensions;
+use jsonrpc_pubsub::{typed::Subscriber, SubscriptionId, manager::SubscriptionManager};
+use sp_transaction_pool::{
+	TransactionPool, InPoolTransaction, TransactionStatus, TransactionSource,
+	BlockHash, TxHash, TransactionFor, error::IntoPoolError,
+};
+use log::warn;
+use sc_rpc_api::author::{ error::Error as RpcApiError, error::Result as RpcApiResult };
 
 #[rpc]
-pub trait KateApi {
+pub trait KateApi<Hash, BlockHash> {
+	type Metadata;
+	type Block;
+
 	#[rpc(name = "kate_queryProof")]
 	fn query_proof(
 		&self,
@@ -29,17 +45,56 @@ pub trait KateApi {
 	fn query_block_length(
 		&self,
 	) -> Result<BlockLength>;
+
+	#[pubsub(
+		subscription = "kate_dataUpdate",
+		subscribe,
+		name = "kate_submitAndWatchData"
+	)]
+	fn submit_and_watch_data(&self,
+		_metadata: Self::Metadata,
+		subscriber: Subscriber<TransactionStatus<Hash, BlockHash>>,
+		key: Bytes,
+		tx: Bytes,
+	);
+
+	#[pubsub(
+		subscription = "kate_dataUpdate",
+		unsubscribe,
+		name = "kate_unwatchData"
+	)]
+	fn unwatch_data(&self,
+		 metadata: Option<Self::Metadata>,
+		 id: SubscriptionId
+	) -> Result<bool>;
+
+	#[rpc(name = "kate_queryData")]
+	fn query_data(
+		&self,
+		key: Bytes,
+		block_number: NumberOrHex,
+	) -> Result<Vec<u8>>;
 }
 
-pub struct Kate<Client, Block: BlockT> {
+pub struct Kate<TxPool, Client, BlockHash> {
 	client: Arc<Client>,
-	block_ext_cache: RwLock<LruCache<Block::Hash, (Vec<dusk_plonk::prelude::BlsScalar>, BlockDimensions)>>,
+	block_ext_cache: RwLock<LruCache<BlockHash, (Vec<dusk_plonk::prelude::BlsScalar>, BlockDimensions)>>,
+	tx_pool: Arc<TxPool>,
+	subscriptions: SubscriptionManager,
 }
 
-impl<Client, Block> Kate<Client, Block> where Block: BlockT {
-	pub fn new(client: Arc<Client>) -> Self {
+impl<TxPool, Client, BlockHash> Kate<TxPool, Client, BlockHash>
+	where BlockHash: Eq + std::hash::Hash
+{
+	pub fn new(
+		client: Arc<Client>,
+		tx_pool: Arc<TxPool>,
+		subscriptions: SubscriptionManager,
+	) -> Self {
 		Self {
 			client,
+			subscriptions,
+			tx_pool,
 			block_ext_cache: RwLock::new(LruCache::new(2048)) // 524288 bytes per block, ~1Gb max size
 		}
 	}
@@ -62,12 +117,19 @@ impl From<Error> for i64 {
 	}
 }
 
-impl<Client, Block> KateApi for Kate<Client, Block> where
-	Block: BlockT,
+const TX_SOURCE: TransactionSource = TransactionSource::External;
+
+impl<TxPool, Client> KateApi<
+	TxHash<TxPool>, BlockHash<TxPool>
+> for Kate<TxPool, Client, BlockHash<TxPool>> where
+	TxPool: TransactionPool + Sync + Send + 'static,
 	Client: Send + Sync + 'static,
-	Client: HeaderBackend<Block> + ProvideRuntimeApi<Block> + BlockBackend<Block>,
-	Client::Api: KateParamsGetter<Block>,
+	Client: HeaderBackend<TxPool::Block> + ProvideRuntimeApi<TxPool::Block> + BlockBackend<TxPool::Block>,
+	Client::Api: KateParamsGetter<TxPool::Block>,
 {
+	type Metadata = sc_rpc_api::Metadata;
+	type Block = TxPool::Block;
+
 	//TODO allocate static thread pool, just for RPC related work, to free up resources, for the block producing processes.
 	fn query_proof(
 		&self,
@@ -84,7 +146,7 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 			data: None,
 		})?;
 
-		let block_num = <NumberFor<Block>>::from(block_num);
+		let block_num = <NumberFor<Self::Block>>::from(block_num);
 		let block = self.client.block(&BlockId::number(block_num)).unwrap();
 		let mut block_ext_cache = self.block_ext_cache.write().unwrap();
 
@@ -149,5 +211,71 @@ impl<Client, Block> KateApi for Kate<Client, Block> where
 			message: "Something wrong".into(),
 			data: Some(format!("{:?}", e).into()),
 		}).unwrap())
+	}
+
+	fn submit_and_watch_data(
+		&self,
+		_metadata: Self::Metadata,
+		subscriber: Subscriber<TransactionStatus<TxHash<TxPool>, BlockHash<TxPool>>>,
+		key: Bytes,
+		data_tx: Bytes,
+	) {
+		let submit = || -> RpcApiResult<_> {
+			let best_block_hash = self.client.info().best_hash;
+			let dtx = TransactionFor::<TxPool>::decode(&mut &data_tx[..])
+				.map_err(RpcApiError::from)?;
+			Ok(
+				self.tx_pool
+					.submit_and_watch(&BlockId::hash(best_block_hash), TX_SOURCE, dtx)
+					.map_err(|e| e.into_pool_error()
+						.map(RpcApiError::from)
+						.unwrap_or_else(|e| RpcApiError::Verification(Box::new(e)).into())
+					)
+			)
+		};
+
+		let subscriptions = self.subscriptions.clone();
+		let future = ready(submit())
+			.and_then(|res| res)
+			// convert the watcher into a `Stream`
+			.map(|res| res.map(|stream| stream.map(|v| Ok::<_, ()>(Ok(v)))))
+			// now handle the import result,
+			// start a new subscrition
+			.map(move |result| match result {
+				Ok(watcher) => {
+					subscriptions.add(subscriber, move |sink| {
+						sink
+							.sink_map_err(|e| log::debug!("Subscription sink failed: {:?}", e))
+							.send_all(Compat::new(watcher))
+							.map(|_| ())
+					});
+				},
+				Err(err) => {
+					warn!("Failed to submit extrinsic: {}", err);
+					// reject the subscriber (ignore errors - we don't care if subscriber is no longer there).
+					let _ = subscriber.reject(err.into());
+				},
+			});
+
+		let res = self.subscriptions.executor()
+			.execute(Box::new(Compat::new(future.map(|_| Ok(())))));
+		if res.is_err() {
+			warn!("Error spawning subscription RPC task.");
+		}
+	}
+
+	fn unwatch_data(&self,
+		metadata: Option<Self::Metadata>,
+		id: SubscriptionId
+	) -> Result<bool> {
+		Ok(true)
+	}
+
+	fn query_data(
+		&self,
+		key: Bytes,
+		block_number: NumberOrHex,
+	) -> Result<Vec<u8>> {
+		Ok(vec![])
 	}
 }

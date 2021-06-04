@@ -18,7 +18,7 @@ use frame_support::{
 use codec::{Encode};
 use frame_system::{ ensure_signed, limits::BlockLength };
 use sp_std::vec::Vec;
-use sp_core::storage::well_known_keys;
+use sp_core::{storage::well_known_keys, Bytes};
 use sp_runtime::Perbill;
 use libm::ceil;
 
@@ -41,9 +41,10 @@ pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(90);
 // https://substrate.dev/docs/en/knowledgebase/runtime/storage
 decl_storage! {
 	trait Store for Module<T: Config> as DataAvailability {
-		KeyToValue: map hasher(blake2_128_concat) (T::AccountId, Vec<u8>) => Vec<u8>;
 		BlockLengthProposalID: u32;
 		BlockLengthProposal: BlockLength;
+		ApplicationKeyIndex: u32;
+		ApplicationKeyToIndex: map hasher(blake2_128_concat) Vec<u8> => u32;
 	}
 }
 
@@ -61,7 +62,7 @@ decl_event!(
 // Errors inform users that something went wrong.
 decl_error! {
 	pub enum Error for Module<T: Config> {
-		/// The data has already been submitted.
+		/// Application key already exist.
 		KeyAlreadyExists,
 		/// The queried key does not exist
 		KeyDoesNotExist,
@@ -104,22 +105,26 @@ decl_module! {
             let sender = ensure_signed(origin)?;
 
             // Verify that the given data has not already been submitted.
-            ensure!(!KeyToValue::<T>::contains_key((&sender, &key)), Error::<T>::KeyAlreadyExists);
+            // ensure!(!KeyToValue::<T>::contains_key((&sender, &key)), Error::<T>::KeyAlreadyExists);
 
             // Store the data with the sender and block number.
-            KeyToValue::<T>::insert((&sender, &key), &value);
+            // KeyToValue::<T>::insert((&sender, &key), &value);
 
             // Emit an event that the claim was created.
-            Self::deposit_event(RawEvent::DataSubmitted(sender, key, value));
+            // Self::deposit_event(RawEvent::DataSubmitted(sender, key, value));
 		}
 
 		// #[weight = 10_000]
 		// fn vote_block_length_proposal(origin, proposal_id: u32) {
 		// 	let sender = ensure_signed(origin)?;
 		// }
+		#[weight = 70_000_000]
+		fn create_application_key(origin, key: Vec<u8>) {
+
+		}
 
 		#[weight = 10_000]
-		fn submit_block_length_proposal(origin, rows: u32, cols: u32)  {
+		fn submit_block_length_proposal(origin, rows: u32, cols: u32) {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(rows <= 1024, Error::<T>::BlockDimensionsOutOfBounds);

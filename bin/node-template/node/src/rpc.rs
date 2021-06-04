@@ -11,9 +11,11 @@ use node_template_runtime::{opaque::Block, AccountId, Balance, Index};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
 use sp_block_builder::BlockBuilder;
-pub use sc_rpc_api::DenyUnsafe;
+pub use sc_rpc_api::{DenyUnsafe};
+use jsonrpc_pubsub::{typed::Subscriber, SubscriptionId, manager::SubscriptionManager};
 use sp_transaction_pool::TransactionPool;
 use kate_rpc_runtime_api::KateParamsGetter;
+pub use sp_keystore::{SyncCryptoStorePtr, SyncCryptoStore};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -23,19 +25,20 @@ pub struct FullDeps<C, P> {
 	pub pool: Arc<P>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
+	pub subscriptions: SubscriptionManager,
 }
 
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P>(
 	deps: FullDeps<C, P>,
 ) -> jsonrpc_core::IoHandler<sc_rpc::Metadata> where
-	C: ProvideRuntimeApi<Block> + BlockBackend<Block>,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error=BlockChainError> + 'static,
+	C: ProvideRuntimeApi<P::Block> + BlockBackend<P::Block>,
+	C: HeaderBackend<P::Block> + HeaderMetadata<P::Block, Error=BlockChainError> + 'static,
 	C: Send + Sync + 'static,
-	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	C::Api: BlockBuilder<Block>,
-	C::Api: KateParamsGetter<Block>,
+	C::Api: substrate_frame_rpc_system::AccountNonceApi<P::Block, AccountId, Index>,
+	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<P::Block, Balance>,
+	C::Api: BlockBuilder<P::Block>,
+	C::Api: KateParamsGetter<P::Block>,
 	P: TransactionPool + 'static,
 {
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
@@ -46,10 +49,11 @@ pub fn create_full<C, P>(
 		client,
 		pool,
 		deny_unsafe,
+		subscriptions
 	} = deps;
 
 	io.extend_with(
-		SystemApi::to_delegate(FullSystem::new(client.clone(), pool, deny_unsafe))
+		SystemApi::to_delegate(FullSystem::new(client.clone(), pool.clone(), deny_unsafe))
 	);
 
 	io.extend_with(
@@ -57,7 +61,7 @@ pub fn create_full<C, P>(
 	);
 
 	io.extend_with(
-		crate::kate_rpc::KateApi::to_delegate(crate::kate_rpc::Kate::new(client.clone()))
+		crate::kate_rpc::KateApi::to_delegate(crate::kate_rpc::Kate::new(client.clone(), pool.clone(), subscriptions))
 	);
 
 	// Extend this RPC with a custom API by using the following syntax.

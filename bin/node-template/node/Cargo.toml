@@ -18,11 +18,13 @@ name = "node-template"
 [dependencies]
 structopt = "0.3.8"
 rand = "0.8.2"
+futures = { version = "0.3.1", features = ["compat"] }
 sc-cli = { version = "0.8.0", path = "../../../client/cli", features = ["wasmtime"] }
 sp-core = { version = "2.0.0", path = "../../../primitives/core" }
 sp-io = { version = "2.0.0", path = "../../../primitives/io" }
 sc-executor = { version = "0.8.0", path = "../../../client/executor", features = ["wasmtime"] }
 sc-service = { version = "0.8.0", path = "../../../client/service", features = ["wasmtime"] }
+sp-keystore = { version = "0.8.0", path = "../../../primitives/keystore" }
 sc-keystore = { version = "2.0.0", path = "../../../client/keystore" }
 sp-inherents = { version = "2.0.0", path = "../../../primitives/inherents" }
 sc-transaction-pool = { version = "2.0.0", path = "../../../client/transaction-pool" }
@@ -46,9 +48,10 @@ frame-system = { package = "frame-system", path = "../../../frame/system"}
 frame-support = { package = "frame-support", path = "../../../frame/support"}
 
 # These dependencies are used for the node template's RPCs
+jsonrpc-pubsub = "15.1.0"
 jsonrpc-core = "15.1.0"
-jsonrpc-core-client = "15.0"
-jsonrpc-derive = "15.0"
+jsonrpc-core-client = "15.1.0"
+jsonrpc-derive = "15.1.0"
 sc-rpc = { version = "2.0.0", path = "../../../client/rpc" }
 sp-api = { version = "2.0.0", path = "../../../primitives/api" }
 sc-rpc-api = { version = "0.8.0", path = "../../../client/rpc-api" }
