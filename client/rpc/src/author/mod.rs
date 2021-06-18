@@ -194,6 +194,7 @@ impl<P, Client> AuthorApi<TxHash<P>, BlockHash<P>> for Author<P, Client>
 			let best_block_hash = self.client.info().best_hash;
 			let dxt = TransactionFor::<P>::decode(&mut &xt[..])
 				.map_err(error::Error::from)?;
+
 			Ok(
 				self.pool
 					.submit_and_watch(&generic::BlockId::hash(best_block_hash), TX_SOURCE, dxt)

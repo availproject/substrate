@@ -43,7 +43,7 @@ where
 	/// The signature, address, number of extrinsics have come before from
 	/// the same signer and an era describing the longevity of this transaction,
 	/// if this is a signed extrinsic.
-	pub signature: Option<(Address, Signature, Extra)>,
+	pub signature: Option<(Address, Signature, Extra, u32)>,
 	/// The function that should be called.
 	pub function: Call,
 }
@@ -68,10 +68,11 @@ impl<Address, Call, Signature, Extra: SignedExtension>
 		function: Call,
 		signed: Address,
 		signature: Signature,
+		key: u32,
 		extra: Extra
 	) -> Self {
 		UncheckedExtrinsic {
-			signature: Some((signed, signature, extra)),
+			signature: Some((signed, signature, extra, key)),
 			function,
 		}
 	}
@@ -94,6 +95,7 @@ impl<Address, Call, Signature, Extra: SignedExtension> Extrinsic
 		Address,
 		Signature,
 		Extra,
+		u32,
 	);
 
 	fn is_signed(&self) -> Option<bool> {
@@ -101,8 +103,8 @@ impl<Address, Call, Signature, Extra: SignedExtension> Extrinsic
 	}
 
 	fn new(function: Call, signed_data: Option<Self::SignaturePayload>) -> Option<Self> {
-		Some(if let Some((address, signature, extra)) = signed_data {
-			UncheckedExtrinsic::new_signed(function, address, signature, extra)
+		Some(if let Some((address, signature, extra, key)) = signed_data {
+			UncheckedExtrinsic::new_signed(function, address, signature, key, extra)
 		} else {
 			UncheckedExtrinsic::new_unsigned(function)
 		})
@@ -241,6 +243,7 @@ where
 		Ok(UncheckedExtrinsic {
 			signature: if is_signed { Some(Decode::decode(input)?) } else { None },
 			function: Decode::decode(input)?,
+			key: Decode::decode(input)?,
 		})
 	}
 }
@@ -266,6 +269,7 @@ where
 				}
 			}
 			self.function.encode_to(v);
+			self.key.encode_to(v);
 		})
 	}
 }

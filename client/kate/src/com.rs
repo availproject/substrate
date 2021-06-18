@@ -66,7 +66,7 @@ pub fn get_block_dimensions(
 	let mut cols = cols_num;
 
 	if block_size < max_block_size {
-		let mut nearest_power_2_size = ((block_size as f32).log2().floor() as usize + 1);
+		let mut nearest_power_2_size = (2 as usize).pow((block_size as f32).log2().ceil() as u32);
 		if nearest_power_2_size < config::MINIMUM_BLOCK_SIZE {
 			nearest_power_2_size = config::MINIMUM_BLOCK_SIZE;
 		}
