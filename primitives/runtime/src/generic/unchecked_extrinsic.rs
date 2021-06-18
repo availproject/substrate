@@ -128,14 +128,14 @@ where
 
 	fn check(self, lookup: &Lookup) -> Result<Self::Checked, TransactionValidityError> {
 		Ok(match self.signature {
-			Some((signed, signature, extra)) => {
+			Some((signed, signature, extra, key)) => {
 				let signed = lookup.lookup(signed)?;
-				let raw_payload = SignedPayload::new(self.function, extra)?;
+				let raw_payload = SignedPayload::new(self.function, key, extra)?;
 				if !raw_payload.using_encoded(|payload| signature.verify(payload, &signed)) {
 					return Err(InvalidTransaction::BadProof.into())
 				}
 
-				let (function, extra, _) = raw_payload.deconstruct();
+				let (function, _, extra, _) = raw_payload.deconstruct();
 				CheckedExtrinsic {
 					signed: Some((signed, extra)),
 					function,
@@ -165,6 +165,7 @@ impl<Address, Call, Signature, Extra> ExtrinsicMetadata
 /// actually contains.
 pub struct SignedPayload<Call, Extra: SignedExtension>((
 	Call,
+	u32,
 	Extra,
 	Extra::AdditionalSigned,
 ));
@@ -176,19 +177,19 @@ impl<Call, Extra> SignedPayload<Call, Extra> where
 	/// Create new `SignedPayload`.
 	///
 	/// This function may fail if `additional_signed` of `Extra` is not available.
-	pub fn new(call: Call, extra: Extra) -> Result<Self, TransactionValidityError> {
+	pub fn new(call: Call, key: u32, extra: Extra) -> Result<Self, TransactionValidityError> {
 		let additional_signed = extra.additional_signed()?;
-		let raw_payload = (call, extra, additional_signed);
+		let raw_payload = (call, key, extra, additional_signed);
 		Ok(Self(raw_payload))
 	}
 
 	/// Create new `SignedPayload` from raw components.
-	pub fn from_raw(call: Call, extra: Extra, additional_signed: Extra::AdditionalSigned) -> Self {
-		Self((call, extra, additional_signed))
+	pub fn from_raw(call: Call, key: u32, extra: Extra, additional_signed: Extra::AdditionalSigned) -> Self {
+		Self((call, key, extra, additional_signed))
 	}
 
 	/// Deconstruct the payload into it's components.
-	pub fn deconstruct(self) -> (Call, Extra, Extra::AdditionalSigned) {
+	pub fn deconstruct(self) -> (Call, u32, Extra, Extra::AdditionalSigned) {
 		self.0
 	}
 }
@@ -243,7 +244,6 @@ where
 		Ok(UncheckedExtrinsic {
 			signature: if is_signed { Some(Decode::decode(input)?) } else { None },
 			function: Decode::decode(input)?,
-			key: Decode::decode(input)?,
 		})
 	}
 }
@@ -269,7 +269,6 @@ where
 				}
 			}
 			self.function.encode_to(v);
-			self.key.encode_to(v);
 		})
 	}
 }
