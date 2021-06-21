@@ -29,7 +29,7 @@ use sp_inherents::InherentData;
 use log::{error, info, debug, trace, warn};
 use sp_runtime::{
 	generic::BlockId,
-	traits::{Block as BlockT, Hash as HashT, Header as HeaderT, DigestFor, BlakeTwo256},
+	traits::{Block as BlockT, Hash as HashT, Header as HeaderT, DigestFor, BlakeTwo256, Keyable},
 };
 use sp_transaction_pool::{TransactionPool, InPoolTransaction};
 use sc_telemetry::{telemetry, CONSENSUS_INFO};
@@ -166,16 +166,15 @@ pub struct Proposer<B, Block: BlockT, C, A: TransactionPool> {
 	max_block_size: usize,
 }
 
-impl<A, B, Block, C> sp_consensus::Proposer<Block> for
-	Proposer<B, Block, C, A>
-		where
-			A: TransactionPool<Block = Block> + 'static,
-			B: backend::Backend<Block> + Send + Sync + 'static,
-			Block: BlockT,
-			C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
-				+ Send + Sync + 'static,
-			C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
-				+ BlockBuilderApi<Block, Error = sp_blockchain::Error>,
+impl<A, B, Block, C> sp_consensus::Proposer<Block> for Proposer<B, Block, C, A>
+	where
+		A: TransactionPool<Block = Block> + 'static,
+		B: backend::Backend<Block> + Send + Sync + 'static,
+		Block: BlockT,
+		C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
+			+ Send + Sync + 'static,
+		C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
+			+ BlockBuilderApi<Block, Error = sp_blockchain::Error>,
 {
 	type Transaction = backend::TransactionFor<B, Block>;
 	type Proposal = Pin<Box<dyn Future<

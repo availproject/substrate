@@ -634,7 +634,7 @@ pub trait Block: Clone + Send + Sync + Codec + Eq + MaybeSerialize + Debug + May
 
 
 /// Something that acts like an `Extrinsic`.
-pub trait Extrinsic: Sized + MaybeMallocSizeOf {
+pub trait Extrinsic: Sized + MaybeMallocSizeOf + Keyable {
 	/// The function call.
 	type Call;
 
@@ -957,7 +957,7 @@ impl SignedExtension for () {
 }
 
 pub trait Keyable {
-	fn key(&self)->u32;
+	fn key(&self)->u32 { 0 }
 }
 
 /// An "executable" piece of information, used by the standard Substrate Executive in order to

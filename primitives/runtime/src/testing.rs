@@ -190,6 +190,11 @@ where Xt: parity_util_mem::MallocSizeOf
 	}
 }
 
+impl<Xt> traits::Keyable for ExtrinsicWrapper<Xt>
+{
+	fn key(&self) -> u32 { 0 }
+}
+
 impl<Xt: Encode> serde::Serialize for ExtrinsicWrapper<Xt> {
 	fn serialize<S>(&self, seq: S) -> Result<S::Ok, S::Error> where S: ::serde::Serializer {
 		self.using_encoded(|bytes| seq.serialize_bytes(bytes))
@@ -288,6 +293,10 @@ impl<Call, Extra> Debug for TestXt<Call, Extra> {
 impl<Call: Codec + Sync + Send, Context, Extra> Checkable<Context> for TestXt<Call, Extra> {
 	type Checked = Self;
 	fn check(self, _: &Context) -> Result<Self::Checked, TransactionValidityError> { Ok(self) }
+}
+
+impl<Call: Codec + Sync + Send, Extra> traits::Keyable for TestXt<Call, Extra> {
+	fn key(&self) -> u32 { 0 }
 }
 
 impl<Call: Codec + Sync + Send, Extra> traits::Extrinsic for TestXt<Call, Extra> {

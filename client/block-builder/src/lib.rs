@@ -30,7 +30,7 @@ use codec::Encode;
 
 use sp_runtime::{
 	generic::BlockId,
-	traits::{Header as HeaderT, Hash, Block as BlockT, HashFor, DigestFor, NumberFor, One, ExtrinsicsRoot},
+	traits::{Header as HeaderT, Hash, Block as BlockT, HashFor, DigestFor, NumberFor, One, ExtrinsicsRoot, Keyable},
 };
 use sp_blockchain::{ApplyExtrinsicFailed, Error};
 use sp_core::ExecutionContext;
@@ -109,6 +109,7 @@ where
 	A::Api: BlockBuilderApi<Block, Error = Error> +
 		ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>,
 	B: backend::Backend<Block>,
+	Block::Extrinsic: Keyable,
 {
 	/// Create a new instance of builder based on the given `parent_hash` and `parent_number`.
 	///
@@ -191,6 +192,8 @@ where
 		let header = self.api.finalize_block_with_context(
 			&self.block_id, ExecutionContext::BlockConstruction
 		)?;
+
+		self.extrinsics.sort_by(|a, b| a.key().cmp(&b.key()));
 
 		debug_assert_eq!(
 			header.extrinsics_root().hash().clone(),

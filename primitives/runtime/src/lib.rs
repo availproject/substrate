@@ -660,6 +660,8 @@ impl traits::Extrinsic for OpaqueExtrinsic {
 	type SignaturePayload = ();
 }
 
+impl traits::Keyable for OpaqueExtrinsic {}
+
 /// Print something that implements `Printable` from the runtime.
 pub fn print(print: impl traits::Printable) {
 	print.print();
