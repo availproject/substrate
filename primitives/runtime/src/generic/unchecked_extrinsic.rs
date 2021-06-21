@@ -158,6 +158,16 @@ impl<Address, Call, Signature, Extra> ExtrinsicMetadata
 	type SignedExtensions = Extra;
 }
 
+impl<Address, Call, Signature, Extra> traits::Keyable
+	for UncheckedExtrinsic<Address, Call, Signature, Extra>
+		where
+			Extra: SignedExtension,
+{
+	fn key(&self) -> u32 {
+		self.signature.as_ref().unwrap().3
+	}
+}
+
 /// A payload that has been signed for an unchecked extrinsics.
 ///
 /// Note that the payload that we sign to produce unchecked extrinsic signature

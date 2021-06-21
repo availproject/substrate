@@ -125,7 +125,7 @@ use sp_runtime::{
 	generic::Digest, ApplyExtrinsicResult,
 	traits::{
 		self, Header, Zero, One, Checkable, Applyable, CheckEqual, ValidateUnsigned, NumberFor,
-		Block as BlockT, Dispatchable, Saturating, ExtrinsicsRoot,
+		Block as BlockT, Dispatchable, Saturating, ExtrinsicsRoot, Keyable,
 	},
 	transaction_validity::{TransactionValidity, TransactionSource},
 };
@@ -197,7 +197,7 @@ impl<
 	COnRuntimeUpgrade: OnRuntimeUpgrade,
 > Executive<System, Block, Context, UnsignedValidator, AllModules, COnRuntimeUpgrade>
 where
-	Block::Extrinsic: Checkable<Context> + Codec,
+	Block::Extrinsic: Checkable<Context> + Codec + Keyable,
 	CheckedOf<Block::Extrinsic, Context>:
 		Applyable +
 		GetDispatchInfo,
@@ -348,28 +348,20 @@ where
 	/// hashes.
 	pub fn apply_extrinsic(uxt: Block::Extrinsic) -> ApplyExtrinsicResult {
 		sp_io::init_tracing();
+		let app_key = uxt.key();
 		let encoded = uxt.encode();
 		let encoded_len = encoded.len();
-		Self::apply_extrinsic_with_len(uxt, encoded_len, encoded)
-	}
-
-	/// Actually apply an extrinsic given its `encoded_len`; this doesn't note its hash.
-	fn apply_extrinsic_with_len(
-		uxt: Block::Extrinsic,
-		encoded_len: usize,
-		to_note: Vec<u8>,
-	) -> ApplyExtrinsicResult {
 		sp_tracing::enter_span!(
 			sp_tracing::info_span!("apply_extrinsic",
-				ext=?sp_core::hexdisplay::HexDisplay::from(&uxt.encode()))
+				ext=?sp_core::hexdisplay::HexDisplay::from(&encoded))
 		);
-		// Verify that the signature is good.
+		// Verify transaction object
 		let xt = uxt.check(&Default::default())?;
 
 		// We don't need to make sure to `note_extrinsic` only after we know it's going to be
 		// executed to prevent it from leaking in storage since at this point, it will either
 		// execute or panic (and revert storage changes).
-		<frame_system::Module<System>>::note_extrinsic(to_note);
+		<frame_system::Module<System>>::note_extrinsic(app_key, encoded);
 
 		// AUDIT: Under no circumstances may this function panic from here onwards.
 

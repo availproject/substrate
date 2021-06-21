@@ -404,8 +404,8 @@ decl_storage! {
 		pub BlockHash get(fn block_hash) build(|_| vec![(T::BlockNumber::zero(), hash69())]):
 			map hasher(twox_64_concat) T::BlockNumber => T::Hash;
 
-		/// Extrinsics data for the current block (maps an extrinsic's index to its data).
-		ExtrinsicData get(fn extrinsic_data): map hasher(twox_64_concat) u32 => Vec<u8>;
+		/// Extrinsics data for the current block (maps an extrinsic's index to its (key, data)).
+		ExtrinsicData get(fn extrinsic_data): map hasher(twox_64_concat) u32 => (u32, Vec<u8>);
 
 		/// The current block number being processed. Set by `execute_block`.
 		Number get(fn block_number): T::BlockNumber;
@@ -1035,6 +1035,15 @@ impl<T: Config> Module<T> {
 		}
 	}
 
+	pub fn block_extrinsics() -> Vec<Vec<u8>> {
+		let mut extrinsics_with_key:Vec<(u32, Vec<u8>)> = (0..ExtrinsicCount::take().unwrap_or_default())
+			.map(ExtrinsicData::take)
+			.collect();
+		// sort extrinsics by key
+		extrinsics_with_key.sort_by(|a, b| a.0.cmp(&b.0));
+		extrinsics_with_key.iter().cloned().map(|x| x.1).collect()
+	}
+
 	/// Remove temporary "environment" entries in storage, compute the storage root and return the
 	/// resulting header for this block.
 	pub fn finalize() -> T::Header {
@@ -1055,9 +1064,7 @@ impl<T: Config> Module<T> {
 		let parent_hash = <ParentHash<T>>::get();
 		let mut digest = <Digest<T>>::get();
 
-		let extrinsics = (0..ExtrinsicCount::take().unwrap_or_default())
-			.map(ExtrinsicData::take)
-			.collect();
+		let extrinsics = Self::block_extrinsics();
 
 		let kc_public_params: Vec<u8> = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
 			.unwrap_or_default();
@@ -1186,8 +1193,8 @@ impl<T: Config> Module<T> {
 	///
 	/// This is required to be called before applying an extrinsic. The data will used
 	/// in [`Self::finalize`] to calculate the correct extrinsics root.
-	pub fn note_extrinsic(encoded_xt: Vec<u8>) {
-		ExtrinsicData::insert(Self::extrinsic_index().unwrap_or_default(), encoded_xt);
+	pub fn note_extrinsic(key: u32, encoded_xt: Vec<u8>) {
+		ExtrinsicData::insert(Self::extrinsic_index().unwrap_or_default(), (key, encoded_xt));
 	}
 
 	/// To be called immediately after an extrinsic has been applied.
