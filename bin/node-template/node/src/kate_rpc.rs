@@ -46,28 +46,6 @@ pub trait KateApi<Hash, BlockHash> {
 		&self,
 	) -> Result<BlockLength>;
 
-	#[pubsub(
-		subscription = "kate_dataUpdate",
-		subscribe,
-		name = "kate_submitAndWatchData"
-	)]
-	fn submit_and_watch_data(&self,
-		_metadata: Self::Metadata,
-		subscriber: Subscriber<TransactionStatus<Hash, BlockHash>>,
-		key: Bytes,
-		tx: Bytes,
-	);
-
-	#[pubsub(
-		subscription = "kate_dataUpdate",
-		unsubscribe,
-		name = "kate_unwatchData"
-	)]
-	fn unwatch_data(&self,
-		 metadata: Option<Self::Metadata>,
-		 id: SubscriptionId
-	) -> Result<bool>;
-
 	#[rpc(name = "kate_queryData")]
 	fn query_data(
 		&self,
@@ -211,64 +189,6 @@ impl<TxPool, Client> KateApi<
 			message: "Something wrong".into(),
 			data: Some(format!("{:?}", e).into()),
 		}).unwrap())
-	}
-
-	fn submit_and_watch_data(
-		&self,
-		_metadata: Self::Metadata,
-		subscriber: Subscriber<TransactionStatus<TxHash<TxPool>, BlockHash<TxPool>>>,
-		key: Bytes,
-		data_tx: Bytes,
-	) {
-		let submit = || -> RpcApiResult<_> {
-			let best_block_hash = self.client.info().best_hash;
-			let dtx = TransactionFor::<TxPool>::decode(&mut &data_tx[..])
-				.map_err(RpcApiError::from)?;
-			Ok(
-				self.tx_pool
-					.submit_and_watch(&BlockId::hash(best_block_hash), TX_SOURCE, dtx)
-					.map_err(|e| e.into_pool_error()
-						.map(RpcApiError::from)
-						.unwrap_or_else(|e| RpcApiError::Verification(Box::new(e)).into())
-					)
-			)
-		};
-
-		let subscriptions = self.subscriptions.clone();
-		let future = ready(submit())
-			.and_then(|res| res)
-			// convert the watcher into a `Stream`
-			.map(|res| res.map(|stream| stream.map(|v| Ok::<_, ()>(Ok(v)))))
-			// now handle the import result,
-			// start a new subscrition
-			.map(move |result| match result {
-				Ok(watcher) => {
-					subscriptions.add(subscriber, move |sink| {
-						sink
-							.sink_map_err(|e| log::debug!("Subscription sink failed: {:?}", e))
-							.send_all(Compat::new(watcher))
-							.map(|_| ())
-					});
-				},
-				Err(err) => {
-					warn!("Failed to submit extrinsic: {}", err);
-					// reject the subscriber (ignore errors - we don't care if subscriber is no longer there).
-					let _ = subscriber.reject(err.into());
-				},
-			});
-
-		let res = self.subscriptions.executor()
-			.execute(Box::new(Compat::new(future.map(|_| Ok(())))));
-		if res.is_err() {
-			warn!("Error spawning subscription RPC task.");
-		}
-	}
-
-	fn unwatch_data(&self,
-		metadata: Option<Self::Metadata>,
-		id: SubscriptionId
-	) -> Result<bool> {
-		Ok(true)
 	}
 
 	fn query_data(
