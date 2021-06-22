@@ -43,8 +43,6 @@ decl_storage! {
 	trait Store for Module<T: Config> as DataAvailability {
 		BlockLengthProposalID: u32;
 		BlockLengthProposal: BlockLength;
-		ApplicationKeyIndex: u32;
-		ApplicationKeyToIndex: map hasher(blake2_128_concat) Vec<u8> => u32;
 	}
 }
 
@@ -56,6 +54,7 @@ decl_event!(
         DataSubmitted(AccountId, Vec<u8>, Vec<u8>),
         /// Event emitted when block length proposal has been submitted. [who, rows, cols]
         BlockLengthProposalSubmitted(AccountId, u32, u32),
+        ApplicationKeyCreated(AccountId, Vec<u8>, u32),
 	}
 );
 
@@ -120,7 +119,10 @@ decl_module! {
 		// }
 		#[weight = 70_000_000]
 		fn create_application_key(origin, key: Vec<u8>) {
+			let sender = ensure_signed(origin)?;
+			let key_id = <frame_system::Module<T>>::create_application_key(&key);
 
+			Self::deposit_event(RawEvent::ApplicationKeyCreated(sender, key, key_id));
 		}
 
 		#[weight = 10_000]
@@ -136,8 +138,8 @@ decl_module! {
 			let block_length = BlockLength::with_normal_ratio(rows, cols, BLOCK_CHUNK_SIZE, NORMAL_DISPATCH_RATIO);
 			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &block_length.encode());
 
-			// let proposalId = BlockLengthProposalID::get() + 1;
-			// BlockLengthProposalID::put(proposalId);
+			let proposalId = BlockLengthProposalID::get() + 1;
+			BlockLengthProposalID::put(proposalId);
 			// BlockLengthProposal::put(BlockLength::with_normal_ratio(rows, cols, chunk_size, Perbill::from_percent(ratio_percent)));
 
 			Self::deposit_event(RawEvent::BlockLengthProposalSubmitted(sender, rows, cols));

@@ -67,6 +67,8 @@ pub enum InvalidTransaction {
 	/// The transaction might be valid, but there are not enough resources
 	/// left in the current block.
 	ExhaustsResources,
+	/// Application key provided doesn't exist
+	BadApplicationKey,
 	/// Any other custom invalid validity that is not covered by this enum.
 	Custom(u8),
 	/// An extrinsic with a Mandatory dispatch resulted in Error. This is indicative of either a
@@ -99,6 +101,7 @@ impl InvalidTransaction {
 impl From<InvalidTransaction> for &'static str {
 	fn from(invalid: InvalidTransaction) -> &'static str {
 		match invalid {
+			InvalidTransaction::BadApplicationKey => "Application key doesn't exist",
 			InvalidTransaction::Call => "Transaction call is not expected",
 			InvalidTransaction::Future => "Transaction will be valid in the future",
 			InvalidTransaction::Stale => "Transaction is outdated",

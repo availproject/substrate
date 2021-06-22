@@ -164,7 +164,11 @@ impl<Address, Call, Signature, Extra> traits::Keyable
 			Extra: SignedExtension,
 {
 	fn key(&self) -> u32 {
-		self.signature.as_ref().unwrap().3
+		if self.signature.is_none() {
+			0
+		} else {
+			self.signature.as_ref().unwrap().3
+		}
 	}
 }
 

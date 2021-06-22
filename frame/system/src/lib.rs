@@ -447,6 +447,12 @@ decl_storage! {
 
 		/// The execution phase of the block.
 		ExecutionPhase: Option<Phase>;
+
+		/// Last application key
+		LastApplicationKey: u32;
+
+		/// Mapping to determine that application key does exist
+		ExistingApplicationKeys: map hasher(blake2_128_concat) u32 => bool;
 	}
 	add_extra_genesis {
 		config(changes_trie_config): Option<ChangesTrieConfiguration>;
@@ -1281,6 +1287,21 @@ impl<T: Config> Module<T> {
 		}
 
 		Ok(())
+	}
+
+	pub fn create_application_key(key: &Vec<u8>) -> u32 {
+		let next_key = LastApplicationKey::get() + 1;
+		LastApplicationKey::put(next_key);
+		ExistingApplicationKeys::insert(next_key, true);
+		next_key
+	}
+
+	pub fn is_application_key_exist(key: u32) -> bool {
+		if key == 0 {
+			true
+		} else {
+			ExistingApplicationKeys::get(key) == true
+		}
 	}
 }
 

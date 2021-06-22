@@ -127,7 +127,7 @@ use sp_runtime::{
 		self, Header, Zero, One, Checkable, Applyable, CheckEqual, ValidateUnsigned, NumberFor,
 		Block as BlockT, Dispatchable, Saturating, ExtrinsicsRoot, Keyable,
 	},
-	transaction_validity::{TransactionValidity, TransactionSource},
+	transaction_validity::{TransactionValidity, TransactionSource, TransactionValidityError, InvalidTransaction},
 };
 use codec::{Codec, Encode};
 use frame_system::DigestOf;
@@ -422,6 +422,11 @@ where
 		use sp_tracing::{enter_span, within_span};
 
 		enter_span!{ sp_tracing::Level::TRACE, "validate_transaction" };
+
+		let is_exist = <frame_system::Module<System>>::is_application_key_exist(uxt.key());
+		if !is_exist {
+			return Err(TransactionValidityError::from(InvalidTransaction::BadApplicationKey));
+		}
 
 		let encoded_len = within_span!{ sp_tracing::Level::TRACE, "using_encoded";
 			uxt.using_encoded(|d| d.len())
