@@ -43,7 +43,7 @@ where
 	/// The signature, address, number of extrinsics have come before from
 	/// the same signer and an era describing the longevity of this transaction,
 	/// if this is a signed extrinsic.
-	pub signature: Option<(Address, Signature, Extra, u32)>,
+	pub signature: Option<(Address, Signature, u32, Extra)>,
 	/// The function that should be called.
 	pub function: Call,
 }
@@ -72,7 +72,7 @@ impl<Address, Call, Signature, Extra: SignedExtension>
 		extra: Extra
 	) -> Self {
 		UncheckedExtrinsic {
-			signature: Some((signed, signature, extra, key)),
+			signature: Some((signed, signature, key, extra)),
 			function,
 		}
 	}
@@ -94,8 +94,8 @@ impl<Address, Call, Signature, Extra: SignedExtension> Extrinsic
 	type SignaturePayload = (
 		Address,
 		Signature,
-		Extra,
 		u32,
+		Extra,
 	);
 
 	fn is_signed(&self) -> Option<bool> {
@@ -103,7 +103,7 @@ impl<Address, Call, Signature, Extra: SignedExtension> Extrinsic
 	}
 
 	fn new(function: Call, signed_data: Option<Self::SignaturePayload>) -> Option<Self> {
-		Some(if let Some((address, signature, extra, key)) = signed_data {
+		Some(if let Some((address, signature, key, extra)) = signed_data {
 			UncheckedExtrinsic::new_signed(function, address, signature, key, extra)
 		} else {
 			UncheckedExtrinsic::new_unsigned(function)
@@ -128,7 +128,7 @@ where
 
 	fn check(self, lookup: &Lookup) -> Result<Self::Checked, TransactionValidityError> {
 		Ok(match self.signature {
-			Some((signed, signature, extra, key)) => {
+			Some((signed, signature, key, extra)) => {
 				let signed = lookup.lookup(signed)?;
 				let raw_payload = SignedPayload::new(self.function, key, extra)?;
 				if !raw_payload.using_encoded(|payload| signature.verify(payload, &signed)) {
@@ -167,7 +167,7 @@ impl<Address, Call, Signature, Extra> traits::Keyable
 		if self.signature.is_none() {
 			0
 		} else {
-			self.signature.as_ref().unwrap().3
+			self.signature.as_ref().unwrap().2
 		}
 	}
 }
