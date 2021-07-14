@@ -1372,7 +1372,7 @@ impl Printable for usize {
 
 impl Printable for u64 {
 	fn print(&self) {
-		sp_io::misc::print_num(*self);
+		(*self as u64).print()
 	}
 }
 

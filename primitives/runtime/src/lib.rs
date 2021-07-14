@@ -529,6 +529,11 @@ impl<T> traits::Printable for DispatchErrorWithPostInfo<T> where
 		self.post_info.print();
 	}
 }
+// impl traits::Printable for u64{
+// 	fn print(&self){
+// 		*self.print();
+// 		}
+// }
 
 /// This type specifies the outcome of dispatching a call to a module.
 ///

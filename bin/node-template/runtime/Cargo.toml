@@ -22,6 +22,10 @@ frame-system = { version = "3.0.0", default-features = false, path = "../../../f
 pallet-timestamp = { version = "3.0.0", default-features = false, path = "../../../frame/timestamp" }
 pallet-transaction-payment = { version = "3.0.0", default-features = false, path = "../../../frame/transaction-payment" }
 frame-executive = { version = "3.0.0", default-features = false, path = "../../../frame/executive" }
+pallet-staking-reward-curve = { version = "3.0.0", default-features = false, path = "../../../frame/staking/reward-curve" }
+pallet-authorship = { version = "3.0.0", default-features = false, path = "../../../frame/authorship" }
+pallet-offences = { version = "3.0.0", default-features = false, path = "../../../frame/offences" }
+pallet-collective = { version = "3.0.0", default-features = false, path = "../../../frame/collective" }
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 sp-api = { version = "3.0.0", default-features = false, path = "../../../primitives/api" }
 sp-block-builder = { path = "../../../primitives/block-builder", default-features = false, version = "3.0.0"}
@@ -59,23 +63,30 @@ std = [
 	"codec/std",
 	"frame-executive/std",
 	"frame-support/std",
-	"pallet-aura/std",
+	"pallet-babe/std",
 	"pallet-balances/std",
 	"pallet-grandpa/std",
+	"pallet-im-online/std",
 	"pallet-randomness-collective-flip/std",
 	"pallet-sudo/std",
+	"pallet-session/std",
+	"pallet-staking/std",
+	"pallet-authorship/std",
+	"pallet-offences/std",
+	"pallet-collective/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"serde",
 	"sp-api/std",
 	"sp-block-builder/std",
-	"sp-consensus-aura/std",
+	"sp-consensus-babe/std",
 	"sp-core/std",
 	"sp-inherents/std",
 	"sp-offchain/std",
 	"sp-runtime/std",
 	"sp-session/std",
+	"sp-staking/std",
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
