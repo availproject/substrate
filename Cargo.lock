@@ -4261,6 +4261,8 @@ dependencies = [
  "log",
  "lru",
  "node-template-runtime",
+ "pallet-im-online",
+ "pallet-staking",
  "pallet-transaction-payment-rpc",
  "parity-scale-codec",
  "rand 0.8.3",
