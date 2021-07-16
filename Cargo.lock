@@ -4253,6 +4253,7 @@ dependencies = [
  "frame-benchmarking-cli",
  "frame-support",
  "frame-system",
+ "hex-literal",
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
