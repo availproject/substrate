@@ -66,6 +66,8 @@ pub fn new_partial(config: &Configuration) -> Result<sc_service::PartialComponen
 	// 	grandpa_block_import.clone(), client.clone(),
 	// );
 
+	let justification_import = grandpa_block_import.clone();
+	
 	let (babe_block_import, babe_link) = sc_consensus_babe::block_import(
 		sc_consensus_babe::Config::get_or_compute(&*client)?,
 		grandpa_block_import,
@@ -75,7 +77,7 @@ pub fn new_partial(config: &Configuration) -> Result<sc_service::PartialComponen
 	let import_queue = sc_consensus_babe::import_queue(
 		babe_link.clone(),
 		babe_block_import.clone(),
-		Some(Box::new(grandpa_block_import.clone())),
+		Some(Box::new(justification_import)),
 		client.clone(),
 		select_chain.clone(),
 		inherent_data_providers.clone(),
@@ -278,6 +280,8 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
 	// 	client.clone(),
 	// );
 
+	let justification_import = grandpa_block_import.clone();
+
 	let (babe_block_import, babe_link) = sc_consensus_babe::block_import(
 		sc_consensus_babe::Config::get_or_compute(&*client)?,
 		grandpa_block_import,
@@ -287,7 +291,7 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
 	let import_queue = sc_consensus_babe::import_queue(
 		babe_link.clone(),
 		babe_block_import,
-		Some(Box::new(grandpa_block_import)),
+		Some(Box::new(justification_import)),
 		client.clone(),
 		select_chain.clone(),
 		InherentDataProviders::new(),
