@@ -78,7 +78,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 			wasm_binary,
 			// Initial PoA authorities
 			vec![
-				authority_keys_from_seed("Alice"),
+				authority_keys_from_seed("Bob"),
 			],
 			// Sudo account
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -321,7 +321,7 @@ pub fn testnet_genesis(
 
 	let num_endowed_accounts = endowed_accounts.len();
 
-	const STASH: Balance = 0;
+	const STASH: u128 = 100 * DOLLARS;
 
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
@@ -333,7 +333,7 @@ pub fn testnet_genesis(
 		}),
 		pallet_balances: Some(BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 20 << 60)).collect(),
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 20	 << 60)).collect(),
 		}),
 		// pallet_babe: Some(BabeConfig {
 		// 	authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
