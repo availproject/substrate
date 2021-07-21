@@ -11,6 +11,7 @@ repository = "https://github.com/maticnetwork/substrate/"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+static_assertions = "1.1.0"
 kate = { path = "../../../client/kate", default-features = false }
 pallet-aura = { version = "3.0.0", default-features = false, path = "../../../frame/aura" }
 pallet-balances = { version = "3.0.0", default-features = false, path = "../../../frame/balances" }
@@ -26,6 +27,7 @@ pallet-staking-reward-curve = { version = "3.0.0", default-features = false, pat
 pallet-authorship = { version = "3.0.0", default-features = false, path = "../../../frame/authorship" }
 pallet-offences = { version = "3.0.0", default-features = false, path = "../../../frame/offences" }
 pallet-collective = { version = "3.0.0", default-features = false, path = "../../../frame/collective" }
+pallet-authority-discovery = { version = "3.0.0", default-features = false, path = "../../../frame/authority-discovery" }
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 sp-api = { version = "3.0.0", default-features = false, path = "../../../primitives/api" }
 sp-block-builder = { path = "../../../primitives/block-builder", default-features = false, version = "3.0.0"}
@@ -65,12 +67,16 @@ std = [
 	"frame-support/std",
 	"pallet-babe/std",
 	"pallet-balances/std",
+	"pallet-authority-discovery/std",
 	"pallet-grandpa/std",
 	"pallet-im-online/std",
 	"pallet-randomness-collective-flip/std",
 	"pallet-sudo/std",
 	"pallet-session/std",
+	"pallet-elections-phragmen/std",
 	"pallet-staking/std",
+	"pallet-treasury/std",
+	"pallet-bounties/std",
 	"pallet-authorship/std",
 	"pallet-offences/std",
 	"pallet-collective/std",
@@ -81,6 +87,7 @@ std = [
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-babe/std",
+	"sp-authority-discovery/std",
 	"sp-core/std",
 	"sp-inherents/std",
 	"sp-offchain/std",
