@@ -2,7 +2,7 @@ use sp_core::{Pair, Public, crypto::UncheckedInto, sr25519};
 use node_template_runtime::{
 	AuthorityDiscoveryConfig, AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, SystemConfig, wasm_binary_unwrap, Signature, StakerStatus,
-	SessionConfig, StakingConfig, ElectionsConfig, opaque::SessionKeys, Balance, ImOnlineConfig, CouncilConfig,
+	SessionConfig, StakingConfig, ElectionsConfig, SessionKeys, Balance, ImOnlineConfig, CouncilConfig,
 };
 use node_template_runtime::Block;
 use node_template_runtime::currency::*;
@@ -166,7 +166,7 @@ pub fn testnet_genesis(
 
 	let num_endowed_accounts = endowed_accounts.len();
 	const ENDOWMENT: Balance = 10_000_000 * DOLLARS;
-	const STASH: Balance = 110 ;
+	const STASH: Balance =  10_000 ;
 	let minVal: u32 = 1;
 	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
 		vec![

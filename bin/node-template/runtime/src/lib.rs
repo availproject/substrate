@@ -103,16 +103,16 @@ pub mod opaque {
 	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 	/// Opaque block identifier type.
 	pub type BlockId = generic::BlockId<Block>;
-
-	impl_opaque_keys! {
-		pub struct SessionKeys {
-			pub babe: Babe,
-			pub grandpa: Grandpa,
-			pub im_online: ImOnline,
-			pub authority_discovery: AuthorityDiscovery,
-		}
+}
+impl_opaque_keys! {
+	pub struct SessionKeys {
+		pub babe: Babe,
+		pub grandpa: Grandpa,
+		pub im_online: ImOnline,
+		pub authority_discovery: AuthorityDiscovery,
 	}
 }
+
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("node-template"),
@@ -413,8 +413,8 @@ impl pallet_session::Config for Runtime {
 	type ShouldEndSession = Babe;
 	type NextSessionRotation = Babe;
 	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
-	type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
-	type Keys = opaque::SessionKeys;
+	type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
+	type Keys = SessionKeys;
 	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
 	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
 }
@@ -749,13 +749,13 @@ impl_runtime_apis! {
 
 	impl sp_session::SessionKeys<Block> for Runtime {
 		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			opaque::SessionKeys::generate(seed)
+			SessionKeys::generate(seed)
 		}
 
 		fn decode_session_keys(
 			encoded: Vec<u8>,
 		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
-			opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
+			SessionKeys::decode_into_raw_public_keys(&encoded)
 		}
 	}
 
