@@ -1099,12 +1099,14 @@ decl_storage! {
 	add_extra_genesis {
 		config(stakers):
 			Vec<(T::AccountId, T::AccountId, BalanceOf<T>, StakerStatus<T::AccountId>)>;
+			
 		build(|config: &GenesisConfig<T>| {
 			for &(ref stash, ref controller, balance, ref status) in &config.stakers {
 				assert!(
 					T::Currency::free_balance(&stash) >= balance,
-					"Stash does not have enough balance to bond."
+					"Stash does not have enough balance to bond	: {:?}	{:?}  {:?}",&stash, &controller, &balance
 				);
+			log!(warn, "stash balance {:?}  {:?}  {:?}  {:?}	",  stash, &controller, &balance, &status);
 				let _ = <Module<T>>::bond(
 					T::Origin::from(Some(stash.clone()).into()),
 					T::Lookup::unlookup(controller.clone()),
@@ -3025,8 +3027,8 @@ impl<T: Config> Module<T> {
 			// If we don't have enough candidates, nothing to do.
 			log!(
 				warn,
-				"💸 Chain does not have enough staking candidates to operate. Era {:?}.",
-				Self::current_era()
+				"💸 Chain does not have enough staking candidates to operate. Era {:?}.validator-count {:?}",
+				Self::current_era(), all_validators.len()
 			);
 			None
 		} else {
