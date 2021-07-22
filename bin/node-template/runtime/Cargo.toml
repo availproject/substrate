@@ -18,6 +18,7 @@ pallet-babe = { version = "2.0.0", default-features = false, path = "../../../fr
 pallet-balances = { version = "2.0.0", default-features = false, path = "../../../frame/balances" }
 frame-support = { version = "2.0.0", default-features = false, path = "../../../frame/support" }
 pallet-grandpa = { version = "2.0.0", default-features = false, path = "../../../frame/grandpa" }
+pallet-indices = { version = "2.0.0", default-features = false, path = "../../../frame/indices" }
 pallet-im-online = { version = "2.0.0", default-features = false, path = "../../../frame/im-online" }
 pallet-randomness-collective-flip = { version = "2.0.0", default-features = false, path = "../../../frame/randomness-collective-flip" }
 pallet-sudo = { version = "2.0.0", default-features = false, path = "../../../frame/sudo" }
@@ -78,6 +79,10 @@ std = [
 	"pallet-balances/std",
 	"pallet-authority-discovery/std",
 	"pallet-grandpa/std",
+	"pallet-indices/std",
+	"pallet-timestamp/std",
+	"pallet-transaction-payment/std",
+	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-im-online/std",
 	"pallet-randomness-collective-flip/std",
 	"pallet-sudo/std",
@@ -89,9 +94,6 @@ std = [
 	"pallet-authorship/std",
 	"pallet-offences/std",
 	"pallet-collective/std",
-	"pallet-timestamp/std",
-	"pallet-transaction-payment/std",
-	"pallet-transaction-payment-rpc-runtime-api/std",
 	"serde",
 	"sp-api/std",
 	"sp-block-builder/std",
