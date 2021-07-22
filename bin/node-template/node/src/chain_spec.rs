@@ -190,7 +190,6 @@ pub fn testnet_genesis(
 			endowed_accounts.push(x.0.clone())
 		}
 	);
-
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
 			// Add Wasm runtime to storage.
@@ -219,16 +218,6 @@ pub fn testnet_genesis(
 			// Assign network admin rights.
 			key: root_key,
 		}),
-		pallet_session: Some(SessionConfig {
-			keys: initial_authorities.iter().map(|x| {
-				(x.0.clone(), x.0.clone(), session_keys(
-					x.3.clone(),
-					x.2.clone(),
-					x.4.clone(),
-					x.5.clone(),
-				))
-			}).collect::<Vec<_>>(),
-		}),
 		pallet_staking: Some(StakingConfig {
 			validator_count: initial_authorities.len() as u32 * 2,
 			minimum_validator_count: initial_authorities.len() as u32,
@@ -238,6 +227,16 @@ pub fn testnet_genesis(
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
 			slash_reward_fraction: Perbill::from_percent(10),
 			.. Default::default()
+		}),
+		pallet_session: Some(SessionConfig {
+			keys: initial_authorities.iter().map(|x| {
+				(x.0.clone(), x.0.clone(), session_keys(
+					x.3.clone(),
+					x.2.clone(),
+					x.4.clone(),
+					x.5.clone(),
+				))
+			}).collect::<Vec<_>>(),
 		}),
 		pallet_im_online: Some(ImOnlineConfig {
 			keys: vec![],
