@@ -1104,9 +1104,10 @@ decl_storage! {
 			for &(ref stash, ref controller, balance, ref status) in &config.stakers {
 				assert!(
 					T::Currency::free_balance(&stash) >= balance,
-					"Stash does not have enough balance to bond	: {:?}	{:?}  {:?}",&stash, &controller, &balance
+					"Stash does not have enough balance to bond	: {:?}	{:?}  {:?}  {:?}  {:?}	{:?}",&stash, &controller,T::Currency::free_balance(&stash), T::Currency::free_balance(&controller), &balance, balance
 				);
-			log!(warn, "stash balance {:?}  {:?}  {:?}  {:?}	",  stash, &controller, &balance, &status);
+				// T::Currency::make_free_balance_be(&stash, balance);
+			log!(warn, "stash balance {:?}  {:?}  {:?}  {:?}",  stash, &controller, &balance, &status);
 				let _ = <Module<T>>::bond(
 					T::Origin::from(Some(stash.clone()).into()),
 					T::Lookup::unlookup(controller.clone()),
