@@ -21,7 +21,8 @@ pub use sp_runtime::{Permill, Perbill, Percent};
 use sp_runtime::generic::Era;
 pub use frame_support::{
 	construct_runtime, parameter_types, StorageValue, debug, RuntimeDebug,
-	traits::{KeyOwnerProofSystem, Randomness, U128CurrencyToVote, Currency, LockIdentifier},
+	traits::{KeyOwnerProofSystem, Randomness, U128CurrencyToVote,
+			 Currency, LockIdentifier, Filter, OnUnbalanced, Imbalance},
 	weights::{
 		Weight, IdentityFee,
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -58,6 +59,7 @@ use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sp_version::RuntimeVersion;
 /// Import the DA pallet.
 pub use da;
+#[cfg(feature = "std")]
 pub use pallet_staking::StakerStatus;
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -113,14 +115,19 @@ impl_opaque_keys! {
 }
 
 
+/// Runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("node-template"),
-	impl_name: create_runtime_str!("node-template"),
-	authoring_version: 1,
-	spec_version: 1,
-	impl_version: 1,
+	spec_name: create_runtime_str!("node"),
+	impl_name: create_runtime_str!("substrate-node"),
+	authoring_version: 10,
+	// Per convention: if the runtime behavior changes, increment spec_version
+	// and set impl_version to 0. If only runtime
+	// implementation changes and behavior does not, then leave spec_version as
+	// is and increment impl_version.
+	spec_version: 261,
+	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 2,
 };
 
 /// This determines the average expected block time that we are targetting.
@@ -154,27 +161,79 @@ pub mod currency {
 	pub const MILLICENTS: Balance = 1_000_000_000;
 	pub const CENTS: Balance = 1_000 * MILLICENTS;    // assume this is worth about a cent.
 	pub const DOLLARS: Balance = 100 * CENTS;
+	pub const fn deposit(items: u32, bytes: u32) -> Balance {
+		items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+	}
 }
 
-pub struct CurrencyToVoteHandler;
+// pub struct CurrencyToVoteHandler;
 
-impl CurrencyToVoteHandler {
-	fn factor() -> Balance { (Balances::total_issuance() / u64::max_value() as Balance).max(1) }
-}
+// impl CurrencyToVoteHandler {
+// 	fn factor() -> Balance { (Balances::total_issuance() / u64::max_value() as Balance).max(1) }
+// }
 
-impl Convert<Balance, u64> for CurrencyToVoteHandler {
-	fn convert(x: Balance) -> u64 { (x / Self::factor()) as u64 }
-}
+// impl Convert<Balance, u64> for CurrencyToVoteHandler {
+// 	fn convert(x: Balance) -> u64 { (x / Self::factor()) as u64 }
+// }
 
-impl Convert<u128, Balance> for CurrencyToVoteHandler {
-	fn convert(x: u128) -> Balance { x * Self::factor() }
-}
+// impl Convert<u128, Balance> for CurrencyToVoteHandler {
+// 	fn convert(x: u128) -> Balance { x * Self::factor() }
+// }
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
 	NativeVersion {
 		runtime_version: VERSION,
 		can_author_with: Default::default(),
+	}
+}
+
+pub struct BaseFilter;
+impl Filter<Call> for BaseFilter {
+	fn filter(call: &Call) -> bool {
+		match call {
+			// These modules are all allowed to be called by transactions:
+			Call::System(_) | Call::Scheduler(_) | Call::Indices(_) |
+			Call::Babe(_) | Call::Timestamp(_) | Call::Balances(_) |
+			Call::Authorship(_) | Call::Staking(_) |
+			Call::Session(_) | Call::Grandpa(_) | Call::ImOnline(_) | 
+			Call::RandomnessCollectiveFlip(_) | Call::Elections(_) |
+			Call::Treasury(_) | Call::Bounties(_) | Call::AuthorityDiscovery(_) |
+			Call::Offences(_) | Call::Council(_) | Call::Sudo(_) | Call::DataAvailability(_)
+			=> true,
+		}
+	}
+}
+// pub struct BaseFilter;
+// impl Filter<Call> for BaseFilter {
+// 	fn filter(call: &Call) -> bool {
+// 		// Avoid processing transactions from template module.
+// 		!matches!(call, Call::TemplateModule(_))
+// 	}
+// }
+
+pub struct Author;
+impl OnUnbalanced<NegativeImbalance> for Author {
+	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+		Balances::resolve_creating(&Authorship::author(), amount);
+	}
+}
+
+type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
+
+pub struct DealWithFees;
+impl OnUnbalanced<NegativeImbalance> for DealWithFees {
+	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item=NegativeImbalance>) {
+		if let Some(fees) = fees_then_tips.next() {
+			// for fees, 80% to treasury, 20% to author
+			let mut split = fees.ration(80, 20);
+			if let Some(tips) = fees_then_tips.next() {
+				// for tips, if any, 80% to treasury, 20% to author (though this can be anything)
+				tips.ration_merge_into(80, 20, &mut split);
+			}
+			Treasury::on_unbalanced(split.0);
+			Author::on_unbalanced(split.1);
+		}
 	}
 }
 
@@ -194,7 +253,7 @@ parameter_types! {
 
 impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = ();
+	type BaseCallFilter = BaseFilter;
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = BlockWeights;
 	/// The maximum length of a block (in bytes).
@@ -241,6 +300,22 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = ();
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
+}
+
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * MaximumBlockWeight::get();	
+	pub const MaxScheduledPerBlock: u32 = 50;
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -585,6 +660,7 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
+		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
 		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
 		Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
