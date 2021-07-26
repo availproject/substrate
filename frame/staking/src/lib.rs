@@ -1100,7 +1100,7 @@ decl_storage! {
 					"Stash does not have enough balance to bond	: {:?}	{:?}  {:?}  {:?}  {:?}	{:?}",&stash, &controller,T::Currency::free_balance(&stash), T::Currency::free_balance(&controller), &balance, balance
 				);
 				// T::Currency::make_free_balance_be(&stash, balance);
-			log!(warn, "stash balance {:?}  {:?}  {:?}  {:?}",  stash, &controller, &balance, &status);
+			log!(warn, "stash balance {:?}  {:?}  {:?}  {:?}  {:?}  {:?}",  stash, controller, balance, T::Currency::free_balance(&stash), T::Currency::free_balance(&controller), &status);
 				let _ = <Module<T>>::bond(
 					T::Origin::from(Some(stash.clone()).into()),
 					T::Lookup::unlookup(controller.clone()),

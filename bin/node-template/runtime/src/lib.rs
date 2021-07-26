@@ -58,6 +58,7 @@ use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sp_version::RuntimeVersion;
 /// Import the DA pallet.
 pub use da;
+use frame_support::traits::StorageMapShim;
 pub use pallet_staking::StakerStatus;
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -317,7 +318,17 @@ impl pallet_balances::Config for Runtime {
 	type Event = Event;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
+	// type AccountStore = System;
+	/// Change AccountStore from System to Balances 
+	type AccountStore = 
+		StorageMapShim<
+			pallet_balances::Account<Runtime>, 
+			frame_system::CallOnCreatedAccount<Runtime>, 
+			frame_system::CallKillAccount<Runtime>, 
+			AccountId, 
+			pallet_balances::AccountData<Balance>
+		>;
+
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
 

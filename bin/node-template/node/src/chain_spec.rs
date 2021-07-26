@@ -166,7 +166,7 @@ pub fn testnet_genesis(
 
 	let num_endowed_accounts = endowed_accounts.len();
 	let ENDOWMENT: Balance = 10_000_000 * DOLLARS;
-	let STASH: Balance = 1_000;
+	let STASH: Balance = 0; // 1_000;
 	let minVal: u32 = 1;
 	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
 		vec![
