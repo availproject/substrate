@@ -30,6 +30,7 @@ pallet-treasury = { version = "2.0.0", default-features = false, path = "../../.
 pallet-bounties = { version = "2.0.0", default-features = false, path = "../../../frame/bounties" }
 pallet-authorship = { version = "2.0.0", default-features = false, path = "../../../frame/authorship" }
 pallet-offences = { version = "2.0.0", default-features = false, path = "../../../frame/offences" }
+pallet-scheduler = { version = "2.0.0", default-features = false, path = "../../../frame/scheduler" }
 pallet-collective = { version = "2.0.0", default-features = false, path = "../../../frame/collective" }
 pallet-authority-discovery = { version = "2.0.0", default-features = false, path = "../../../frame/authority-discovery" }
 frame-system = { version = "2.0.0", default-features = false, path = "../../../frame/system" }
@@ -94,6 +95,7 @@ std = [
 	"pallet-authorship/std",
 	"pallet-offences/std",
 	"pallet-collective/std",
+	"pallet-scheduler/std",
 	"serde",
 	"sp-api/std",
 	"sp-block-builder/std",

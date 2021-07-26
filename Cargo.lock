@@ -4330,6 +4330,7 @@ dependencies = [
  "pallet-indices",
  "pallet-offences",
  "pallet-randomness-collective-flip",
+ "pallet-scheduler",
  "pallet-session",
  "pallet-staking",
  "pallet-staking-reward-curve",
