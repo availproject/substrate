@@ -1104,7 +1104,7 @@ decl_storage! {
 			for &(ref stash, ref controller, balance, ref status) in &config.stakers {
 				assert!(
 					T::Currency::free_balance(&stash) >= balance,
-					"Stash does not have enough balance to bond	: {:?}	{:?}  {:?}  {:?}  {:?}	{:?}",&stash, &controller,T::Currency::free_balance(&stash), T::Currency::free_balance(&controller), &balance, balance
+					"Stash does not have enough balance to bond	: {:?} || {:?} || {:?} || {:?} || {:?}",&stash, &controller,T::Currency::free_balance(&stash), T::Currency::free_balance(&controller), &balance
 				);
 				// T::Currency::make_free_balance_be(&stash, balance);
 			log!(warn, "stash balance {:?}  {:?}  {:?}  {:?}",  stash, &controller, &balance, &status);
