@@ -202,7 +202,8 @@ impl Filter<Call> for BaseFilter {
 			Call::Session(_) | Call::Grandpa(_) | Call::ImOnline(_) | 
 			Call::RandomnessCollectiveFlip(_) | Call::Elections(_) |
 			Call::Treasury(_) | Call::Bounties(_) | Call::AuthorityDiscovery(_) |
-			Call::Offences(_) | Call::Council(_) | Call::Sudo(_) | Call::DataAvailability(_)
+			Call::Offences(_) | Call::Council(_) | Call::Sudo(_) | Call::DataAvailability(_)  |
+			Call::Utility(_) | Call::Democracy(_) | Call::TechnicalMembership(_)
 			=> true,
 		}
 	}
