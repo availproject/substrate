@@ -17,6 +17,7 @@ codec = { package = "parity-scale-codec", version = "1.3.4", default-features = 
 pallet-babe = { version = "2.0.0", default-features = false, path = "../../../frame/babe" }
 pallet-balances = { version = "2.0.0", default-features = false, path = "../../../frame/balances" }
 frame-support = { version = "2.0.0", default-features = false, path = "../../../frame/support" }
+pallet-utility = { version = "2.0.0", default-features = false, path = "../../../frame/utility" }
 pallet-grandpa = { version = "2.0.0", default-features = false, path = "../../../frame/grandpa" }
 pallet-indices = { version = "2.0.0", default-features = false, path = "../../../frame/indices" }
 pallet-im-online = { version = "2.0.0", default-features = false, path = "../../../frame/im-online" }
@@ -26,6 +27,8 @@ pallet-session = { default-features = false, version = '2.0.0', features = ['his
 pallet-elections-phragmen = { version = "2.0.0", default-features = false, path = "../../../frame/elections-phragmen" }
 pallet-staking = { version = "2.0.0", default-features = false, path = "../../../frame/staking" }
 pallet-staking-reward-curve = { version = "2.0.0", default-features = false, path = "../../../frame/staking/reward-curve" }
+pallet-democracy = { version = "2.0.0", default-features = false, path = "../../../frame/democracy" }
+pallet-membership = { version = "2.0.0", default-features = false, path = "../../../frame/membership" }
 pallet-treasury = { version = "2.0.0", default-features = false, path = "../../../frame/treasury" }
 pallet-bounties = { version = "2.0.0", default-features = false, path = "../../../frame/bounties" }
 pallet-authorship = { version = "2.0.0", default-features = false, path = "../../../frame/authorship" }
@@ -91,11 +94,14 @@ std = [
 	"pallet-elections-phragmen/std",
 	"pallet-staking/std",
 	"pallet-treasury/std",
+	"pallet-democracy/std",
 	"pallet-bounties/std",
 	"pallet-authorship/std",
 	"pallet-offences/std",
 	"pallet-collective/std",
 	"pallet-scheduler/std",
+	"pallet-utility/std",
+	"pallet-membership/std",
 	"serde",
 	"sp-api/std",
 	"sp-block-builder/std",
