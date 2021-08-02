@@ -1,8 +1,8 @@
 use sp_core::{Pair, Public, crypto::UncheckedInto, sr25519};
 use node_template_runtime::{
 	AuthorityDiscoveryConfig, AccountId, BabeConfig, BalancesConfig, IndicesConfig, GenesisConfig, GrandpaConfig,
-	SudoConfig, SystemConfig, wasm_binary_unwrap, Signature, StakerStatus,
-	SessionConfig, StakingConfig, ElectionsConfig, SessionKeys, Balance, ImOnlineConfig, CouncilConfig,
+	DemocracyConfig, SudoConfig, SystemConfig, wasm_binary_unwrap, Signature, StakerStatus,
+	SessionConfig, StakingConfig, ElectionsConfig, SessionKeys, Balance, ImOnlineConfig, CouncilConfig, TechnicalCommitteeConfig,
 };
 use node_template_runtime::Block;
 use node_template_runtime::currency::*;
