@@ -1,7 +1,7 @@
 use sp_core::{Pair, Public, crypto::UncheckedInto, sr25519};
 use node_template_runtime::{
-	AuthorityDiscoveryConfig, AccountId, BabeConfig, BalancesConfig, IndicesConfig, GenesisConfig, GrandpaConfig,
-	DemocracyConfig, SudoConfig, SystemConfig, wasm_binary_unwrap, Signature, StakerStatus,
+	AuthorityDiscoveryConfig, AccountId, BabeConfig, BalancesConfig, IndicesConfig, GenesisConfig, GrandpaConfig, DemocracyConfig,
+	SudoConfig, SystemConfig, WASM_BINARY, Signature, StakerStatus,
 	SessionConfig, StakingConfig, ElectionsConfig, SessionKeys, Balance, ImOnlineConfig, CouncilConfig, TechnicalCommitteeConfig,
 };
 use node_template_runtime::Block;
@@ -94,61 +94,66 @@ pub fn authority_keys_from_seed(seed: &str) -> (
 	)
 }
 
-fn development_config_genesis() -> GenesisConfig {
+fn development_config_genesis(wasm_binary: &[u8]) -> GenesisConfig {
 	testnet_genesis(
+		wasm_binary,
 		vec![
 			authority_keys_from_seed("Alice"),
 		],
-		vec![],
+		//vec![],
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
 		None,
 		true,
 	)
 }
 // //single validator ALICE
-pub fn development_config() -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn development_config() -> Result<ChainSpec, String> {
+	let wasm_binary = WASM_BINARY.ok_or("Development wasm not available")?;
+	Ok(ChainSpec::from_genesis(
 		"Avail-Dev",
 		"Dev",
 		ChainType::Development,
-		development_config_genesis,
+		move || development_config_genesis(wasm_binary),
 		vec![],
 		None,
 		None,
 		None,
 		Default::default(),
-	)
+	))
 }
 
-fn local_testnet_genesis() -> GenesisConfig {
+fn local_testnet_genesis(wasm_binary: &[u8]) -> GenesisConfig {
 	testnet_genesis(
+		wasm_binary,
 		vec![
 			authority_keys_from_seed("Alice"),
 			authority_keys_from_seed("Bob"),
 		],
-		vec![],
+		//vec![],
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
 		None,
 		false,
 	)
 }
 //multivalidator ALICE+BOB
-pub fn local_testnet_config() -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn local_testnet_config() -> Result<ChainSpec, String> {
+	let wasm_binary = WASM_BINARY.ok_or("Development wasm not available")?;
+	Ok(ChainSpec::from_genesis(
 		"Avail-Testnet",
 		"local_testnet",
 		ChainType::Local,
-		local_testnet_genesis,
+		move || local_testnet_genesis(wasm_binary),
 		vec![],
 		None,
 		None,
 		None,
 		Default::default(),
-	)
+	))
 }
 
 /// Configure initial storage state for FRAME modules.
 pub fn testnet_genesis(
+	wasm_binary: &[u8],
 	initial_authorities: Vec<(
 		AccountId,
 		AccountId,
@@ -157,7 +162,7 @@ pub fn testnet_genesis(
 		ImOnlineId,
 		AuthorityDiscoveryId,
 	)>,
-	initial_nominators: Vec<AccountId>,
+	//initial_nominators: Vec<AccountId>,
 	root_key: AccountId,
 	endowed_accounts: Option<Vec<AccountId>>,
 	_enable_println: bool,
@@ -166,7 +171,7 @@ pub fn testnet_genesis(
 
 	let num_endowed_accounts = endowed_accounts.len();
 	let ENDOWMENT: Balance = 10_000_000 * DOLLARS;
-	let STASH: Balance = ENDOWMENT / 1000;
+	let STASH: Balance = ENDOWMENT/1_000;
 	let minVal: u32 = 1;
 	let mut endowed_accounts: Vec<AccountId> = endowed_accounts.unwrap_or_else(|| {
 		vec![
@@ -193,7 +198,7 @@ pub fn testnet_genesis(
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
 			// Add Wasm runtime to storage.
-			code: wasm_binary_unwrap().to_vec(),
+			code: wasm_binary.to_vec(),
 			changes_trie_config: Default::default(),
 			kc_public_params: params,
 			block_length: BlockLength::with_normal_ratio(128, 256, 64, 	Perbill::from_percent(90)),

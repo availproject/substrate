@@ -132,7 +132,7 @@ mod inner {
 				ws::Error::Io(io) => io,
 				ws::Error::ConnectionClosed => io::ErrorKind::BrokenPipe.into(),
 				e => {
-					error!("{}", e);
+					error!("{}test", e);
 					io::ErrorKind::Other.into()
 				}
 			})
