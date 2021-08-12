@@ -244,6 +244,7 @@ pub fn check_execution_proof<Header, E, H>(
 			Default::default(),
 			header.hash(),
 			Default::default(),
+			Default::default(),
 		),
 	)
 }

@@ -25,7 +25,7 @@ use crate::traits::{
 	MaybeSerializeDeserialize, MaybeSerialize, MaybeDisplay,
 	MaybeMallocSizeOf,
 };
-use crate::generic::Digest;
+use crate::generic::{Digest, DataLookup};
 use sp_core::U256;
 use sp_std::{
 	prelude::*,
@@ -140,6 +140,8 @@ pub struct Header<Number: Copy + Into<U256> + TryFrom<U256>, Hash: HashT> {
 	pub extrinsics_root: ExtrinsicsRoot<Hash::Output>,
 	/// A chain-specific digest of data useful for light clients or referencing auxiliary data.
 	pub digest: Digest<Hash::Output>,
+	/// Application specific data index
+	pub app_data_lookup: DataLookup,
 }
 
 #[cfg(feature = "std")]
@@ -154,7 +156,8 @@ where
 			self.number.size_of(ops) +
 			self.state_root.size_of(ops) +
 			self.extrinsics_root.size_of(ops) +
-			self.digest.size_of(ops)
+			self.digest.size_of(ops) +
+			self.app_data_lookup.size_of(ops)
 	}
 }
 
@@ -186,6 +189,7 @@ impl<Number, Hash> Decode for Header<Number, Hash> where
 			state_root: Decode::decode(input)?,
 			extrinsics_root: Decode::decode(input)?,
 			digest: Decode::decode(input)?,
+			app_data_lookup: Decode::decode(input)?,
 		})
 	}
 }
@@ -201,6 +205,7 @@ impl<Number, Hash> Encode for Header<Number, Hash> where
 		dest.push(&self.state_root);
 		dest.push(&self.extrinsics_root);
 		dest.push(&self.digest);
+		dest.push(&self.app_data_lookup);
 	}
 }
 
@@ -243,12 +248,15 @@ impl<Number, Hash> traits::Header for Header<Number, Hash> where
 		&mut self.digest
 	}
 
+	fn app_data_lookup(&self) -> &DataLookup { &self.app_data_lookup }
+
 	fn new(
 		number: Self::Number,
 		extrinsics_root: Self::Root,
 		state_root: Self::Hash,
 		parent_hash: Self::Hash,
 		digest: Digest<Self::Hash>,
+		app_data_lookup: DataLookup,
 	) -> Self {
 		Header {
 			number,
@@ -256,6 +264,7 @@ impl<Number, Hash> traits::Header for Header<Number, Hash> where
 			state_root,
 			parent_hash,
 			digest,
+			app_data_lookup
 		}
 	}
 }

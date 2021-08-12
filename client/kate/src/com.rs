@@ -27,14 +27,34 @@ pub struct BlockDimensions {
 	pub chunk_size: usize,
 }
 
+pub type AppIdXts = Vec<(u32, Vec<u8>)>;
+pub type XtsLayout = Vec<(u32, u32)>;
+type FlatData = Vec<u8>;
+
 pub fn flatten_and_pad_block(
 	rows_num: usize,
 	cols_num: usize,
 	chunk_size: usize,
-	extrinsics: &Vec<Vec<u8>>,
+	extrinsics: &AppIdXts,
 	header_hash: &[u8]
-) -> (Vec<u8>, BlockDimensions) {
-	let mut block:Vec<u8> = extrinsics.clone().into_iter().flatten().collect::<Vec<u8>>(); // TODO probably can be done more efficiently
+) -> (XtsLayout, FlatData, BlockDimensions) {
+	let mut tx_layout:XtsLayout = Vec::with_capacity(extrinsics.len());
+	let mut block:Vec<u8> = Vec::with_capacity(extrinsics.len() + config::SCALAR_SIZE_WIDE * extrinsics.len());
+
+	for xt in extrinsics {
+		// get aligned xt length
+		let aligned_len = xt.1.len() + (config::SCALAR_SIZE_WIDE - (xt.1.len() % config::SCALAR_SIZE_WIDE));
+		// insert into flat buffer
+		block.extend(&xt.1);
+		// add extra 0's if required
+		let more_elems = aligned_len - xt.1.len();
+		for _ in 0..more_elems {
+			block.push(0);
+		}
+		// save tx by app id and size in chunks
+		tx_layout.push((xt.0, (aligned_len / config::SCALAR_SIZE_WIDE) as u32));
+	}
+
 	let block_dims = get_block_dimensions(block.len(), rows_num, cols_num, chunk_size);
 
 	if block.len() < block_dims.size {
@@ -51,7 +71,7 @@ pub fn flatten_and_pad_block(
 		panic!("block is too big, must not happen!");
 	}
 
-	(block, block_dims)
+	(tx_layout, block, block_dims)
 }
 
 pub fn get_block_dimensions(
@@ -239,17 +259,17 @@ pub fn build_commitments(
 	rows_num: usize,
 	cols_num: usize,
 	chunk_size: usize,
-	extrinsics: &Vec<Vec<u8>>,
+	extrinsics_by_key: &Vec<(u32, Vec<u8>)>,
 	header_hash: &[u8]
-) -> (Vec<u8>, BlockDimensions) {
+) -> (XtsLayout, Vec<u8>, BlockDimensions, Vec<BlsScalar>) {
 	let start= Instant::now();
 
 	// generate data matrix first
-	let (block, block_dims) = flatten_and_pad_block(
+	let (tx_layout, block, block_dims) = flatten_and_pad_block(
 		rows_num,
 		cols_num,
 		chunk_size,
-		extrinsics,
+		extrinsics_by_key,
 		header_hash
 	);
 
@@ -316,5 +336,5 @@ pub fn build_commitments(
 		start.elapsed()
 	);
 
-	(result_bytes, block_dims)
+	(tx_layout, result_bytes, block_dims, ext_data_matrix)
 }

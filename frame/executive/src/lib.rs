@@ -125,7 +125,7 @@ use sp_runtime::{
 	generic::Digest, ApplyExtrinsicResult,
 	traits::{
 		self, Header, Zero, One, Checkable, Applyable, CheckEqual, ValidateUnsigned, NumberFor,
-		Block as BlockT, Dispatchable, Saturating, ExtrinsicsRoot, Keyable,
+		Block as BlockT, Dispatchable, Saturating, ExtrinsicsRoot, ApplicationId,
 	},
 	transaction_validity::{TransactionValidity, TransactionSource, TransactionValidityError, InvalidTransaction},
 };
@@ -197,7 +197,7 @@ impl<
 	COnRuntimeUpgrade: OnRuntimeUpgrade,
 > Executive<System, Block, Context, UnsignedValidator, AllModules, COnRuntimeUpgrade>
 where
-	Block::Extrinsic: Checkable<Context> + Codec + Keyable,
+	Block::Extrinsic: Checkable<Context> + Codec + ApplicationId,
 	CheckedOf<Block::Extrinsic, Context>:
 		Applyable +
 		GetDispatchInfo,
@@ -348,7 +348,7 @@ where
 	/// hashes.
 	pub fn apply_extrinsic(uxt: Block::Extrinsic) -> ApplyExtrinsicResult {
 		sp_io::init_tracing();
-		let app_key = uxt.key();
+		let app_id = uxt.app_id();
 		let encoded = uxt.encode();
 		let encoded_len = encoded.len();
 		sp_tracing::enter_span!(
@@ -361,7 +361,7 @@ where
 		// We don't need to make sure to `note_extrinsic` only after we know it's going to be
 		// executed to prevent it from leaking in storage since at this point, it will either
 		// execute or panic (and revert storage changes).
-		<frame_system::Module<System>>::note_extrinsic(app_key, encoded);
+		<frame_system::Module<System>>::note_extrinsic(app_id, encoded);
 
 		// AUDIT: Under no circumstances may this function panic from here onwards.
 
@@ -423,7 +423,7 @@ where
 
 		enter_span!{ sp_tracing::Level::TRACE, "validate_transaction" };
 
-		let is_exist = <frame_system::Module<System>>::is_application_key_exist(uxt.key());
+		let is_exist = <frame_system::Module<System>>::is_application_id_exist(uxt.app_id());
 		if !is_exist {
 			return Err(TransactionValidityError::from(InvalidTransaction::BadApplicationKey));
 		}

@@ -150,6 +150,7 @@ pub use extensions::{
 // Backward compatible re-export.
 pub use extensions::check_mortality::CheckMortality as CheckEra;
 pub use weights::WeightInfo;
+use sp_runtime::generic::DataLookup;
 
 /// Compute the trie root of a list of extrinsics.
 pub fn extrinsics_root<H: Hash, E: codec::Encode>(extrinsics: &[E]) -> H::Output {
@@ -450,6 +451,9 @@ decl_storage! {
 
 		/// Last application key
 		LastApplicationKey: u32;
+
+		/// Mapping application key (bytes) => id (u32)
+		ApplicationKeyToId: map hasher(blake2_128_concat) Vec<u8> => u32;
 
 		/// Mapping to determine that application key does exist
 		ExistingApplicationKeys: map hasher(blake2_128_concat) u32 => bool;
@@ -1041,13 +1045,21 @@ impl<T: Config> Module<T> {
 		}
 	}
 
-	pub fn block_extrinsics() -> Vec<Vec<u8>> {
+	pub fn block_extrinsics_by_key() -> Vec<(u32, Vec<u8>)> {
 		let mut extrinsics_with_key:Vec<(u32, Vec<u8>)> = (0..ExtrinsicCount::take().unwrap_or_default())
 			.map(ExtrinsicData::take)
 			.collect();
 		// sort extrinsics by key
 		extrinsics_with_key.sort_by(|a, b| a.0.cmp(&b.0));
-		extrinsics_with_key.iter().cloned().map(|x| x.1).collect()
+		extrinsics_with_key
+	}
+
+	pub fn block_extrinsics() -> Vec<Vec<u8>> {
+		Self::to_block_extrinsics(&Self::block_extrinsics_by_key())
+	}
+
+	fn to_block_extrinsics(xt_by_key: &Vec<(u32, Vec<u8>)>) -> Vec<Vec<u8>> {
+		xt_by_key.iter().cloned().map(|x| x.1).collect()
 	}
 
 	/// Remove temporary "environment" entries in storage, compute the storage root and return the
@@ -1070,24 +1082,32 @@ impl<T: Config> Module<T> {
 		let parent_hash = <ParentHash<T>>::get();
 		let mut digest = <Digest<T>>::get();
 
-		let extrinsics = Self::block_extrinsics();
+		let extrinsics_by_key = Self::block_extrinsics_by_key();
+		let extrinsics = Self::to_block_extrinsics(&extrinsics_by_key);
 
 		let kc_public_params: Vec<u8> = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
 			.unwrap_or_default();
 
-		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
 		let block_length: BlockLength = BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH)
 			.unwrap_or_default()[..]).unwrap();
 
 		#[cfg(feature = "std")]
-		let (kate_commitment, block_dims) = kate::com::build_commitments(
+		let (xts_layout, kate_commitment, block_dims, data_matrix) = kate::com::build_commitments(
 			&kc_public_params,
 			block_length.rows as usize,
 			block_length.cols  as usize,
 			block_length.chunk_size  as usize,
-			&extrinsics,
+			&extrinsics_by_key,
 			parent_hash.as_ref()
 		);
+
+		#[cfg(feature = "std")]
+		let data_index = DataLookup::construct(&xts_layout);
+
+		#[cfg(not(feature = "std"))]
+		let data_index:DataLookup = Default::default();
+
+		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
 
 		// move block hash pruning window by one block
 		let block_hash_count = T::BlockHashCount::get();
@@ -1118,7 +1138,14 @@ impl<T: Config> Module<T> {
 		#[cfg(not(feature = "std"))]
 		let extrinsics_root = <T::Header as traits::Header>::Root::new(root_hash);
 
-		<T::Header as traits::Header>::new(number, extrinsics_root, storage_root, parent_hash, digest)
+		<T::Header as traits::Header>::new(
+			number,
+			extrinsics_root,
+			storage_root,
+			parent_hash,
+			digest,
+			data_index,
+		)
 	}
 
 	/// Deposits a log and ensures it matches the block's log data.
@@ -1293,10 +1320,15 @@ impl<T: Config> Module<T> {
 		let next_key = LastApplicationKey::get() + 1;
 		LastApplicationKey::put(next_key);
 		ExistingApplicationKeys::insert(next_key, true);
+		ApplicationKeyToId::insert(key, next_key);
 		next_key
 	}
 
-	pub fn is_application_key_exist(key: u32) -> bool {
+	pub fn get_application_id(key: &Vec<u8>) -> u32 {
+		ApplicationKeyToId::get(key)
+	}
+
+	pub fn is_application_id_exist(key: u32) -> bool {
 		if key == 0 {
 			true
 		} else {

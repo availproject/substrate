@@ -46,6 +46,7 @@ where
 	pub signature: Option<(Address, Signature, u32, Extra)>,
 	/// The function that should be called.
 	pub function: Call,
+	pub bytes_size: usize,
 }
 
 #[cfg(feature = "std")]
@@ -54,7 +55,7 @@ impl<Address, Call, Signature, Extra> parity_util_mem::MallocSizeOf
 where
 	Extra: SignedExtension
 {
-	fn size_of(&self, _ops: &mut parity_util_mem::MallocSizeOfOps) -> usize {
+	fn size_of(&self, ops: &mut parity_util_mem::MallocSizeOfOps) -> usize {
 		// Instantiated only in runtime.
 		0
 	}
@@ -72,6 +73,7 @@ impl<Address, Call, Signature, Extra: SignedExtension>
 		extra: Extra
 	) -> Self {
 		UncheckedExtrinsic {
+			bytes_size: 0, // TODO calculate actual size
 			signature: Some((signed, signature, key, extra)),
 			function,
 		}
@@ -80,6 +82,7 @@ impl<Address, Call, Signature, Extra: SignedExtension>
 	/// New instance of an unsigned extrinsic aka "inherent".
 	pub fn new_unsigned(function: Call) -> Self {
 		UncheckedExtrinsic {
+			bytes_size: 0,
 			signature: None,
 			function,
 		}
@@ -141,10 +144,12 @@ where
 					function,
 				}
 			}
-			None => CheckedExtrinsic {
-				signed: None,
-				function: self.function,
-			},
+			None => {
+				CheckedExtrinsic {
+					signed: None,
+					function: self.function,
+				}
+			}
 		})
 	}
 }
@@ -158,12 +163,12 @@ impl<Address, Call, Signature, Extra> ExtrinsicMetadata
 	type SignedExtensions = Extra;
 }
 
-impl<Address, Call, Signature, Extra> traits::Keyable
+impl<Address, Call, Signature, Extra> traits::ApplicationId
 	for UncheckedExtrinsic<Address, Call, Signature, Extra>
 		where
 			Extra: SignedExtension,
 {
-	fn key(&self) -> u32 {
+	fn app_id(&self) -> u32 {
 		if self.signature.is_none() {
 			0
 		} else {
@@ -245,6 +250,8 @@ where
 		// with substrate's generic `Vec<u8>` type. Basically this just means accepting that there
 		// will be a prefix of vector length (we don't need
 		// to use this).
+		// length before decoding
+		let mut initialBytesLeft = input.remaining_len().unwrap().unwrap();
 		let _length_do_not_remove_me_see_above: Vec<()> = Decode::decode(input)?;
 
 		let version = input.read_byte()?;
@@ -255,10 +262,16 @@ where
 			return Err("Invalid transaction version".into());
 		}
 
-		Ok(UncheckedExtrinsic {
+		let mut xt = UncheckedExtrinsic {
 			signature: if is_signed { Some(Decode::decode(input)?) } else { None },
 			function: Decode::decode(input)?,
-		})
+			bytes_size: 0
+		};
+
+		// subtract remaining length to get final decoded bytes
+		xt.bytes_size = initialBytesLeft - input.remaining_len().unwrap().unwrap();
+
+		Ok(xt)
 	}
 }
 

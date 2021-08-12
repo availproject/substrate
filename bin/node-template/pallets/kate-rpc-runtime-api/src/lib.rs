@@ -9,6 +9,5 @@ sp_api::decl_runtime_apis! {
 	pub trait KateParamsGetter {
 		fn get_public_params() -> Vec<u8>;
 		fn get_block_length() -> BlockLength;
-		// fn get_application_id(key: String) -> u32;
 	}
 }

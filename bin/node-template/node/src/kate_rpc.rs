@@ -6,7 +6,7 @@ use sp_blockchain::HeaderBackend;
 use sc_client_api::BlockBackend;
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::{generic::BlockId, traits::{Block as BlockT}};
-use sp_runtime::traits::{NumberFor, Header};
+use sp_runtime::traits::{NumberFor, Header, ApplicationId};
 use jsonrpc_core::futures::{
 	Sink, Future,
 	future::result,
@@ -20,7 +20,7 @@ use frame_system::limits::BlockLength;
 use sp_core::{Bytes, storage::well_known_keys};
 use kate_rpc_runtime_api::KateParamsGetter;
 use frame_benchmarking::frame_support::weights::DispatchClass;
-use kate::com::BlockDimensions;
+use kate::com::{BlockDimensions, XtsLayout};
 use jsonrpc_pubsub::{typed::Subscriber, SubscriptionId, manager::SubscriptionManager};
 use sp_transaction_pool::{
 	TransactionPool, InPoolTransaction, TransactionStatus, TransactionSource,
@@ -45,13 +45,6 @@ pub trait KateApi<Hash, BlockHash> {
 	fn query_block_length(
 		&self,
 	) -> Result<BlockLength>;
-
-	#[rpc(name = "kate_queryData")]
-	fn query_data(
-		&self,
-		key: Bytes,
-		block_number: NumberOrHex,
-	) -> Result<Vec<u8>>;
 }
 
 pub struct Kate<TxPool, Client, BlockHash> {
@@ -101,6 +94,7 @@ impl<TxPool, Client> KateApi<
 	TxHash<TxPool>, BlockHash<TxPool>
 > for Kate<TxPool, Client, BlockHash<TxPool>> where
 	TxPool: TransactionPool + Sync + Send + 'static,
+	<TxPool::Block as BlockT>::Extrinsic: ApplicationId,
 	Client: Send + Sync + 'static,
 	Client: HeaderBackend<TxPool::Block> + ProvideRuntimeApi<TxPool::Block> + BlockBackend<TxPool::Block>,
 	Client::Api: KateParamsGetter<TxPool::Block>,
@@ -140,15 +134,15 @@ impl<TxPool, Client> KateApi<
 			let block_hash = block.block.header().hash();
 			if !block_ext_cache.contains(&block_hash) {
 				// build block data extension and cache it
-				let data: Vec<Vec<u8>> = block.block.extrinsics().into_iter().map(|e|{
-					e.encode()
+				let xts_by_id: Vec<(u32, Vec<u8>)> = block.block.extrinsics().into_iter().map(|e|{
+					(e.app_id(), e.encode())
 				}).collect();
 
-				let (block, block_dims) = kate::com::flatten_and_pad_block(
+				let (_, block, block_dims) = kate::com::flatten_and_pad_block(
 					block_length.rows as usize,
 					block_length.cols as usize,
 					block_length.chunk_size as usize,
-					&data,
+					&xts_by_id,
 					block.block.header().parent_hash().as_ref()
 				);
 
@@ -189,13 +183,5 @@ impl<TxPool, Client> KateApi<
 			message: "Something wrong".into(),
 			data: Some(format!("{:?}", e).into()),
 		}).unwrap())
-	}
-
-	fn query_data(
-		&self,
-		key: Bytes,
-		block_number: NumberOrHex,
-	) -> Result<Vec<u8>> {
-		Ok(vec![])
 	}
 }

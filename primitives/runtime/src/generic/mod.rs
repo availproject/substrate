@@ -27,6 +27,7 @@ mod block;
 mod digest;
 #[cfg(test)]
 mod tests;
+mod data_lookup;
 
 pub use self::unchecked_extrinsic::{UncheckedExtrinsic, SignedPayload};
 pub use self::era::{Era, Phase};
@@ -36,6 +37,7 @@ pub use self::block::{Block, SignedBlock, BlockId};
 pub use self::digest::{
 	Digest, DigestItem, DigestItemRef, OpaqueDigestItemId, ChangesTrieSignal,
 };
+pub use self::data_lookup::DataLookup;
 
 use crate::codec::Encode;
 use sp_std::prelude::*;

@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 use sc_client_api::BlockBackend;
-use node_template_runtime::{opaque::Block, AccountId, Balance, Index};
+use node_template_runtime::{AccountId, Balance, Index};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
 use sp_block_builder::BlockBuilder;
@@ -15,6 +15,7 @@ pub use sc_rpc_api::{DenyUnsafe};
 use jsonrpc_pubsub::{typed::Subscriber, SubscriptionId, manager::SubscriptionManager};
 use sp_transaction_pool::TransactionPool;
 use kate_rpc_runtime_api::KateParamsGetter;
+use sp_runtime::traits::{ApplicationId, Block as BlockT};
 pub use sp_keystore::{SyncCryptoStorePtr, SyncCryptoStore};
 
 /// Full client dependencies.
@@ -32,6 +33,7 @@ pub struct FullDeps<C, P> {
 pub fn create_full<C, P>(
 	deps: FullDeps<C, P>,
 ) -> jsonrpc_core::IoHandler<sc_rpc::Metadata> where
+	<P::Block as BlockT>::Extrinsic: ApplicationId,
 	C: ProvideRuntimeApi<P::Block> + BlockBackend<P::Block>,
 	C: HeaderBackend<P::Block> + HeaderMetadata<P::Block, Error=BlockChainError> + 'static,
 	C: Send + Sync + 'static,

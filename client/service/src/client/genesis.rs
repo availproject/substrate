@@ -37,6 +37,7 @@ pub fn construct_genesis_block<
 			extrinsics_root,
 			state_root,
 			Default::default(),
+			Default::default(),
 			Default::default()
 		),
 		Default::default()

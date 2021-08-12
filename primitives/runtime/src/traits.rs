@@ -32,7 +32,7 @@ use crate::transaction_validity::{
 	ValidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	UnknownTransaction,
 };
-use crate::generic::{Digest, DigestItem};
+use crate::generic::{Digest, DigestItem, DataLookup};
 pub use sp_arithmetic::traits::{
 	AtLeast32Bit, AtLeast32BitUnsigned, UniqueSaturatedInto, UniqueSaturatedFrom, Saturating,
 	SaturatedConversion, Zero, One, Bounded, CheckedAdd, CheckedSub, CheckedMul, CheckedDiv,
@@ -568,6 +568,7 @@ pub trait Header:
 		state_root: Self::Hash,
 		parent_hash: Self::Hash,
 		digest: Digest<Self::Hash>,
+		app_data_lookup: DataLookup,
 	) -> Self;
 
 	/// Returns a reference to the header number.
@@ -599,6 +600,9 @@ pub trait Header:
 	fn hash(&self) -> Self::Hash {
 		<Self::Hashing as Hash>::hash_of(self)
 	}
+
+	/// Returns application specific data look up table
+	fn app_data_lookup(&self) -> &DataLookup;
 }
 
 /// Something which fulfills the abstract idea of a Substrate block. It has types for
@@ -634,7 +638,7 @@ pub trait Block: Clone + Send + Sync + Codec + Eq + MaybeSerialize + Debug + May
 
 
 /// Something that acts like an `Extrinsic`.
-pub trait Extrinsic: Sized + MaybeMallocSizeOf + Keyable {
+pub trait Extrinsic: Sized + MaybeMallocSizeOf + ApplicationId {
 	/// The function call.
 	type Call;
 
@@ -956,8 +960,8 @@ impl SignedExtension for () {
 	fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> { Ok(()) }
 }
 
-pub trait Keyable {
-	fn key(&self)->u32 { 0 }
+pub trait ApplicationId {
+	fn app_id(&self)->u32 { 0 }
 }
 
 /// An "executable" piece of information, used by the standard Substrate Executive in order to

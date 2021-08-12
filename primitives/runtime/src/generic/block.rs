@@ -21,15 +21,12 @@
 use std::fmt;
 
 #[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Deserializer};
 
 use sp_std::prelude::*;
 use sp_core::RuntimeDebug;
 use crate::codec::{Codec, Encode, Decode};
-use crate::traits::{
-	self, Member, Block as BlockT, Header as HeaderT, MaybeSerialize, MaybeMallocSizeOf,
-	NumberFor,
-};
+use crate::traits::{self, Member, Block as BlockT, Header as HeaderT, MaybeSerialize, MaybeMallocSizeOf, NumberFor};
 use crate::Justification;
 
 /// Something to identify a block.

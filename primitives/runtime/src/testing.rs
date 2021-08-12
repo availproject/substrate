@@ -29,6 +29,7 @@ use crate::{generic, KeyTypeId, CryptoTypeId, ApplyExtrinsicResultWithInfo};
 pub use sp_core::{H256, sr25519};
 use sp_core::{crypto::{CryptoType, Dummy, key_types, Public}, U256};
 use crate::transaction_validity::{TransactionValidity, TransactionValidityError, TransactionSource};
+use crate::generic::DataLookup;
 
 /// A dummy type which can be used instead of regular cryptographic primitives.
 ///
@@ -171,6 +172,7 @@ impl Header {
 			state_root: Default::default(),
 			parent_hash: Default::default(),
 			digest: Default::default(),
+			app_data_lookup: Default::default(),
 		}
 	}
 }
@@ -190,9 +192,9 @@ where Xt: parity_util_mem::MallocSizeOf
 	}
 }
 
-impl<Xt> traits::Keyable for ExtrinsicWrapper<Xt>
+impl<Xt> traits::ApplicationId for ExtrinsicWrapper<Xt>
 {
-	fn key(&self) -> u32 { 0 }
+	fn app_id(&self) -> u32 { 0 }
 }
 
 impl<Xt: Encode> serde::Serialize for ExtrinsicWrapper<Xt> {
@@ -295,8 +297,8 @@ impl<Call: Codec + Sync + Send, Context, Extra> Checkable<Context> for TestXt<Ca
 	fn check(self, _: &Context) -> Result<Self::Checked, TransactionValidityError> { Ok(self) }
 }
 
-impl<Call: Codec + Sync + Send, Extra> traits::Keyable for TestXt<Call, Extra> {
-	fn key(&self) -> u32 { 0 }
+impl<Call: Codec + Sync + Send, Extra> traits::ApplicationId for TestXt<Call, Extra> {
+	fn app_id(&self) -> u32 { 0 }
 }
 
 impl<Call: Codec + Sync + Send, Extra> traits::Extrinsic for TestXt<Call, Extra> {

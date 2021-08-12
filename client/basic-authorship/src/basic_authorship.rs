@@ -29,7 +29,7 @@ use sp_inherents::InherentData;
 use log::{error, info, debug, trace, warn};
 use sp_runtime::{
 	generic::BlockId,
-	traits::{Block as BlockT, Hash as HashT, Header as HeaderT, DigestFor, BlakeTwo256, Keyable},
+	traits::{Block as BlockT, Hash as HashT, Header as HeaderT, DigestFor, BlakeTwo256, ApplicationId},
 };
 use sp_transaction_pool::{TransactionPool, InPoolTransaction};
 use sc_telemetry::{telemetry, CONSENSUS_INFO};
