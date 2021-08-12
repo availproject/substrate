@@ -39,7 +39,7 @@ pub fn flatten_and_pad_block(
 	header_hash: &[u8]
 ) -> (XtsLayout, FlatData, BlockDimensions) {
 	let mut tx_layout:XtsLayout = Vec::with_capacity(extrinsics.len());
-	let mut block:Vec<u8> = Vec::with_capacity(extrinsics.len() + config::SCALAR_SIZE_WIDE * extrinsics.len());
+	let mut block:Vec<u8> = Vec::with_capacity((config::SCALAR_SIZE_WIDE + 100) * extrinsics.len());
 
 	for xt in extrinsics {
 		// get aligned xt length
