@@ -46,7 +46,6 @@ where
 	pub signature: Option<(Address, Signature, u32, Extra)>,
 	/// The function that should be called.
 	pub function: Call,
-	pub bytes_size: usize,
 }
 
 #[cfg(feature = "std")]
@@ -73,7 +72,6 @@ impl<Address, Call, Signature, Extra: SignedExtension>
 		extra: Extra
 	) -> Self {
 		UncheckedExtrinsic {
-			bytes_size: 0, // TODO calculate actual size
 			signature: Some((signed, signature, key, extra)),
 			function,
 		}
@@ -82,7 +80,6 @@ impl<Address, Call, Signature, Extra: SignedExtension>
 	/// New instance of an unsigned extrinsic aka "inherent".
 	pub fn new_unsigned(function: Call) -> Self {
 		UncheckedExtrinsic {
-			bytes_size: 0,
 			signature: None,
 			function,
 		}
@@ -251,7 +248,6 @@ where
 		// will be a prefix of vector length (we don't need
 		// to use this).
 		// length before decoding
-		let mut initialBytesLeft = input.remaining_len().unwrap().unwrap();
 		let _length_do_not_remove_me_see_above: Vec<()> = Decode::decode(input)?;
 
 		let version = input.read_byte()?;
@@ -261,17 +257,10 @@ where
 		if version != EXTRINSIC_VERSION {
 			return Err("Invalid transaction version".into());
 		}
-
-		let mut xt = UncheckedExtrinsic {
+		Ok(UncheckedExtrinsic {
 			signature: if is_signed { Some(Decode::decode(input)?) } else { None },
 			function: Decode::decode(input)?,
-			bytes_size: 0
-		};
-
-		// subtract remaining length to get final decoded bytes
-		xt.bytes_size = initialBytesLeft - input.remaining_len().unwrap().unwrap();
-
-		Ok(xt)
+		})
 	}
 }
 
