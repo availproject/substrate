@@ -31,7 +31,6 @@ pallet-democracy = { version = "2.0.0", default-features = false, path = "../../
 pallet-membership = { version = "2.0.0", default-features = false, path = "../../../frame/membership" }
 pallet-treasury = { version = "2.0.0", default-features = false, path = "../../../frame/treasury" }
 pallet-bounties = { version = "2.0.0", default-features = false, path = "../../../frame/bounties" }
-pallet-tips = { version = "2.0.0", default-features = false, path = "../../../frame/tips" }
 pallet-authorship = { version = "2.0.0", default-features = false, path = "../../../frame/authorship" }
 pallet-offences = { version = "2.0.0", default-features = false, path = "../../../frame/offences" }
 pallet-scheduler = { version = "2.0.0", default-features = false, path = "../../../frame/scheduler" }
@@ -97,7 +96,6 @@ std = [
 	"pallet-treasury/std",
 	"pallet-democracy/std",
 	"pallet-bounties/std",
-	"pallet-tips/std",
 	"pallet-authorship/std",
 	"pallet-offences/std",
 	"pallet-collective/std",
