@@ -1,7 +1,7 @@
 use sp_core::{Pair, Public, crypto::UncheckedInto, sr25519};
 use node_template_runtime::{
 	AuthorityDiscoveryConfig, AccountId, BabeConfig, BalancesConfig, IndicesConfig, GenesisConfig, GrandpaConfig, DemocracyConfig,
-	SudoConfig, SystemConfig, WASM_BINARY, Signature, StakerStatus,
+	SystemConfig, WASM_BINARY, Signature, StakerStatus,
 	SessionConfig, StakingConfig, ElectionsConfig, SessionKeys, Balance, ImOnlineConfig, CouncilConfig, TechnicalCommitteeConfig,
 };
 use node_template_runtime::Block;
@@ -219,10 +219,10 @@ pub fn testnet_genesis(
 		pallet_grandpa: Some(GrandpaConfig {
 			authorities: vec![],
 		}),
-		pallet_sudo: Some(SudoConfig {
-			// Assign network admin rights.
-			key: root_key,
-		}),
+		// pallet_sudo: Some(SudoConfig {
+		// 	// Assign network admin rights.
+		// 	key: root_key,
+		// }),
 		pallet_staking: Some(StakingConfig {
 			validator_count: initial_authorities.len() as u32 * 2,
 			minimum_validator_count: initial_authorities.len() as u32,
@@ -267,9 +267,6 @@ pub fn testnet_genesis(
 						.map(|member| (member, STASH))
 						.collect(),
 		}),
-		// pallet_sudo: Some(SudoConfig {
-		// 	// Assign network admin rights.
-		// 	key: root_key,
-		// }),
+		
 	}
 }

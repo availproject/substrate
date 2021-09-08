@@ -29,6 +29,7 @@ pallet-offences = { version = "3.0.0", default-features = false, path = "../../.
 pallet-collective = { version = "3.0.0", default-features = false, path = "../../../frame/collective" }
 pallet-authority-discovery = { version = "3.0.0", default-features = false, path = "../../../frame/authority-discovery" }
 pallet-membership = { version = "2.0.0", default-features = false, path = "../../../frame/membership" }
+pallet-tips = { version = "2.0.0", default-features = false, path = "../../../frame/tips" }
 pallet-scheduler = { version = "2.0.0", default-features = false, path = "../../../frame/scheduler" }
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 sp-api = { version = "3.0.0", default-features = false, path = "../../../primitives/api" }
@@ -84,6 +85,7 @@ std = [
 	"pallet-treasury/std",
 	"pallet-democracy/std",
 	"pallet-bounties/std",
+	"pallet-tips/std",
 	"pallet-authorship/std",
 	"pallet-offences/std",
 	"pallet-collective/std",
