@@ -205,10 +205,10 @@ pub fn testnet_genesis(
 		}),
 		pallet_balances: Some(BalancesConfig {
 			//Configure endowed accounts with initial balance of 20 << 60.
-			//balances: endowed_accounts.iter().cloned().map(|k| (k, 20	 << 60)).collect(),
-			balances: endowed_accounts.iter().cloned()
-				.map(|k| (k, ENDOWMENT))
-				.collect(),
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+			// balances: endowed_accounts.iter().cloned()
+			// 	.map(|k| (k, 100))
+			// 	.collect(),
 		}),
 		pallet_indices: Some(IndicesConfig {
 			indices: vec![],
