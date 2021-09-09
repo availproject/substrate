@@ -2,7 +2,11 @@
   "name": "Avail-Testnet",
   "id": "local_testnet",
   "chainType": "Local",
-  "bootNodes": [],
+  "bootNodes": [
+    "/ip4/54.160.87.220/tcp/8002/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp",
+    "/ip4/3.218.2.152/tcp/8002/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD",
+    "/ip4/3.230.45.76/tcp/8002/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x"
+  ],
   "telemetryEndpoints": null,
   "protocolId": null,
   "properties": null,
