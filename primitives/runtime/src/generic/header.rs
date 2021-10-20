@@ -31,10 +31,9 @@ use sp_std::{
 	prelude::*,
 	convert::TryFrom,
 	fmt::Debug,
-	vec,
 };
 
-#[derive(PartialEq, Eq, Clone, sp_core::RuntimeDebug, Default)]
+#[derive(PartialEq, Eq, Clone, sp_core::RuntimeDebug, Default, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "std", serde(deny_unknown_fields))]
@@ -93,6 +92,7 @@ impl<HashOutput> parity_util_mem::MallocSizeOf for ExtrinsicsRoot<HashOutput>  w
 	}
 }
 
+/*
 impl<HashOutput> Decode for ExtrinsicsRoot<HashOutput> where
 	HashOutput: Decode,
 {
@@ -109,17 +109,17 @@ impl<HashOutput> Decode for ExtrinsicsRoot<HashOutput> where
 impl<HashOutput> Encode for ExtrinsicsRoot<HashOutput> where
 	HashOutput: Encode,
 {
-	fn encode_to<T: Output>(&self, dest: &mut T) {
-		dest.push(&self.hash);
-		dest.push(&self.commitment);
-		dest.push(&self.rows);
-		dest.push(&self.cols);
+	fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+		self.hash.encode_to(dest);
+		self.commitment.encode_to(dest);
+		self.rows.encode_to(dest);
+		self.cols.encode_to(dest);
 	}
 }
 
 impl<HashOutput> codec::EncodeLike for ExtrinsicsRoot<HashOutput> where
 	HashOutput: Encode,
-{}
+{}*/
 
 /// Abstraction over a block header for a substrate chain.
 #[derive(PartialEq, Eq, Clone, sp_core::RuntimeDebug)]

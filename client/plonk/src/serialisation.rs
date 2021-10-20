@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
+#![allow(dead_code)]
 
 use crate::commitment_scheme::kzg10::Commitment;
 use crate::fft::{EvaluationDomain, Evaluations, Polynomial};

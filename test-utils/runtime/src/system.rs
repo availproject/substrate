@@ -203,7 +203,7 @@ pub fn execute_transaction(utx: Extrinsic) -> ApplyExtrinsicResult {
 pub fn finalize_block() -> Header {
 	let extrinsic_index: u32 = storage::unhashed::take(well_known_keys::EXTRINSIC_INDEX).unwrap();
 	let txs: Vec<_> = (0..extrinsic_index).map(ExtrinsicData::take).collect();
-	let root_hash = trie::blake2_256_ordered_root(txs).into();
+	let root_hash = trie::blake2_256_ordered_root(&txs).into();
 	let number = <Number>::take().expect("Number is set by `initialize_block`");
 	let parent_hash = <ParentHash>::take();
 	let mut digest = <StorageDigest>::take().expect("StorageDigest is set by `initialize_block`");

@@ -9,7 +9,6 @@ use frame_support::{
 	decl_storage,
 	decl_event,
 	decl_error,
-	dispatch,
 	traits::{ Get },
 	ensure,
 	StorageMap,

@@ -18,7 +18,6 @@ use sp_runtime::traits::{
 	self, BlakeTwo256, Block as BlockT, AccountIdLookup, Verify, IdentifyAccount, NumberFor,OpaqueKeys, Convert,
 };
 pub use sp_runtime::{Permill, Perbill, Percent, Perquintill};
-use sp_runtime::generic::Era;
 pub use frame_support::{
 	construct_runtime, parameter_types, StorageValue, debug, RuntimeDebug,
 	traits::{KeyOwnerProofSystem, Randomness, U128CurrencyToVote,
@@ -28,14 +27,12 @@ pub use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 	},
 };
-use frame_support::traits::StorageMapShim;
 use frame_system::{EnsureRoot, EnsureOneOf};
 use pallet_session::{historical as pallet_session_historical};
 use codec::{Decode};
 use sp_core::storage::well_known_keys;
 use sp_api::impl_runtime_apis;
 use sp_core::{	u32_trait::{_1, _2, _3, _4, _5},};
-use sp_inherents::{CheckInherentsResult, InherentData};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 
@@ -54,7 +51,7 @@ use static_assertions::const_assert;
 use currency::*;
 pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment, CurrencyAdapter};
 use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo;
-use sp_consensus_babe::AuthorityId as BabeId;
+use sp_consensus_babe::Slot;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use pallet_grandpa::fg_primitives;
@@ -199,7 +196,7 @@ impl Filter<Call> for BaseFilter {
 			Call::System(_) | Call::Scheduler(_) | Call::Indices(_) |
 			Call::Babe(_) | Call::Timestamp(_) | Call::Balances(_) |
 			Call::Authorship(_) | Call::Staking(_) | Call::Tips(_) |
-			Call::Session(_) | Call::Grandpa(_) | Call::ImOnline(_) | 
+			Call::Session(_) | Call::Grandpa(_) | Call::ImOnline(_) |
 			Call::RandomnessCollectiveFlip(_) | Call::Elections(_) |
 			Call::Treasury(_) | Call::Bounties(_) | Call::AuthorityDiscovery(_) |
 			Call::Offences(_) | Call::Council(_) |  Call::DataAvailability(_)  |
@@ -331,6 +328,8 @@ impl pallet_scheduler::Config for Runtime {
 parameter_types! {
 	pub const EpochDuration: u64 = EPOCH_DURATION_IN_SLOTS;
 	pub const ExpectedBlockTime: Moment = MILLISECS_PER_BLOCK;
+	pub const ReportLongevity: u64 =
+		BondingDuration::get() as u64 * SessionsPerEra::get() as u64 * EpochDuration::get();
 }
 
 impl pallet_babe::Config for Runtime {
@@ -350,7 +349,7 @@ impl pallet_babe::Config for Runtime {
 		pallet_babe::AuthorityId,
 	)>>::IdentificationTuple;
 
-	type HandleEquivocation = pallet_babe::EquivocationHandler<Self::KeyOwnerIdentification, Offences>;
+	type HandleEquivocation = pallet_babe::EquivocationHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
 
 	type WeightInfo = ();
 
@@ -372,7 +371,7 @@ impl pallet_grandpa::Config for Runtime {
 		GrandpaId,
 	)>>::IdentificationTuple;
 
-	type HandleEquivocation = pallet_grandpa::EquivocationHandler<Self::KeyOwnerIdentification, Offences>;
+	type HandleEquivocation = pallet_grandpa::EquivocationHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
 	
 	type WeightInfo = ();
 }
@@ -609,9 +608,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type InitializeMembers = Council;
 	type CurrencyToVote = U128CurrencyToVote;
 	type CandidacyBond = CandidacyBond;
-	type VotingBond = VotingBond;
 	type LoserCandidate = Treasury;
-	type BadReport = ();
 	type KickedMember = Treasury;
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
@@ -634,7 +631,6 @@ parameter_types! {
 	pub const SessionDuration: BlockNumber = EPOCH_DURATION_IN_SLOTS as _;
 	pub const ImOnlineUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 }
-
 impl pallet_im_online::Config for Runtime {
 	type AuthorityId = ImOnlineId;
 	type Event = Event;
@@ -901,6 +897,7 @@ impl_runtime_apis! {
 		}
 	}
 
+
 	impl sp_consensus_babe::BabeApi<Block> for Runtime {
 		fn configuration() -> sp_consensus_babe::BabeGenesisConfiguration {
 			// The choice of `c` parameter (where `1 - c` represents the
@@ -917,7 +914,7 @@ impl_runtime_apis! {
 				allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryPlainSlots,
 			}
 		}
-		fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
+		fn current_epoch_start() -> Slot {
 			Babe::current_epoch_start()
 		}
 		fn current_epoch() -> sp_consensus_babe::Epoch {
@@ -928,7 +925,7 @@ impl_runtime_apis! {
 		}
 
 		fn generate_key_ownership_proof(
-			_slot_number: sp_consensus_babe::SlotNumber,
+			_slot_number: Slot,
 			authority_id: sp_consensus_babe::AuthorityId,
 		) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
 			use codec::Encode;
@@ -1006,12 +1003,6 @@ impl_runtime_apis! {
 	> for Runtime {
 		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32) -> RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
-		}
-		fn query_fee_details(
-			uxt: <Block as BlockT>::Extrinsic,
-			len: u32,
-		) -> pallet_transaction_payment::FeeDetails<Balance> {
-			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
 

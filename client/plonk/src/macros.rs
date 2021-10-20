@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+/*
 macro_rules! impl_serde {
     ($w : ident) => {
         impl Serialize for $w {
@@ -45,7 +46,7 @@ macro_rules! impl_serde {
             }
         }
     };
-}
+}*/
 
 macro_rules! impl_serde_into {
     ($w : ident) => {

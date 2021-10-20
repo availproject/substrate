@@ -69,12 +69,12 @@ impl Polynomial {
         result
     }
 
-	// pub fn from_coefficients_vec_ref(coeffs: &Vec<BlsScalar>) -> Self {
-	// 	let mut result = Self { coeffs };
-	// 	// While there are zeros at the end of the coefficient vector, pop them off.
-	// 	result.truncate_leading_zeros();
-	// 	result
-	// }
+    // pub fn from_coefficients_vec_ref(coeffs: &Vec<BlsScalar>) -> Self {
+    // 	let mut result = Self { coeffs };
+    // 	// While there are zeros at the end of the coefficient vector, pop them off.
+    // 	result.truncate_leading_zeros();
+    // 	result
+    // }
 
     /// Returns the degree of the polynomial.
     pub fn degree(&self) -> usize {
@@ -118,15 +118,15 @@ impl Polynomial {
         sum
     }
 
-    // Outputs a polynomial of degree `d` where each coefficient is sampled
-    // uniformly at random from the field `F`.
-    // pub fn rand<R: Rng>(d: usize, mut rng: &mut R) -> Self {
-    //     let mut random_coeffs = Vec::with_capacity(d + 1);
-    //     for _ in 0..=d {
-    //         random_coeffs.push(util::random_scalar(&mut rng));
-    //     }
-    //     Self::from_coefficients_vec(random_coeffs)
-    // }
+    /// Outputs a polynomial of degree `d` where each coefficient is sampled
+    /// uniformly at random from the field `F`.
+    pub fn rand<R: Rng>(d: usize, mut rng: &mut R) -> Self {
+        let mut random_coeffs = Vec::with_capacity(d + 1);
+        for _ in 0..=d {
+            random_coeffs.push(util::random_scalar(&mut rng));
+        }
+        Self::from_coefficients_vec(random_coeffs)
+    }
 }
 
 use sp_std::iter::Sum;
@@ -352,28 +352,28 @@ impl Polynomial {
         Polynomial::from_coefficients_vec(quotient)
     }
 
-	// pub fn ruffini_with_quotient(&self, z: BlsScalar, quotient: &mut Vec<BlsScalar>) -> Polynomial {
-	// 	// let mut quotient: Vec<BlsScalar> = Vec::with_capacity(self.degree());
-	// 	let mut k = BlsScalar::zero();
-	//
-	// 	// Reverse the results and use Ruffini's method to compute the quotient
-	// 	// The coefficients must be reversed as Ruffini's method
-	// 	// starts with the leading coefficient, while Polynomials
-	// 	// are stored in increasing order i.e. the leading coefficient is the last element
-	// 	for coeff in self.coeffs.iter().rev() {
-	// 		let t = coeff + k;
-	// 		quotient.push(t);
-	// 		k = z * t;
-	// 	}
-	//
-	// 	// Pop off the last element, it is the remainder term
-	// 	// For PLONK, we only care about perfect factors
-	// 	quotient.pop();
-	//
-	// 	// Reverse the results for storage in the Polynomial struct
-	// 	quotient.reverse();
-	// 	Polynomial::from_coefficients_vec(quotient)
-	// }
+    // pub fn ruffini_with_quotient(&self, z: BlsScalar, quotient: &mut Vec<BlsScalar>) -> Polynomial {
+    // 	// let mut quotient: Vec<BlsScalar> = Vec::with_capacity(self.degree());
+    // 	let mut k = BlsScalar::zero();
+    //
+    // 	// Reverse the results and use Ruffini's method to compute the quotient
+    // 	// The coefficients must be reversed as Ruffini's method
+    // 	// starts with the leading coefficient, while Polynomials
+    // 	// are stored in increasing order i.e. the leading coefficient is the last element
+    // 	for coeff in self.coeffs.iter().rev() {
+    // 		let t = coeff + k;
+    // 		quotient.push(t);
+    // 		k = z * t;
+    // 	}
+    //
+    // 	// Pop off the last element, it is the remainder term
+    // 	// For PLONK, we only care about perfect factors
+    // 	quotient.pop();
+    //
+    // 	// Reverse the results for storage in the Polynomial struct
+    // 	quotient.reverse();
+    // 	Polynomial::from_coefficients_vec(quotient)
+    // }
 }
 
 /// Performs O(nlogn) multiplication of polynomials if F is smooth.

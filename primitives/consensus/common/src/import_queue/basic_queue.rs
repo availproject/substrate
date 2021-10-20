@@ -420,6 +420,7 @@ mod tests {
 	use futures::{executor::block_on, Future};
 	use sp_test_primitives::{Block, BlockNumber, Extrinsic, Hash, Header};
 	use std::collections::HashMap;
+	use sp_runtime::traits::ExtrinsicsRoot;
 
 	impl Verifier<Block> for () {
 		fn verify(
@@ -512,7 +513,7 @@ mod tests {
 			let header = Header {
 				parent_hash: Hash::random(),
 				number: n,
-				extrinsics_root: Hash::random(),
+				extrinsics_root: ExtrinsicsRoot::new(Hash::random()),
 				state_root: Default::default(),
 				digest: Default::default(),
 			};

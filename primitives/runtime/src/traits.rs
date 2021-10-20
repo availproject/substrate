@@ -16,6 +16,7 @@
 // limitations under the License.
 
 //! Primitives for the runtime modules.
+#![allow(missing_docs)]
 
 use sp_std::prelude::*;
 use sp_std::{self, marker::PhantomData, convert::{TryFrom, TryInto}, fmt::Debug};
@@ -1372,7 +1373,7 @@ impl Printable for usize {
 
 impl Printable for u64 {
 	fn print(&self) {
-		(*self as u64).print()
+		sp_io::misc::print_num(*self);
 	}
 }
 

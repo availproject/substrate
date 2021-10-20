@@ -119,7 +119,7 @@ decl_module! {
 	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		fn deposit_event() = default;
 
-		fn on_initialize(now: T::BlockNumber) -> Weight {
+		fn on_initialize(_now: T::BlockNumber) -> Weight {
 			// only decode storage if we can actually submit anything again.
 			if !T::OnOffenceHandler::can_report() {
 				return 0;
@@ -144,7 +144,7 @@ decl_module! {
 								debug::native::error!(
 									target: "pallet-offences",
 									"re-submitting a deferred slash returned Err at {}. This should not happen with pallet-staking",
-									now,
+									_now,
 								);
 								true
 							},

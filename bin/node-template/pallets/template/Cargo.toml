@@ -30,7 +30,7 @@ path = "../../../../frame/system"
 [dev-dependencies]
 serde = { version = "1.0.101" }
 
-[dev-dependencies.sp-core]
+[dependencies.sp-core]
 default-features = false
 version = "3.0.0"
 path = "../../../../primitives/core"

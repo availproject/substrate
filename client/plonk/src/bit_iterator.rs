@@ -22,6 +22,7 @@ macro_rules! bit_iterator {
         }
 
         impl<E: AsRef<[$sty]>> $name<E> {
+            #[allow(dead_code)]
             pub fn new(t: E) -> Self {
                 let num_of_integers = t.as_ref().len();
                 let num_of_total_bits = mem::size_of::<E>() * 8;

@@ -32,7 +32,8 @@ use serde::{Serialize, Deserialize};
 use codec::{Encode, Decode};
 
 /// Block length limit configuration.
-#[derive(RuntimeDebug, Clone, codec::Encode, codec::Decode)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(RuntimeDebug, Clone, Encode, Decode)]
 pub struct BlockLength {
 	/// Maximal total length in bytes for each extrinsic class.
 	///

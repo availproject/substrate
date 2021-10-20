@@ -11,11 +11,11 @@ use super::{errors::KZG10Errors, AggregateProof, Commitment, Proof};
 use crate::{fft::Polynomial, transcript::TranscriptProtocol, util};
 use anyhow::{Error, Result};
 use dusk_bls12_381::{
-    multiscalar_mul::{msm_variable_base, msm_variable_base_fast}, BlsScalar, G1Affine, G1Projective, G2Affine, G2Prepared,
+    multiscalar_mul::msm_variable_base,
+    BlsScalar, G1Affine, G1Projective, G2Affine, G2Prepared,
 };
 use merlin::Transcript;
 use sp_std::prelude::*;
-use dusk_jubjub::Scalar;
 
 /// Opening Key is used to verify opening proofs made about a committed polynomial.
 #[derive(Clone, Debug)]
@@ -326,7 +326,8 @@ mod test {
 
     // Creates a proving key and verifier key based on a specified degree
     fn setup_test(degree: usize) -> (CommitKey, OpeningKey) {
-        let srs = PublicParameters::setup(degree, &mut rand::thread_rng()).unwrap();
+        let mut rng = rand::thread_rng();
+        let srs = PublicParameters::setup(degree, &mut rng).unwrap();
         srs.trim(degree).unwrap()
     }
     #[test]

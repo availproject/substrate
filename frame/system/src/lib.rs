@@ -116,6 +116,7 @@ mod tests;
 #[cfg(feature = "std")]
 pub mod mocking;
 
+
 pub use extensions::{
 	check_mortality::CheckMortality, check_genesis::CheckGenesis, check_nonce::CheckNonce,
 	check_spec_version::CheckSpecVersion, check_tx_version::CheckTxVersion,
@@ -127,7 +128,11 @@ pub use weights::WeightInfo;
 
 /// Compute the trie root of a list of extrinsics.
 pub fn extrinsics_root<H: Hash, E: codec::Encode>(extrinsics: &[E]) -> H::Output {
-	extrinsics_data_root::<H>(&extrinsics.iter().map(codec::Encode::encode).collect())
+    let encoded_extrinsics = extrinsics
+        .iter()
+        .map(codec::Encode::encode)
+        .collect::<Vec<_>>();
+    extrinsics_data_root::<H>(&encoded_extrinsics)
 }
 
 /// Compute the trie root of a list of extrinsics.
@@ -258,11 +263,6 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub (super) trait Store)]
 	pub struct Pallet<T>(_);
-		#[serde(with = "sp_core::bytes")]
-		config(kc_public_params): Vec<u8>;
-		config(block_length): BlockLength;
-			sp_io::storage::set(well_known_keys::KATE_PUBLIC_PARAMS, &config.kc_public_params);
-			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &config.block_length.encode());
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -599,6 +599,9 @@ pub mod pallet {
 		pub changes_trie_config: Option<ChangesTrieConfiguration>,
 		#[serde(with = "sp_core::bytes")]
 		pub code: Vec<u8>,
+        #[serde(with = "sp_core::bytes")]
+		pub kc_public_params: Vec<u8>,
+		pub block_length: BlockLength,
 	}
 
 	#[cfg(feature = "std")]
@@ -607,6 +610,8 @@ pub mod pallet {
 			Self {
 				changes_trie_config: Default::default(),
 				code: Default::default(),
+                kc_public_params: <_>::default(),
+                block_length: <_>::default(),
 			}
 		}
 	}
@@ -625,6 +630,8 @@ pub mod pallet {
 			if let Some(ref changes_trie_config) = self.changes_trie_config {
 				sp_io::storage::set(well_known_keys::CHANGES_TRIE_CONFIG, &changes_trie_config.encode());
 			}
+            sp_io::storage::set(well_known_keys::KATE_PUBLIC_PARAMS, &self.kc_public_params);
+			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &self.block_length.encode());
 		}
 	}
 }
@@ -1241,22 +1248,25 @@ impl<T: Config> Module<T> {
 			.map(ExtrinsicData::<T>::take)
 			.collect();
 
-		let kc_public_params: Vec<u8> = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
-			.unwrap_or_default();
 
-		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
-		let block_length: BlockLength = BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH)
-			.unwrap_or_default()[..]).unwrap();
 
 		#[cfg(feature = "std")]
-		let (kate_commitment, block_dims) = kate::com::build_commitments(
-			&kc_public_params,
-			block_length.rows as usize,
-			block_length.cols  as usize,
-			block_length.chunk_size  as usize,
-			&extrinsics,
-			parent_hash.as_ref()
-		);
+		let (kate_commitment, block_dims) = {
+			let kc_public_params = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
+				.unwrap_or_default();
+			let coded_block_length = &mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH)
+				.unwrap_or_default()[..];
+			let block_length: BlockLength = BlockLength::decode(coded_block_length)
+				.unwrap_or_default();
+
+			kate::com::build_commitments(
+				&kc_public_params,
+				block_length.rows as usize,
+				block_length.cols  as usize,
+				block_length.chunk_size  as usize,
+				&extrinsics,
+				parent_hash.as_ref())
+		};
 
 		// move block hash pruning window by one block
 		let block_hash_count = T::BlockHashCount::get();
@@ -1280,6 +1290,8 @@ impl<T: Config> Module<T> {
 			);
 			digest.push(item);
 		}
+
+		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
 
 		#[cfg(feature = "std")]
 		let extrinsics_root = <T::Header as traits::Header>::Root::new_with_commitment(root_hash, kate_commitment, block_dims.rows as u16, block_dims.cols as u16);
