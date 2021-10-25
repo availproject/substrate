@@ -116,7 +116,6 @@ parameter_types! {
 impl frame_system::Config for Runtime {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
-	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
 	type Index = u64;

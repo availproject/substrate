@@ -134,7 +134,6 @@ parameter_types! {
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
-	type BlockLength = ();
 	type DbWeight = RocksDbWeight;
 	type Origin = Origin;
 	type Index = AccountIndex;

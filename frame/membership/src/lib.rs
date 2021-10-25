@@ -308,7 +308,6 @@ mod tests {
 	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
 		type BlockWeights = ();
-		type BlockLength = ();
 		type DbWeight = ();
 		type Origin = Origin;
 		type Index = u64;

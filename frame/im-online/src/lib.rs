@@ -676,9 +676,9 @@ impl<T: Config> OneSessionHandler<T::AccountId> for Module<T> {
 		<AuthoredBlocks<T>>::remove_prefix(&T::ValidatorSet::session_index());
 
 		if offenders.is_empty() {
-			Self::deposit_event(RawEvent::AllGood);
+			Self::deposit_event(Event::<T>::AllGood);
 		} else {
-			Self::deposit_event(RawEvent::SomeOffline(offenders.clone()));
+			Self::deposit_event(Event::<T>::SomeOffline(offenders.clone()));
 
 			let validator_set_count = keys.len() as u32;
 			let offence = UnresponsivenessOffence { session_index, validator_set_count, offenders };

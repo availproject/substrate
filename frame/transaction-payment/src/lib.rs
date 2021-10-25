@@ -58,8 +58,6 @@ use frame_support::{
 	},
 	dispatch::DispatchResult,
 };
-use frame_system::limits::BlockLength;
-use sp_core::storage::well_known_keys;
 use sp_runtime::{
 	FixedU128, FixedPointNumber, FixedPointOperand, Perquintill, RuntimeDebug,
 	transaction_validity::{
@@ -475,9 +473,7 @@ impl<T> Convert<Weight, BalanceOf<T>> for Module<T> where
 
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
-#[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct ChargeTransactionPayment<T: Config>(#[codec(compact)] BalanceOf<T>);
-
+#[derive(Encode, Decode, Clone, Eq, PartialEq)] pub struct ChargeTransactionPayment<T: Config>(#[codec(compact)] BalanceOf<T>);
 impl<T: Config> ChargeTransactionPayment<T> where
 	T::Call: Dispatchable<Info=DispatchInfo, PostInfo=PostDispatchInfo>,
 	BalanceOf<T>: Send + Sync + FixedPointOperand,
@@ -520,7 +516,7 @@ impl<T: Config> ChargeTransactionPayment<T> where
 	fn get_priority(len: usize, info: &DispatchInfoOf<T::Call>, final_fee: BalanceOf<T>) -> TransactionPriority {
 		let weight_saturation = T::BlockWeights::get().max_block / info.weight.max(1);
 
-		let length_limit: BlockLength = BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH).unwrap_or_default()[..]).unwrap();
+		let length_limit = frame_system::Pallet::<T>::block_length();
 		let max_block_length = *length_limit.max.get(DispatchClass::Normal);
 		let len_saturation = max_block_length as u64 / (len as u64).max(1);
 		let coefficient: BalanceOf<T> = weight_saturation.min(len_saturation).saturated_into::<BalanceOf<T>>();
@@ -671,7 +667,6 @@ mod tests {
 	impl frame_system::Config for Runtime {
 		type BaseCallFilter = ();
 		type BlockWeights = BlockWeights;
-		type BlockLength = ();
 		type DbWeight = ();
 		type Origin = Origin;
 		type Index = u64;

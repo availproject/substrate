@@ -251,7 +251,6 @@ impl frame_system::Config for Runtime {
 	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type BlockWeights = ();
-	type BlockLength = ();
 	type DbWeight = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;

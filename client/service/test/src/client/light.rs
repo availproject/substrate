@@ -263,8 +263,8 @@ fn local_executor() -> NativeExecutor<substrate_test_runtime_client::LocalExecut
 
 #[test]
 fn local_state_is_created_when_genesis_state_is_available() {
-	let def = Default::default();
-	let header0 = substrate_test_runtime_client::runtime::Header::new(0, def, def, def, Default::default());
+	let def = H256::default();
+	let header0 = substrate_test_runtime_client::runtime::Header::new(0, def.into(), def, def, Default::default());
 
 	let backend: Backend<_, BlakeTwo256> = Backend::new(
 		Arc::new(DummyBlockchain::new(DummyStorage::new())),
@@ -409,9 +409,9 @@ fn execution_proof_is_generated_and_checked() {
 fn code_is_executed_at_genesis_only() {
 	let backend = Arc::new(InMemBackend::<Block>::new());
 	let def = H256::default();
-	let header0 = substrate_test_runtime_client::runtime::Header::new(0, def, def, def, Default::default());
+	let header0 = substrate_test_runtime_client::runtime::Header::new(0, def.into(), def, def, Default::default());
 	let hash0 = header0.hash();
-	let header1 = substrate_test_runtime_client::runtime::Header::new(1, def, def, hash0, Default::default());
+	let header1 = substrate_test_runtime_client::runtime::Header::new(1, def.into(), def, hash0, Default::default());
 	let hash1 = header1.hash();
 	backend.blockchain().insert(hash0, header0, None, None, NewBlockState::Final).unwrap();
 	backend.blockchain().insert(hash1, header1, None, None, NewBlockState::Final).unwrap();
@@ -570,7 +570,7 @@ fn header_with_computed_extrinsics_root(extrinsics: Vec<Extrinsic>) -> Header {
 	let extrinsics_root = Layout::<BlakeTwo256>::ordered_trie_root(iter);
 
 	// only care about `extrinsics_root`
-	Header::new(0, extrinsics_root, H256::zero(), H256::zero(), Default::default())
+	Header::new(0, extrinsics_root.into(), H256::zero(), H256::zero(), Default::default())
 }
 
 #[test]
@@ -686,8 +686,8 @@ fn changes_proof_is_generated_and_checked_when_headers_are_not_pruned() {
 		// ..and ensure that result is the same as on remote node
 		match local_result == expected_result {
 			true => (),
-			false => panic!(format!("Failed test {}: local = {:?}, expected = {:?}",
-									index, local_result, expected_result)),
+			false => panic!("Failed test {}: local = {:?}, expected = {:?}",
+									index, local_result, expected_result),
 		}
 	}
 }

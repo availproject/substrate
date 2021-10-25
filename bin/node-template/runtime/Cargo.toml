@@ -11,9 +11,10 @@ repository = "https://github.com/maticnetwork/substrate/"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+
 static_assertions = "1.1.0"
 kate = { path = "../../../client/kate", default-features = false }
-codec = { package = "parity-scale-codec", version = "1.3.4", default-features = false, features = ["derive"] }
 pallet-babe = { version = "3.0.0", default-features = false, path = "../../../frame/babe" }
 pallet-balances = { version = "3.0.0", default-features = false, path = "../../../frame/balances" }
 frame-support = { version = "3.0.0", default-features = false, path = "../../../frame/support" }

@@ -812,7 +812,6 @@ mod tests {
 	impl system::Config for Test {
 		type BaseCallFilter = BaseFilter;
 		type BlockWeights = ();
-		type BlockLength = ();
 		type DbWeight = RocksDbWeight;
 		type Origin = Origin;
 		type Call = Call;

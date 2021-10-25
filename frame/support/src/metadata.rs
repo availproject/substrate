@@ -166,7 +166,7 @@ macro_rules! __runtime_modules_to_metadata_calls_call {
 	) => {
 		$crate::__runtime_modules_to_metadata_calls_call! {
 			$mod, $module $( <$instance> )?, $runtime, $(with $kws)*
-		};
+		}
 	};
 	(
 		$mod: ident,
@@ -239,7 +239,7 @@ macro_rules! __runtime_modules_to_metadata_calls_storage {
 	) => {
 		$crate::__runtime_modules_to_metadata_calls_storage! {
 			$mod, $module $( <$instance> )?, $runtime, $(with $kws)*
-		};
+		}
 	};
 	(
 		$mod: ident,

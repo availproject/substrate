@@ -63,7 +63,6 @@ impl frame_system::Config for Test {
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
 	type BlockWeights = ();
-	type BlockLength = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;
 	type AccountData = ();

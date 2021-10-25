@@ -29,7 +29,6 @@ parameter_types! {
 impl system::Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
-	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
 	type Call = Call;

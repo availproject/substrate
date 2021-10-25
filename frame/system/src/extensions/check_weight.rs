@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{limits::BlockWeights, limits::BlockLength, Config, Module};
+use crate::{limits::BlockWeights, Config, Module};
 use codec::{Encode, Decode};
 use sp_runtime::{
 	traits::{SignedExtension, DispatchInfoOf, Dispatchable, PostDispatchInfoOf, Printable},
@@ -29,7 +29,6 @@ use frame_support::{
 	traits::{Get},
 	weights::{PostDispatchInfo, DispatchInfo, DispatchClass, priority::FrameTransactionPriority},
 };
-use sp_core::storage::well_known_keys;
 
 /// Block resource (weight) limit check.
 #[derive(Encode, Decode, Clone, Eq, PartialEq, Default)]
@@ -70,7 +69,7 @@ impl<T: Config + Send + Sync> CheckWeight<T> where
 		info: &DispatchInfoOf<T::Call>,
 		len: usize,
 	) -> Result<u32, TransactionValidityError> {
-		let length_limit: BlockLength = BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH).unwrap_or_default()[..]).unwrap();
+		let length_limit = Module::<T>::block_length();
 		let current_len = Module::<T>::all_extrinsics_len();
 		let added_len = len as u32;
 		let next_len = current_len.saturating_add(added_len);
@@ -301,7 +300,7 @@ mod tests {
 	}
 
 	fn normal_length_limit() -> u32 {
-		*<Test as Config>::BlockLength::get().max.get(DispatchClass::Normal)
+        *crate::Module::<Test>::block_length().max.get(DispatchClass::Normal)
 	}
 
 	#[test]

@@ -27,7 +27,6 @@ use sp_runtime::traits::Hash;
 use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_support::{
 	storage,
-	traits::Get,
 	weights::DispatchClass,
 };
 use frame_system::{Module as System, Call, RawOrigin, DigestItemOf};
@@ -39,7 +38,7 @@ pub trait Config: frame_system::Config {}
 
 benchmarks! {
 	remark {
-		let b in 0 .. *T::BlockLength::get().max.get(DispatchClass::Normal) as u32;
+		let b in 0 .. *System::<T>::block_length().max.get(DispatchClass::Normal) as u32;
 		let remark_message = vec![1; b as usize];
 		let caller = whitelisted_caller();
 	}: _(RawOrigin::Signed(caller), remark_message)

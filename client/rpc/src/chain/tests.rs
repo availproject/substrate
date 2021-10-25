@@ -27,20 +27,22 @@ use sp_rpc::list::ListOrValue;
 use sc_block_builder::BlockBuilderProvider;
 use futures::{executor, compat::{Future01CompatExt, Stream01CompatExt}};
 use crate::testing::TaskExecutor;
+use sp_runtime::generic::ExtrinsicsRoot;
 
 #[test]
 fn should_return_header() {
 	let client = Arc::new(substrate_test_runtime_client::new());
 	let api = new_full(client.clone(), SubscriptionManager::new(Arc::new(TaskExecutor)));
 
+	let extrinsics_root_hash :H256 = "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314".parse().unwrap();
+	let extrinsics_root :ExtrinsicsRoot<H256> = extrinsics_root_hash.into();
 	assert_matches!(
 		api.header(Some(client.genesis_hash()).into()).wait(),
 		Ok(Some(ref x)) if x == &Header {
 			parent_hash: H256::from_low_u64_be(0),
 			number: 0,
 			state_root: x.state_root.clone(),
-			extrinsics_root:
-				"03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314".parse().unwrap(),
+			extrinsics_root: extrinsics_root.clone(),
 			digest: Default::default(),
 		}
 	);
@@ -51,8 +53,7 @@ fn should_return_header() {
 			parent_hash: H256::from_low_u64_be(0),
 			number: 0,
 			state_root: x.state_root.clone(),
-			extrinsics_root:
-				"03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314".parse().unwrap(),
+			extrinsics_root, 
 			digest: Default::default(),
 		}
 	);
@@ -75,6 +76,8 @@ fn should_return_a_block() {
 		Ok(Some(SignedBlock { justification: None, .. }))
 	);
 
+	let extrinsics_root_hash :H256 = "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314".parse().unwrap();
+	let extrinsics_root :ExtrinsicsRoot<H256> = extrinsics_root_hash.into();
 	assert_matches!(
 		api.block(Some(block_hash).into()).wait(),
 		Ok(Some(ref x)) if x.block == Block {
@@ -82,10 +85,9 @@ fn should_return_a_block() {
 				parent_hash: client.genesis_hash(),
 				number: 1,
 				state_root: x.block.header.state_root.clone(),
-				extrinsics_root:
-					"03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314".parse().unwrap(),
-				digest: Default::default(),
-			},
+				extrinsics_root: extrinsics_root.clone(), 
+                digest: Default::default(), 
+            },
 			extrinsics: vec![],
 		}
 	);
@@ -97,8 +99,7 @@ fn should_return_a_block() {
 				parent_hash: client.genesis_hash(),
 				number: 1,
 				state_root: x.block.header.state_root.clone(),
-				extrinsics_root:
-					"03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314".parse().unwrap(),
+				extrinsics_root,
 				digest: Default::default(),
 			},
 			extrinsics: vec![],

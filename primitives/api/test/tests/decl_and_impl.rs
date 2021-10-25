@@ -157,19 +157,19 @@ fn test_client_side_function_signature() {
 
 #[test]
 fn check_runtime_api_info() {
-	assert_eq!(&Api::<Block, Error = ()>::ID, &runtime_decl_for_Api::ID);
-	assert_eq!(Api::<Block, Error = ()>::VERSION, runtime_decl_for_Api::VERSION);
-	assert_eq!(Api::<Block, Error = ()>::VERSION, 1);
+	assert_eq!(&<dyn Api::<Block, Error = ()>>::ID, &runtime_decl_for_Api::ID);
+	assert_eq!(<dyn Api::<Block, Error = ()>>::VERSION, runtime_decl_for_Api::VERSION);
+	assert_eq!(<dyn Api::<Block, Error = ()>>::VERSION, 1);
 
 	assert_eq!(
-		ApiWithCustomVersion::<Block, Error = ()>::VERSION,
+		<dyn ApiWithCustomVersion::<Block, Error = ()>>::VERSION,
 		runtime_decl_for_ApiWithCustomVersion::VERSION,
 	);
 	assert_eq!(
-		&ApiWithCustomVersion::<Block, Error = ()>::ID,
+		&<dyn ApiWithCustomVersion::<Block, Error = ()>>::ID,
 		&runtime_decl_for_ApiWithCustomVersion::ID,
 	);
-	assert_eq!(ApiWithCustomVersion::<Block, Error = ()>::VERSION, 2);
+	assert_eq!(<dyn ApiWithCustomVersion::<Block, Error = ()>>::VERSION, 2);
 }
 
 fn check_runtime_api_versions_contains<T: RuntimeApiInfo + ?Sized>() {

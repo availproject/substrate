@@ -96,7 +96,6 @@ use frame_support::{
 	},
 	dispatch::DispatchResultWithPostInfo,
 };
-use crate::limits::BlockLength;
 use codec::{Encode, Decode, FullCodec, EncodeLike};
 
 #[cfg(feature = "std")]
@@ -161,10 +160,6 @@ pub mod pallet {
 		/// Block & extrinsics weights: base values and limits.
 		#[pallet::constant]
 		type BlockWeights: Get<limits::BlockWeights>;
-
-		/// The maximum length of a block (in bytes).
-		#[pallet::constant]
-		type BlockLength: Get<limits::BlockLength>;
 
 		/// The `Origin` type used by dispatchable calls.
 		type Origin:
@@ -601,7 +596,7 @@ pub mod pallet {
 		pub code: Vec<u8>,
         #[serde(with = "sp_core::bytes")]
 		pub kc_public_params: Vec<u8>,
-		pub block_length: BlockLength,
+		pub block_length: limits::BlockLength,
 	}
 
 	#[cfg(feature = "std")]
@@ -631,7 +626,7 @@ pub mod pallet {
 				sp_io::storage::set(well_known_keys::CHANGES_TRIE_CONFIG, &changes_trie_config.encode());
 			}
             sp_io::storage::set(well_known_keys::KATE_PUBLIC_PARAMS, &self.kc_public_params);
-			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &self.block_length.encode());
+            Pallet::<T>::set_block_length(&self.block_length);
 		}
 	}
 }
@@ -1254,10 +1249,7 @@ impl<T: Config> Module<T> {
 		let (kate_commitment, block_dims) = {
 			let kc_public_params = sp_io::storage::get(well_known_keys::KATE_PUBLIC_PARAMS)
 				.unwrap_or_default();
-			let coded_block_length = &mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH)
-				.unwrap_or_default()[..];
-			let block_length: BlockLength = BlockLength::decode(coded_block_length)
-				.unwrap_or_default();
+			let block_length = Self::block_length();
 
 			kate::com::build_commitments(
 				&kc_public_params,
@@ -1450,6 +1442,18 @@ impl<T: Config> Module<T> {
 		}
 
 		Ok(())
+	}
+
+	/// Returns the current block lenght.
+	pub fn block_length() -> limits::BlockLength {
+		let raw = sp_io::storage::get(well_known_keys::BLOCK_LENGTH).unwrap_or_default();
+		limits::BlockLength::decode(&mut &raw[..]).unwrap_or_default()
+	}
+
+	/// Update the block length.
+	pub fn set_block_length(len: &limits::BlockLength) {
+		let raw = len.encode();
+		sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &raw);
 	}
 }
 

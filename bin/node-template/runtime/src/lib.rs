@@ -15,7 +15,7 @@ use sp_runtime::{
 };
 use sp_runtime::transaction_validity::{TransactionValidity, TransactionSource, TransactionPriority};
 use sp_runtime::traits::{
-	self, BlakeTwo256, Block as BlockT, AccountIdLookup, Verify, IdentifyAccount, NumberFor,OpaqueKeys, Convert,
+	BlakeTwo256, Block as BlockT, Verify, IdentifyAccount, NumberFor,OpaqueKeys,
 };
 pub use sp_runtime::{Permill, Perbill, Percent, Perquintill};
 pub use frame_support::{
@@ -29,7 +29,6 @@ pub use frame_support::{
 };
 use frame_system::{EnsureRoot, EnsureOneOf};
 use pallet_session::{historical as pallet_session_historical};
-use codec::{Decode};
 use sp_core::storage::well_known_keys;
 use sp_api::impl_runtime_apis;
 use sp_core::{	u32_trait::{_1, _2, _3, _4, _5},};
@@ -55,7 +54,7 @@ use sp_consensus_babe::Slot;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use pallet_grandpa::fg_primitives;
-use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+// use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sp_version::RuntimeVersion;
 /// Import the DA pallet.
 pub use da;
@@ -109,7 +108,8 @@ impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub babe: Babe,
 		pub grandpa: Grandpa,
-		pub im_online: ImOnline,
+		// TODO @miguel
+		// pub im_online: ImOnline,
 		pub authority_discovery: AuthorityDiscovery,
 	}
 }
@@ -166,19 +166,6 @@ pub mod currency {
 	}
 }
 
-// pub struct CurrencyToVoteHandler;
-
-// impl CurrencyToVoteHandler {
-// 	fn factor() -> Balance { (Balances::total_issuance() / u64::max_value() as Balance).max(1) }
-// }
-
-// impl Convert<Balance, u64> for CurrencyToVoteHandler {
-// 	fn convert(x: Balance) -> u64 { (x / Self::factor()) as u64 }
-// }
-
-// impl Convert<u128, Balance> for CurrencyToVoteHandler {
-// 	fn convert(x: u128) -> Balance { x * Self::factor() }
-// }
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
@@ -196,7 +183,8 @@ impl Filter<Call> for BaseFilter {
 			Call::System(_) | Call::Scheduler(_) | Call::Indices(_) |
 			Call::Babe(_) | Call::Timestamp(_) | Call::Balances(_) |
 			Call::Authorship(_) | Call::Staking(_) | Call::Tips(_) |
-			Call::Session(_) | Call::Grandpa(_) | Call::ImOnline(_) |
+			// TODO @miguel
+			Call::Session(_) | Call::Grandpa(_) | /*Call::ImOnline(_) |*/
 			Call::RandomnessCollectiveFlip(_) | Call::Elections(_) |
 			Call::Treasury(_) | Call::Bounties(_) | Call::AuthorityDiscovery(_) |
 			Call::Offences(_) | Call::Council(_) |  Call::DataAvailability(_)  |
@@ -205,13 +193,6 @@ impl Filter<Call> for BaseFilter {
 		}
 	}
 }
-// pub struct BaseFilter;
-// impl Filter<Call> for BaseFilter {
-// 	fn filter(call: &Call) -> bool {
-// 		// Avoid processing transactions from template module.
-// 		!matches!(call, Call::TemplateModule(_))
-// 	}
-// }
 
 pub struct Author;
 impl OnUnbalanced<NegativeImbalance> for Author {
@@ -244,8 +225,6 @@ parameter_types! {
 	/// We allow for 2 seconds of compute with a 6 second average block time.
 	pub BlockWeights: frame_system::limits::BlockWeights = frame_system::limits::BlockWeights
 		::with_sensible_defaults(2 * WEIGHT_PER_SECOND, da::NORMAL_DISPATCH_RATIO);
-	// pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
-	// 	::max_with_normal_ratio(kate::config::MAX_BLOCK_SIZE as u32, NORMAL_DISPATCH_RATIO);
 	pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
 	pub const SS58Prefix: u8 = 42;
 }
@@ -258,9 +237,6 @@ impl frame_system::Config for Runtime {
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = BlockWeights;
 	/// The maximum length of a block (in bytes).
-	// type BlockLength = BlockLength;
-	/// Maximum weight of each block.
-	//type MaximumBlockWeight = MaximumBlockWeight;
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The aggregated dispatch type that is available for extrinsics.
@@ -447,7 +423,7 @@ impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Babe>;
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
-	type EventHandler = (Staking, ImOnline);
+	type EventHandler = (Staking, /*ImOnline*/);
 }
 
 parameter_types! {
@@ -588,7 +564,10 @@ impl pallet_democracy::Config for Runtime {
 
 parameter_types! {
 	pub const CandidacyBond: Balance = 10 * DOLLARS;
-	pub const VotingBond: Balance = 1 * DOLLARS;
+	pub const VotingBondBase: Balance = deposit(1, 64);
+	// additional data per vote is 32 bytes (account id).
+	pub const VotingBondFactor: Balance = deposit(0, 32);
+
 	pub const TermDuration: BlockNumber = 1 * DAYS;
 	pub const DesiredMembers: u32 = 4;
 	pub const DesiredRunnersUp: u32 = 2;
@@ -608,6 +587,8 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type InitializeMembers = Council;
 	type CurrencyToVote = U128CurrencyToVote;
 	type CandidacyBond = CandidacyBond;
+	type VotingBondBase = VotingBondBase;
+	type VotingBondFactor = VotingBondFactor;
 	type LoserCandidate = Treasury;
 	type KickedMember = Treasury;
 	type DesiredMembers = DesiredMembers;
@@ -631,14 +612,15 @@ parameter_types! {
 	pub const SessionDuration: BlockNumber = EPOCH_DURATION_IN_SLOTS as _;
 	pub const ImOnlineUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 }
-impl pallet_im_online::Config for Runtime {
+// TODO @miguel
+/*impl pallet_im_online::Config for Runtime {
 	type AuthorityId = ImOnlineId;
 	type Event = Event;
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
 	type WeightInfo = pallet_im_online::weights::SubstrateWeight<Runtime>;
-}
+}*/
 
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
@@ -785,7 +767,7 @@ construct_runtime!(
 		Historical: pallet_session_historical::{Module},
 		Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
 		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
-		ImOnline: pallet_im_online::{Module, Call, Storage, Event<T>, ValidateUnsigned, Config<T>},
+		// ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>},
 		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config},
 
 		//governance stuff
@@ -834,7 +816,13 @@ pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signatu
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
-pub type Executive = frame_executive::Executive<Runtime, Block, frame_system::ChainContext<Runtime>, Runtime, AllModules>;
+pub type Executive = frame_executive::Executive<
+	Runtime,
+	Block,
+	frame_system::ChainContext<Runtime>,
+	Runtime,
+	AllModules,
+>;
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -945,11 +933,7 @@ impl_runtime_apis! {
 				equivocation_proof,
 				key_owner_proof,
 			)
-		}	
-
-		// fn authorities() -> Vec<BabeId> {
-		// 	Babe::authorities()
-		// }
+		}
 	}
 
 	impl fg_primitives::GrandpaApi<Block> for Runtime {
@@ -997,12 +981,18 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<
-		Block,
-		Balance,
-	> for Runtime {
-		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32) -> RuntimeDispatchInfo<Balance> {
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+		fn query_info(
+			uxt: <Block as BlockT>::Extrinsic,
+			len: u32,
+		) -> RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
+		}
+		fn query_fee_details(
+			uxt: <Block as BlockT>::Extrinsic,
+			len: u32,
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
+			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
 
@@ -1050,7 +1040,8 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_babe, Babe);
 			add_benchmark!(params, batches, pallet_elections_phragmen, Elections);
 			add_benchmark!(params, batches, pallet_grandpa, Grandpa);
-			add_benchmark!(params, batches, pallet_im_online, ImOnline);
+			// TODO @miguel
+			// add_benchmark!(params, batches, pallet_im_online, ImOnline);
 			add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_staking, Staking);
 			add_benchmark!(params, batches, pallet_treasury, Treasury);
@@ -1067,7 +1058,7 @@ impl_runtime_apis! {
 		}
 
 		fn get_block_length() -> frame_system::limits::BlockLength {
-			frame_system::limits::BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH).unwrap_or_default()[..]).unwrap()
+			frame_system::Pallet::<Runtime>::block_length()
 		}
 	}
 }

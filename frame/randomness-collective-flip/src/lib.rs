@@ -160,14 +160,11 @@ mod tests {
 		pub const BlockHashCount: u64 = 250;
 		pub BlockWeights: limits::BlockWeights = limits::BlockWeights
 			::simple_max(1024);
-		pub BlockLength: limits::BlockLength = limits::BlockLength
-			::max(2 * 1024);
 	}
 
 	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
 		type BlockWeights = ();
-		type BlockLength = BlockLength;
 		type DbWeight = ();
 		type Origin = Origin;
 		type Index = u64;

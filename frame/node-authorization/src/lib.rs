@@ -461,7 +461,6 @@ mod tests {
 		type BaseCallFilter = ();
 		type DbWeight = ();
 		type BlockWeights = ();
-		type BlockLength = ();
 		type Origin = Origin;
 		type Index = u64;
 		type BlockNumber = u64;

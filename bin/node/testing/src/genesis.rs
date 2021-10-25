@@ -62,6 +62,7 @@ pub fn config_endowed(
 				digest_levels: 2,
 			}) } else { None },
 			code: code.map(|x| x.to_vec()).unwrap_or_else(|| wasm_binary_unwrap().to_vec()),
+			block_length: <_>::default(),
 			kc_public_params: vec![]
 		}),
 		pallet_indices: Some(IndicesConfig {

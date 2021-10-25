@@ -646,7 +646,7 @@ pub(crate) mod tests {
 		};
 		Header::new(
 			number,
-			H256::from_low_u64_be(0),
+			H256::from_low_u64_be(0).into(),
 			H256::from_low_u64_be(0),
 			parent_hash,
 			Default::default(),

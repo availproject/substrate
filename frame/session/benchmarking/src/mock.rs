@@ -46,7 +46,6 @@ frame_support::construct_runtime!(
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
-	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
 	type Index = AccountIndex;

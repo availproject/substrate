@@ -56,7 +56,7 @@ use frame_support::{
 	traits::KeyOwnerProofSystem,
 	weights::RuntimeDbWeight,
 };
-use frame_system::limits::{BlockWeights, BlockLength};
+use frame_system::limits::BlockWeights;
 use sp_inherents::{CheckInherentsResult, InherentData};
 use cfg_if::cfg_if;
 
@@ -471,8 +471,6 @@ parameter_types! {
 		read: 100,
 		write: 1000,
 	};
-	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max(4 * 1024 * 1024);
 	pub RuntimeBlockWeights: BlockWeights =
 		BlockWeights::with_sensible_defaults(4 * 1024 * 1024, Perbill::from_percent(75));
 }
@@ -480,7 +478,6 @@ parameter_types! {
 impl frame_system::Config for Runtime {
 	type BaseCallFilter = ();
 	type BlockWeights = RuntimeBlockWeights;
-	type BlockLength = RuntimeBlockLength;
 	type Origin = Origin;
 	type Call = Extrinsic;
 	type Index = u64;

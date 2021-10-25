@@ -1107,7 +1107,7 @@ mod tests {
 
 		let head = Header::new(
 			1,
-			H256::from_low_u64_be(0),
+			H256::from_low_u64_be(0).into(),
 			H256::from_low_u64_be(0),
 			Default::default(),
 			Default::default()

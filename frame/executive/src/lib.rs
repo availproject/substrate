@@ -557,7 +557,7 @@ mod tests {
 				}
 
 				#[weight = 0]
-				fn calculate_storage_root(origin) {
+				fn calculate_storage_root(_origin) {
 					let root = sp_io::storage::root();
 					sp_io::storage::set("storage_root".as_bytes(), &root);
 				}
@@ -607,7 +607,6 @@ mod tests {
 	impl frame_system::Config for Runtime {
 		type BaseCallFilter = ();
 		type BlockWeights = BlockWeights;
-		type BlockLength = ();
 		type DbWeight = ();
 		type Origin = Origin;
 		type Index = u64;
@@ -730,7 +729,7 @@ mod tests {
 		t.execute_with(|| {
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -758,7 +757,7 @@ mod tests {
 					parent_hash: [69u8; 32].into(),
 					number: 1,
 					state_root: hex!("1599922f15b2d5cf75e83370e29e13b96fdf799d917a5b6319736af292f21665").into(),
-					extrinsics_root: hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into(),
+					extrinsics_root: ExtrinsicsRoot::new( hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into()),
 					digest: Digest { logs: vec![], },
 				},
 				extrinsics: vec![],
@@ -775,7 +774,7 @@ mod tests {
 					parent_hash: [69u8; 32].into(),
 					number: 1,
 					state_root: [0u8; 32].into(),
-					extrinsics_root: hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into(),
+					extrinsics_root: ExtrinsicsRoot::new(hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into()),
 					digest: Digest { logs: vec![], },
 				},
 				extrinsics: vec![],
@@ -792,7 +791,7 @@ mod tests {
 					parent_hash: [69u8; 32].into(),
 					number: 1,
 					state_root: hex!("49cd58a254ccf6abc4a023d9a22dcfc421e385527a250faec69f8ad0d8ed3e48").into(),
-					extrinsics_root: [0u8; 32].into(),
+					extrinsics_root: ExtrinsicsRoot::new([0u8; 32].into()),
 					digest: Digest { logs: vec![], },
 				},
 				extrinsics: vec![],
@@ -808,7 +807,7 @@ mod tests {
 		t.execute_with(|| {
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -834,7 +833,7 @@ mod tests {
 		t.execute_with(|| {
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -875,7 +874,7 @@ mod tests {
 
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -904,7 +903,7 @@ mod tests {
 			// New Block
 			Executive::initialize_block(&Header::new(
 				2,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -965,7 +964,7 @@ mod tests {
 					<Runtime as pallet_transaction_payment::Config>::WeightToFee::calc(&weight);
 				Executive::initialize_block(&Header::new(
 					1,
-					H256::default(),
+					<_>::default(),
 					H256::default(),
 					[69u8; 32].into(),
 					Digest::default(),
@@ -1084,7 +1083,7 @@ mod tests {
 
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -1108,7 +1107,7 @@ mod tests {
 
 			Executive::initialize_block(&Header::new(
 				block_number,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -1144,7 +1143,7 @@ mod tests {
 
 			let header = Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				parent_hash,
 				digest.clone(),
@@ -1167,7 +1166,7 @@ mod tests {
 			// Let's build some fake block.
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),

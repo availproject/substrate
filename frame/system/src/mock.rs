@@ -71,8 +71,6 @@ parameter_types! {
 		})
 		.avg_block_initialization(Perbill::from_percent(0))
 		.build_or_panic();
-	pub RuntimeBlockLength: limits::BlockLength =
-		limits::BlockLength::max_with_normal_ratio(1024, NORMAL_DISPATCH_RATIO);
 }
 
 thread_local!{
@@ -87,7 +85,6 @@ impl OnKilledAccount<u64> for RecordKilled {
 impl Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = RuntimeBlockWeights;
-	type BlockLength = RuntimeBlockLength;
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;

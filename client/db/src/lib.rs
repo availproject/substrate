@@ -1969,12 +1969,13 @@ pub(crate) mod tests {
 			digest.push(DigestItem::ChangesTrieRoot(root));
 			changes_trie_update = update;
 		}
+
 		let header = Header {
 			number,
 			parent_hash,
 			state_root: BlakeTwo256::trie_root(Vec::new()),
 			digest,
-			extrinsics_root,
+			extrinsics_root: extrinsics_root.into(),
 		};
 		let header_hash = header.hash();
 
