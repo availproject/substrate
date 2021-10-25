@@ -417,7 +417,7 @@ fn extrinsics_root_is_calculated_correctly() {
         let header = System::finalize();
 
         let ext_root_hash = extrinsics_data_root::<BlakeTwo256>(&vec![vec![1], vec![2]]);
- 	let    ext_root :Et rinsicsRoot<_> = ext_root_hash.into();
+		let ext_root :ExtrinsicsRoot<_> = ext_root_hash.into();
         assert_eq!(ext_root, *header.extrinsics_root());
     });
 }
