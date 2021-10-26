@@ -1861,6 +1861,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "kate",
  "pallet-balances",
  "pallet-indices",
  "pallet-transaction-payment",

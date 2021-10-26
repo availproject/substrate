@@ -483,7 +483,7 @@ mod tests {
 	use super::*;
 	use sp_core::H256;
 	use sp_runtime::{
-		generic::{Era, DigestItem}, DispatchError, testing::{Digest, Header, Block},
+		generic::{Era, DigestItem}, DispatchError, testing::{Digest, Header, Block}, Perbill,
 		traits::{Header as HeaderT, BlakeTwo256, IdentityLookup},
 		transaction_validity::{
 			InvalidTransaction, ValidTransaction, TransactionValidityError, UnknownTransaction
@@ -495,7 +495,7 @@ mod tests {
 		traits::{Currency, LockIdentifier, LockableCurrency, WithdrawReasons},
 	};
 	use frame_system::{
-		Call as SystemCall, ChainContext, LastRuntimeUpgradeInfo,
+		Call as SystemCall, ChainContext, LastRuntimeUpgradeInfo, limits::BlockLength,
 	};
 	use pallet_transaction_payment::CurrencyAdapter;
 	use pallet_balances::Call as BalancesCall;
@@ -742,10 +742,17 @@ mod tests {
 	}
 
 	fn new_test_ext(balance_factor: Balance) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+		let mut t = frame_system::GenesisConfig{
+			code: <_>::default(),
+			changes_trie_config: <_>::default(),
+			kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
+			block_length: BlockLength::with_normal_ratio(128, 256, 64, Perbill::from_percent(90))
+		}.build_storage::<Runtime>().unwrap();
+
 		pallet_balances::GenesisConfig::<Runtime> {
 			balances: vec![(1, 111 * balance_factor)],
 		}.assimilate_storage(&mut t).unwrap();
+
 		t.into()
 	}
 

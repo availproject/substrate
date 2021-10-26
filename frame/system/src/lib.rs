@@ -594,7 +594,7 @@ pub mod pallet {
 		pub changes_trie_config: Option<ChangesTrieConfiguration>,
 		#[serde(with = "sp_core::bytes")]
 		pub code: Vec<u8>,
-        #[serde(with = "sp_core::bytes")]
+		#[serde(with = "sp_core::bytes")]
 		pub kc_public_params: Vec<u8>,
 		pub block_length: limits::BlockLength,
 	}
@@ -605,8 +605,8 @@ pub mod pallet {
 			Self {
 				changes_trie_config: Default::default(),
 				code: Default::default(),
-                kc_public_params: <_>::default(),
-                block_length: <_>::default(),
+				kc_public_params: <_>::default(),
+				block_length: <_>::default(),
 			}
 		}
 	}
