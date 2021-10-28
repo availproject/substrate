@@ -759,12 +759,19 @@ mod tests {
 	#[test]
 	fn block_import_works() {
 		new_test_ext(1).execute_with(|| {
+			let extrinsics_root = sp_runtime::generic::ExtrinsicsRoot {
+				hash: hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into(),
+				commitment: hex!("b208887554cf1bca4fd85d62f9354b316adbdcf74cf93542b0451e86fb1c01dab0ac96efca738f13d001a5ade4d24ce9b208887554cf1bca4fd85d62f9354b316adbdcf74cf93542b0451e86fb1c01dab0ac96efca738f13d001a5ade4d24ce9").to_vec(),
+				rows: 1,
+				cols: 4 
+			};
+
 			Executive::execute_block(Block {
 				header: Header {
 					parent_hash: [69u8; 32].into(),
 					number: 1,
-					state_root: hex!("1599922f15b2d5cf75e83370e29e13b96fdf799d917a5b6319736af292f21665").into(),
-					extrinsics_root: ExtrinsicsRoot::new( hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into()),
+					state_root: hex!("05c161096e4f89db32bb74af97c1a2554f4d8d18e14a7f5a2c4730e49605e385").into(),
+					extrinsics_root,
 					digest: Digest { logs: vec![], },
 				},
 				extrinsics: vec![],

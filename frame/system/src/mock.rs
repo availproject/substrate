@@ -15,12 +15,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{self as frame_system, *};
+use crate::{self as frame_system, *, limits::BlockLength};
 use sp_std::cell::RefCell;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
-	testing::Header, BuildStorage,
+	testing::Header,
 };
 use frame_support::parameter_types;
 
@@ -113,8 +113,12 @@ pub const CALL: &<Test as Config>::Call = &Call::System(frame_system::Call::set_
 
 /// Create new externalities for `System` module tests.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut ext: sp_io::TestExternalities = GenesisConfig::default()
-		.build_storage().unwrap().into();
+	let mut ext: sp_io::TestExternalities = frame_system::GenesisConfig {
+		kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
+		block_length: BlockLength::with_normal_ratio(128, 256, 64, Perbill::from_percent(90)),
+		..Default::default()
+	}.build_storage::<Test>().unwrap().into();
+
 	// Add to each test the initial weight of a block
 	ext.execute_with(|| System::register_extra_weight_unchecked(
 		<Test as crate::Config>::BlockWeights::get().base_block,

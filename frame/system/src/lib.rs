@@ -605,8 +605,8 @@ pub mod pallet {
 			Self {
 				changes_trie_config: Default::default(),
 				code: Default::default(),
-				kc_public_params: <_>::default(),
-				block_length: <_>::default(),
+				kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
+				block_length: limits::BlockLength::with_normal_ratio(128, 256, 64, Perbill::from_percent(90)),
 			}
 		}
 	}
@@ -1243,6 +1243,7 @@ impl<T: Config> Module<T> {
 			.map(ExtrinsicData::<T>::take)
 			.collect();
 
+		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
 
 
 		#[cfg(feature = "std")]
@@ -1282,8 +1283,6 @@ impl<T: Config> Module<T> {
 			);
 			digest.push(item);
 		}
-
-		let root_hash = extrinsics_data_root::<T::Hashing>(&extrinsics);
 
 		#[cfg(feature = "std")]
 		let extrinsics_root = <T::Header as traits::Header>::Root::new_with_commitment(root_hash, kate_commitment, block_dims.rows as u16, block_dims.cols as u16);

@@ -1972,6 +1972,7 @@ version = "3.0.0"
 dependencies = [
  "criterion",
  "frame-support",
+ "hex-literal",
  "impl-trait-for-tuples",
  "kate",
  "log",
