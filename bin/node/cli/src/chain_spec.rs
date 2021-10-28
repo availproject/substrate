@@ -250,7 +250,7 @@ pub fn testnet_genesis(
 		frame_system: Some(SystemConfig {
 			code: wasm_binary_unwrap().to_vec(),
 			changes_trie_config: Default::default(),
-			kc_public_params: vec![],
+			kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(), 
 			block_length: BlockLength::with_normal_ratio(128, 256, 64, 	Perbill::from_percent(90)),
 		}),
 		pallet_balances: Some(BalancesConfig {

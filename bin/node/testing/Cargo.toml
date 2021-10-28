@@ -13,6 +13,7 @@ publish = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+kate = { path = "../../../client/kate", default-features = false }
 pallet-balances = { version = "3.0.0", path = "../../../frame/balances" }
 sc-service = { version = "0.9.0", features = ["test-helpers", "db"],  path = "../../../client/service" }
 sc-client-db = { version = "0.9.0", path = "../../../client/db/", features = ["kvdb-rocksdb", "parity-db"] }

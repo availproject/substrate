@@ -63,7 +63,7 @@ pub fn config_endowed(
 			}) } else { None },
 			code: code.map(|x| x.to_vec()).unwrap_or_else(|| wasm_binary_unwrap().to_vec()),
 			block_length: <_>::default(),
-			kc_public_params: vec![]
+			kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(), 
 		}),
 		pallet_indices: Some(IndicesConfig {
 			indices: vec![],
