@@ -280,7 +280,7 @@ impl<T: Config + Send + Sync> sp_std::fmt::Debug for CheckWeight<T> {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::{BlockWeight, AllExtrinsicsLen};
+	use crate::{BlockWeight, AllExtrinsicsLen, PerDispatchClass};
 	use crate::mock::{Test, CALL, new_test_ext, System};
 	use sp_std::marker::PhantomData;
 	use frame_support::{assert_ok, assert_noop};
@@ -299,8 +299,16 @@ mod tests {
 		block_weights().max_block
 	}
 
+	fn block_length_limit() -> PerDispatchClass<u32> {
+		crate::Module::<Test>::block_length().max
+	}
+
 	fn normal_length_limit() -> u32 {
-        *crate::Module::<Test>::block_length().max.get(DispatchClass::Normal)
+		*block_length_limit().get(DispatchClass::Normal)
+	}
+
+	fn operational_length_limit() -> u32 {
+		*block_length_limit().get(DispatchClass::Operational)
 	}
 
 	#[test]
@@ -505,7 +513,7 @@ mod tests {
 	fn signed_ext_check_weight_block_size_works() {
 		new_test_ext().execute_with(|| {
 			let normal = DispatchInfo::default();
-			let normal_limit = normal_weight_limit() as usize;
+			let normal_limit = normal_length_limit() as usize;
 			let reset_check_weight = |tx, s, f| {
 				AllExtrinsicsLen::<Test>::put(0);
 				let r = CheckWeight::<Test>(PhantomData).pre_dispatch(&1, CALL, tx, s);
@@ -517,11 +525,12 @@ mod tests {
 			reset_check_weight(&normal, normal_limit + 1, true);
 
 			// Operational ones don't have this limit.
+			let operational_limit = operational_length_limit() as usize; 
 			let op = DispatchInfo { weight: 0, class: DispatchClass::Operational, pays_fee: Pays::Yes };
 			reset_check_weight(&op, normal_limit, false);
 			reset_check_weight(&op, normal_limit + 100, false);
-			reset_check_weight(&op, 1024, false);
-			reset_check_weight(&op, 1025, true);
+			reset_check_weight(&op, operational_limit, false);
+			reset_check_weight(&op, operational_limit +1, true);
 		})
 	}
 
