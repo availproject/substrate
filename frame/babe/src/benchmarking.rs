@@ -19,6 +19,7 @@
 
 use super::*;
 use frame_benchmarking::benchmarks;
+use hex_literal::hex;
 
 type Header = sp_runtime::generic::Header<u64, sp_runtime::traits::BlakeTwo256>;
 
@@ -31,28 +32,22 @@ benchmarks! {
 		// signature content changes). it should not affect the benchmark.
 		// with the current benchmark setup it is not possible to generate this programatically
 		// from the benchmark setup.
-		const EQUIVOCATION_PROOF_BLOB: [u8; 416] = [
-			222, 241, 46, 66, 243, 228, 135, 233, 177, 64, 149, 170, 141, 92, 193, 106, 51, 73, 31,
-			27, 80, 218, 220, 248, 129, 29, 20, 128, 243, 250, 134, 39, 11, 0, 0, 0, 0, 0, 0, 0,
-			158, 4, 7, 240, 67, 153, 134, 190, 251, 196, 229, 95, 136, 165, 234, 228, 255, 18, 2,
-			187, 76, 125, 108, 50, 67, 33, 196, 108, 38, 115, 179, 86, 40, 36, 27, 5, 105, 58, 228,
-			94, 198, 65, 212, 218, 213, 61, 170, 21, 51, 249, 182, 121, 101, 91, 204, 25, 31, 87,
-			219, 208, 43, 119, 211, 185, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 6, 66, 65, 66, 69, 52, 2, 0, 0, 0, 0, 11,
-			0, 0, 0, 0, 0, 0, 0, 5, 66, 65, 66, 69, 1, 1, 188, 192, 217, 91, 138, 78, 217, 80, 8,
-			29, 140, 55, 242, 210, 170, 184, 73, 98, 135, 212, 236, 209, 115, 52, 200, 79, 175,
-			172, 242, 161, 199, 47, 236, 93, 101, 95, 43, 34, 141, 16, 247, 220, 33, 59, 31, 197,
-			27, 7, 196, 62, 12, 238, 236, 124, 136, 191, 29, 36, 22, 238, 242, 202, 57, 139, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 40, 23, 175, 153, 83, 6, 33, 65, 123, 51, 80, 223, 126, 186, 226, 225, 240, 105, 28,
-			169, 9, 54, 11, 138, 46, 194, 201, 250, 48, 242, 125, 117, 116, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 6, 66, 65,
-			66, 69, 52, 2, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 5, 66, 65, 66, 69, 1, 1, 142, 12,
-			124, 11, 167, 227, 103, 88, 78, 23, 228, 33, 96, 41, 207, 183, 227, 189, 114, 70, 254,
-			30, 128, 243, 233, 83, 214, 45, 74, 182, 120, 119, 64, 243, 219, 119, 63, 240, 205,
-			123, 231, 82, 205, 174, 143, 70, 2, 86, 182, 20, 16, 141, 145, 91, 116, 195, 58, 223,
-			175, 145, 255, 7, 121, 133
-		];
+		const EQUIVOCATION_PROOF_BLOB: [u8; 620] = hex!(
+			"def12e42f3e487e9b14095aa8d5cc16a33491f1b50dadcf8811d1480f3fa86270b000000000000008526a
+			9c21fa1aca2510754974532fe6efe00e3c9262d4bf738c32e545f010f2b28876f7ff1e2c8a7f391c6cd623
+			13d35ed837a57c95b1b5e138984c24317f1d80c03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c
+			082f29dcf4c11131481019188715cbf61d78e6ffc93ab30d9af35f00142f0462504dbfc128bb13af56b8fa
+			f2a66aee08af074f536ffedcb2a52ed9188715cbf61d78e6ffc93ab30d9af35f00142f0462504dbfc128bb
+			13af56b8faf2a66aee08af074f536ffedcb2a52ed010004000806424142453402000000000b00000000000
+			00005424142450101d040a99d39a9704f43d6fe4eb6c4391bad218b7fe2d7cc838e2d2806ded932240dec4
+			886ebab981a01c79aeb17b093326b3d693ad66ffc2c3034b6cf3839c5878526a9c21fa1aca251075497453
+			2fe6efe00e3c9262d4bf738c32e545f010f2b28876f7ff1e2c8a7f391c6cd62313d35ed837a57c95b1b5e1
+			38984c24317f1d80c03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c11131481019
+			188715cbf61d78e6ffc93ab30d9af35f00142f0462504dbfc128bb13af56b8faf2a66aee08af074f536ffe
+			dcb2a52ed9188715cbf61d78e6ffc93ab30d9af35f00142f0462504dbfc128bb13af56b8faf2a66aee08af
+			074f536ffedcb2a52ed010004000806424142453402000000000b00000000000000054241424501010c704
+			63cc03b63f3bfb30c0efba9149478a4aa1c550ea22021b5a9ce35dd170cc891de2d8fece48a6025c041b91
+			1bd9fa69873da9456cc1cecfeb6fb9d182a8f");
 
 		let equivocation_proof1: sp_consensus_babe::EquivocationProof<Header> =
 			Decode::decode(&mut &EQUIVOCATION_PROOF_BLOB[..]).unwrap();
@@ -95,10 +90,9 @@ mod tests {
 			);
 
 			println!("equivocation_proof: {:?}", equivocation_proof);
-			println!(
-				"equivocation_proof.encode(): {:?}",
-				equivocation_proof.encode()
-			);
+			let encoded = equivocation_proof.encode();
+			let hex_encoded = hex::encode(encoded); 
+			println!("equivocation_proof.encode(): {}", hex_encoded);
 		});
 	}
 }

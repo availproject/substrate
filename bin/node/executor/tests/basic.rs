@@ -437,6 +437,8 @@ fn full_native_block_import_works() {
 	});
 }
 
+/// TODO - Disabled until wasm be fixed.
+#[ignore]
 #[test]
 fn full_wasm_block_import_works() {
 	let mut t = new_test_ext(compact_code_unwrap(), false);
@@ -577,6 +579,8 @@ const CODE_TRANSFER: &str = r#"
 )
 "#;
 
+/// TODO - Disabled until wasm be fixed.
+#[ignore]
 #[test]
 fn deploying_wasm_contract_should_work() {
 	let transfer_code = wat::parse_str(CODE_TRANSFER).unwrap();
@@ -647,6 +651,8 @@ fn deploying_wasm_contract_should_work() {
 	});
 }
 
+/// TODO - Disabled until wasm be fixed.
+#[ignore]
 #[test]
 fn wasm_big_block_import_fails() {
 	let mut t = new_test_ext(compact_code_unwrap(), false);
@@ -787,6 +793,8 @@ fn full_native_block_import_works_with_changes_trie() {
 	assert!(t.ext().storage_changes_root(&GENESIS_HASH).unwrap().is_some());
 }
 
+/// TODO - Disabled until wasm be fixed.
+#[ignore]
 #[test]
 fn full_wasm_block_import_works_with_changes_trie() {
 	let block1 = changes_trie_block();

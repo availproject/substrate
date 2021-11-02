@@ -25,7 +25,7 @@ use sp_runtime::{
 	testing::{Digest, DigestItem, Header, TestXt,},
 	traits::{Header as _, IdentityLookup, OpaqueKeys},
 };
-use frame_system::InitKind;
+use frame_system::{InitKind, limits::BlockLength};
 use frame_support::{
 	parameter_types, StorageValue,
 	traits::{KeyOwnerProofSystem, OnInitialize},
@@ -378,9 +378,11 @@ pub fn new_test_ext_with_pairs(authorities_len: usize) -> (Vec<AuthorityPair>, s
 }
 
 pub fn new_test_ext_raw_authorities(authorities: Vec<AuthorityId>) -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = frame_system::GenesisConfig{ 
+		kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
+		block_length: BlockLength::with_normal_ratio(128, 256, 64, Perbill::from_percent(90)),
+		..Default::default()
+	}.build_storage::<Test>().unwrap();
 
 	let balances: Vec<_> = (0..authorities.len())
 		.map(|i| (i as u64, 10_000_000))

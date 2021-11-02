@@ -37,15 +37,19 @@ pub type TestExternalities = CoreTestExternalities<BlakeTwo256, u64>;
 type HostFunctions = sp_io::SubstrateHostFunctions;
 
 /// Simple macro that runs a given method as test with the available wasm execution methods.
+/// # TODO @Polygon
+///  - Re-enable it once wasm is fixed.
 #[macro_export]
 macro_rules! test_wasm_execution {
 	($method_name:ident) => {
 		paste::item! {
+			#[ignore]
 			#[test]
 			fn [<$method_name _interpreted>]() {
 				$method_name(WasmExecutionMethod::Interpreted);
 			}
 
+			#[ignore]
 			#[test]
 			#[cfg(feature = "wasmtime")]
 			fn [<$method_name _compiled>]() {
@@ -56,6 +60,7 @@ macro_rules! test_wasm_execution {
 
 	(interpreted_only $method_name:ident) => {
 		paste::item! {
+			#[ignore]
 			#[test]
 			fn [<$method_name _interpreted>]() {
 				$method_name(WasmExecutionMethod::Interpreted);

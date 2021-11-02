@@ -17,7 +17,7 @@
 
 use codec::{Decode, Encode};
 use frame_support::Hashable;
-use frame_system::offchain::AppCrypto;
+use frame_system::{offchain::AppCrypto, limits::BlockLength};
 use sc_executor::error::Result;
 use sc_executor::{NativeExecutor, WasmExecutionMethod};
 use sp_core::{
@@ -28,7 +28,7 @@ use sp_core::{
 };
 use sp_runtime::{
     traits::{BlakeTwo256, Header as HeaderT},
-    ApplyExtrinsicResult, MultiSignature, MultiSigner,
+    ApplyExtrinsicResult, MultiSignature, MultiSigner, Perbill,
 };
 use sp_state_machine::TestExternalities as CoreTestExternalities;
 
@@ -127,12 +127,19 @@ pub fn executor_call<
 }
 
 pub fn new_test_ext(code: &[u8], support_changes_trie: bool) -> TestExternalities<BlakeTwo256> {
-    let mut ext = TestExternalities::new_with_code(
-        code,
-        node_testing::genesis::config(support_changes_trie, Some(code))
+    let mut storage = node_testing::genesis::config(support_changes_trie, Some(code))
             .build_storage()
-            .unwrap(),
-    );
+            .unwrap();
+
+    let sys_gen = frame_system::GenesisConfig {
+        kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
+        block_length: BlockLength::with_normal_ratio(128, 256, 64, Perbill::from_percent(90)),
+        ..Default::default()
+    };
+
+    sys_gen.assimilate_storage::<node_runtime::Runtime>(&mut storage).unwrap();
+
+    let mut ext = TestExternalities::new_with_code(code, storage);
     ext.changes_trie_storage()
         .insert(0, GENESIS_HASH.into(), Default::default());
     ext
