@@ -2,7 +2,7 @@ use sp_core::{Pair, Public, sr25519};
 use node_template_runtime::{
 	AuthorityDiscoveryConfig, AccountId, BabeConfig, BalancesConfig, IndicesConfig, GenesisConfig, GrandpaConfig, DemocracyConfig,
 	SystemConfig, WASM_BINARY, Signature, StakerStatus,
-	SessionConfig, StakingConfig, ElectionsConfig, SessionKeys, Balance, CouncilConfig, TechnicalCommitteeConfig,
+	SessionConfig, StakingConfig, ElectionsConfig, SessionKeys, Balance, CouncilConfig, TechnicalCommitteeConfig, ImOnlineConfig,
 };
 use node_template_runtime::Block;
 use node_template_runtime::currency::*;
@@ -235,9 +235,9 @@ pub fn testnet_genesis(
 				))
 			}).collect::<Vec<_>>(),
 		}),
-		/*pallet_im_online: Some(ImOnlineConfig {
+		pallet_im_online: Some(ImOnlineConfig {
 			keys: vec![],
-		}),*/
+		}),
 		pallet_collective_Instance1: Some(CouncilConfig::default()),
 		pallet_collective_Instance2: Some(TechnicalCommitteeConfig {
 			members: endowed_accounts.iter()
