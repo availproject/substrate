@@ -108,8 +108,7 @@ impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub babe: Babe,
 		pub grandpa: Grandpa,
-		// TODO @miguel
-		// pub im_online: ImOnline,
+		pub im_online: ImOnline,
 		pub authority_discovery: AuthorityDiscovery,
 	}
 }
@@ -422,7 +421,7 @@ impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Babe>;
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
-	type EventHandler = (Staking, /*ImOnline*/);
+	type EventHandler = (Staking, ImOnline);
 }
 
 parameter_types! {
@@ -766,7 +765,7 @@ construct_runtime!(
 		Historical: pallet_session_historical::{Module},
 		Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
 		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
-		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>},
+		ImOnline: pallet_im_online::{Module, Call, Storage, Event<T>, ValidateUnsigned, Config<T>},
 		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config},
 
 		//governance stuff
@@ -815,13 +814,7 @@ pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signatu
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
-pub type Executive = frame_executive::Executive<
-	Runtime,
-	Block,
-	frame_system::ChainContext<Runtime>,
-	Runtime,
-	AllModules,
->;
+pub type Executive = frame_executive::Executive<Runtime, Block, frame_system::ChainContext<Runtime>, Runtime, AllModules>;
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -980,7 +973,10 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<
+		Block,
+		Balance,
+	> for Runtime {
 		fn query_info(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,

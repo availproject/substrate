@@ -35,13 +35,13 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions, >;
 fn session_keys(
 	babe: BabeId,
 	grandpa: GrandpaId,
-	_im_online: ImOnlineId,
+	im_online: ImOnlineId,
 	authority_discovery: AuthorityDiscoveryId,
 ) -> SessionKeys {
 	SessionKeys {
 		babe,
 		grandpa,
-		// im_online,
+		im_online,
 		authority_discovery
 	}
 }

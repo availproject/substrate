@@ -33,7 +33,7 @@ use codec::{Encode, Decode};
 
 /// Block length limit configuration.
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(RuntimeDebug, Clone, PartialEq, Encode, Decode)]
+#[derive(RuntimeDebug, Clone, Encode, Decode, PartialEq)]
 pub struct BlockLength {
 	/// Maximal total length in bytes for each extrinsic class.
 	///

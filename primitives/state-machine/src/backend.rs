@@ -18,10 +18,12 @@
 //! State machine backends. These manage the code and storage of contracts.
 
 use hash_db::Hasher;
-use codec::{Decode, Encode};
-use sp_core::{
-	storage::{ChildInfo, well_known_keys, TrackedStorageKey}
-};
+use codec::Encode;
+#[cfg( feature = "std")]
+use codec::Decode;
+use sp_core::storage::{ChildInfo, TrackedStorageKey};
+#[cfg( feature = "std")]
+use sp_core::storage::well_known_keys;
 use crate::{
 	trie_backend::TrieBackend,
 	trie_backend_essence::TrieBackendStorage,
