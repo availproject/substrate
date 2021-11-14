@@ -17,7 +17,7 @@ name = "node-template"
 
 [dependencies]
 structopt = "0.3.8"
-rand = "0.8.2"
+rand = "0.8.4"
 hex-literal = "0.3.1"
 futures = { version = "0.3.9", features = ["compat"] }
 sc-cli = { version = "0.9.0", path = "../../../client/cli", features = ["wasmtime"] }
@@ -51,7 +51,8 @@ sc-network = { version = "0.9.0", path = "../../../client/network" }
 sc-sync-state-rpc = { version = "0.9.0", path = "../../../client/sync-state-rpc" }
 sp-keystore = { version = "0.9.0", path = "../../../primitives/keystore" }
 
-dusk-plonk = { path = "../../../client/plonk" }
+# dusk-plonk = { path = "../../../client/plonk" }
+dusk-plonk = { version = "0.8.2", default-features = false }
 kate = { path = "../../../client/kate", default-features = false }
 log = "0.4.8"
 lru = { version = "0.6.4"}

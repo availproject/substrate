@@ -233,10 +233,11 @@ fn main() -> Result<(), String> {
 	let (authority_seeds, endowed_accounts, sudo_account) = match builder {
 		ChainSpecBuilder::Generate { authorities, endowed, keystore_path, .. } => {
 			let authorities = authorities.max(1);
-			let rand_str = || -> String {
+			let rand_str = || {
 				OsRng.sample_iter(&Alphanumeric)
 					.take(32)
-					.collect()
+					.map(char::from)
+					.collect::<String>()
 			};
 
 			let authority_seeds = (0..authorities).map(|_| rand_str()).collect::<Vec<_>>();

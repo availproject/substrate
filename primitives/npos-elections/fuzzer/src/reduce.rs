@@ -83,16 +83,15 @@ fn generate_random_phragmen_assignment(
 	(1..=voter_count).for_each(|acc| {
 		let mut targets_to_chose_from = all_targets.clone();
 		let targets_to_chose = if edge_per_voter_var > 0 { rng.gen_range(
-			avg_edge_per_voter - edge_per_voter_var,
-			avg_edge_per_voter + edge_per_voter_var,
+			avg_edge_per_voter - edge_per_voter_var..avg_edge_per_voter + edge_per_voter_var
 		) } else { avg_edge_per_voter };
 
 		let distribution = (0..targets_to_chose).map(|_| {
-			let target = targets_to_chose_from.remove(rng.gen_range(0, targets_to_chose_from.len()));
+			let target = targets_to_chose_from.remove(rng.gen_range(0..targets_to_chose_from.len()));
 			if winners.iter().find(|w| **w == target).is_none() {
 				winners.push(target.clone());
 			}
-			(target, rng.gen_range(1 * KSM, 100 * KSM))
+			(target, rng.gen_range(1 * KSM..100 * KSM))
 		}).collect::<Vec<(AccountId, ExtendedBalance)>>();
 
 		assignments.push(StakedAssignment {

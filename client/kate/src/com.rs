@@ -1,10 +1,12 @@
 use dusk_plonk::commitment_scheme::kzg10;
 use dusk_plonk::fft::{EvaluationDomain,Evaluations};
+use dusk_bytes::Serializable;
 use std::time::{Instant};
 use log::{info};
 use std::convert::{TryInto, TryFrom};
 use serde::{Serialize, Deserialize};
-use rand::{rngs::StdRng, Rng};
+use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand_core::{RngCore};
 use super::*;
 use dusk_plonk::prelude::BlsScalar;
 
@@ -87,6 +89,7 @@ pub fn get_block_dimensions(
 	}
 }
 
+#[cfg(feature = "alloc")]
 /// build extended data matrix, by columns
 pub fn extend_data_matrix(
 	block_dims: BlockDimensions,
@@ -153,7 +156,7 @@ pub fn build_proof(
 		()
 	}
 
-	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
+	let public_params = kzg10::PublicParameters::from_slice(public_params_data.as_slice()).unwrap();
 	let (prover_key, _) = public_params.trim(cols_num).unwrap();
 
 	// Generate all the x-axis points of the domain on which all the row polynomials reside
@@ -227,6 +230,7 @@ pub fn build_proof(
 	Some(result_bytes)
 }
 
+#[cfg(feature = "alloc")]
 pub fn build_commitments(
 	public_params_data: &Vec<u8>,
 	rows_num: usize,
@@ -267,7 +271,9 @@ pub fn build_commitments(
 	);
 
 	// construct commitments in parallel
-	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
+	// let public_params = kzg10::PublicParameters::from_slice(public_params_data.as_slice()).unwrap();
+	let mut rng = StdRng::seed_from_u64(42);
+	let public_params = kzg10::PublicParameters::setup(block_dims.cols,&mut rng).unwrap();
 	let (prover_key, _) = public_params.trim(block_dims.cols).unwrap();
 	let row_eval_domain = EvaluationDomain::new(block_dims.cols).unwrap();
 
