@@ -67,6 +67,7 @@ pallet-transaction-payment-rpc-runtime-api = { version = "3.0.0", default-featur
 # Used for runtime benchmarking
 frame-benchmarking = { version = "3.0.0", default-features = false, path = "../../../frame/benchmarking", optional = true }
 frame-system-benchmarking = { version = "3.0.0", default-features = false, path = "../../../frame/system/benchmarking", optional = true }
+pallet-session-benchmarking = { version = "3.0.0", default-features = false, path = "../../../frame/session/benchmarking", optional = true }
 hex-literal = { version = "0.3.1", optional = true }
 
 da = { version = "2.0.0", default-features = false, path = "../pallets/template", package = "polygon-data-availability" }
@@ -129,8 +130,15 @@ runtime-benchmarks = [
 	"frame-benchmarking",
 	"frame-support/runtime-benchmarks",
 	"frame-system-benchmarking",
+	"pallet-session-benchmarking",
 	"hex-literal",
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
+	"pallet-collective/runtime-benchmarks",
+	"pallet-babe/runtime-benchmarks",
+	"pallet-elections-phragmen/runtime-benchmarks",
+	"pallet-grandpa/runtime-benchmarks",
+	"pallet-im-online/runtime-benchmarks",
+	"pallet-treasury/runtime-benchmarks",
 ]
