@@ -37,7 +37,7 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_grandpa::WeightInfo for WeightInfo<T> {
 	fn check_equivocation_proof(_x: u32, ) -> Weight {
-		(125_667_000 as Weight)
+		(119_000_000 as Weight)
 	}
 	fn note_stalled() -> Weight {
 		(3_000_000 as Weight)
