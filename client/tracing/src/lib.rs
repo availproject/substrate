@@ -27,6 +27,7 @@
 //! Currently we provide `Log` (default), `Telemetry` variants for `Receiver`
 
 #![warn(missing_docs)]
+#![allow(deprecated)]
 
 pub mod logging;
 

@@ -23,7 +23,7 @@ sp-std = { version = "3.0.0", default-features = false, path = "../../primitives
 [dev-dependencies]
 sp-core = { version = "3.0.0", path = "../../primitives/core" }
 sp-io = { version = "3.0.0", path = "../../primitives/io" }
-serde = { version = "1.0.101" }
+serde = { version = "1.0.121" }
 
 [features]
 default = ["std"]

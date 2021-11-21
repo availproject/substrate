@@ -26,7 +26,7 @@ sp-core = { version = "3.0.0", path = "../../primitives/core" }
 sp-version = { version = "3.0.0", path = "../../primitives/version" }
 sp-runtime = { path = "../../primitives/runtime" , version = "3.0.0"}
 sp-chain-spec = { path = "../../primitives/chain-spec" , version = "3.0.0"}
-serde = { version = "1.0.101", features = ["derive"] }
+serde = { version = "1.0.121", features = ["derive"] }
 serde_json = "1.0.41"
 sp-transaction-pool = { version = "3.0.0", path = "../../primitives/transaction-pool" }
 sp-rpc = { version = "3.0.0", path = "../../primitives/rpc" }

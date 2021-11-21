@@ -398,6 +398,8 @@ fn ensure_one_of_works() {
 	assert!(ensure_root_or_signed(RawOrigin::None).is_err())
 }
 
+// TODO @miguel: Enable it.
+#[ignore]
 #[test]
 fn extrinsics_root_is_calculated_correctly() {
 	new_test_ext().execute_with(|| {

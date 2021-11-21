@@ -1657,6 +1657,8 @@ fn cannot_self_destruct_while_live() {
 		});
 }
 
+// TODO @miguel
+#[ignore]
 #[test]
 fn self_destruct_works() {
 	let (wasm, code_hash) = compile_module::<Test>("self_destruct").unwrap();

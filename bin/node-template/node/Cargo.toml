@@ -57,7 +57,7 @@ kate = { path = "../../../client/kate", default-features = false }
 log = "0.4.8"
 lru = { version = "0.6.4"}
 codec = { package = "parity-scale-codec", version = "2.0.0" }
-serde = { version = "1.0.102", features = ["derive"] }
+serde = { version = "1.0.121", features = ["derive"] }
 frame-system = { package = "frame-system", path = "../../../frame/system"}
 frame-support = { package = "frame-support", path = "../../../frame/support"}
 

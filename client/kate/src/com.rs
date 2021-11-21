@@ -5,8 +5,7 @@ use std::time::{Instant};
 use log::{info};
 use std::convert::{TryInto, TryFrom};
 use serde::{Serialize, Deserialize};
-use rand::{rngs::StdRng, Rng, SeedableRng};
-use rand_core::{RngCore};
+use rand::{rngs::StdRng, Rng};
 use super::*;
 use dusk_plonk::prelude::BlsScalar;
 
@@ -230,9 +229,10 @@ pub fn build_proof(
 	Some(result_bytes)
 }
 
+// TODO @miguel Remove that param?
 #[cfg(feature = "alloc")]
 pub fn build_commitments(
-	public_params_data: &Vec<u8>,
+	_public_params_data: &Vec<u8>,
 	rows_num: usize,
 	cols_num: usize,
 	chunk_size: usize,
@@ -271,9 +271,7 @@ pub fn build_commitments(
 	);
 
 	// construct commitments in parallel
-	// let public_params = kzg10::PublicParameters::from_slice(public_params_data.as_slice()).unwrap();
-	let mut rng = StdRng::seed_from_u64(42);
-	let public_params = kzg10::PublicParameters::setup(block_dims.cols,&mut rng).unwrap();
+	let public_params = testnet::public_params(block_dims.cols);
 	let (prover_key, _) = public_params.trim(block_dims.cols).unwrap();
 	let row_eval_domain = EvaluationDomain::new(block_dims.cols).unwrap();
 
