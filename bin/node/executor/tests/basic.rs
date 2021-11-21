@@ -437,7 +437,7 @@ fn full_native_block_import_works() {
 	});
 }
 
-/// TODO - Disabled until wasm be fixed.
+/// TODO @polygon Disabled until wasm be fixed.
 #[ignore]
 #[test]
 fn full_wasm_block_import_works() {
@@ -579,7 +579,7 @@ const CODE_TRANSFER: &str = r#"
 )
 "#;
 
-/// TODO - Disabled until wasm be fixed.
+/// TODO @polygon - Disabled until wasm be fixed.
 #[ignore]
 #[test]
 fn deploying_wasm_contract_should_work() {
@@ -651,7 +651,7 @@ fn deploying_wasm_contract_should_work() {
 	});
 }
 
-/// TODO - Disabled until wasm be fixed.
+/// TODO @polygon - Disabled until wasm be fixed.
 #[ignore]
 #[test]
 fn wasm_big_block_import_fails() {
@@ -793,7 +793,7 @@ fn full_native_block_import_works_with_changes_trie() {
 	assert!(t.ext().storage_changes_root(&GENESIS_HASH).unwrap().is_some());
 }
 
-/// TODO - Disabled until wasm be fixed.
+/// TODO @polygon - Disabled until wasm be fixed.
 #[ignore]
 #[test]
 fn full_wasm_block_import_works_with_changes_trie() {

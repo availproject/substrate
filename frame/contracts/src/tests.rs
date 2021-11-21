@@ -1657,8 +1657,6 @@ fn cannot_self_destruct_while_live() {
 		});
 }
 
-// TODO @miguel
-#[ignore]
 #[test]
 fn self_destruct_works() {
 	let (wasm, code_hash) = compile_module::<Test>("self_destruct").unwrap();
@@ -1712,7 +1710,7 @@ fn self_destruct_works() {
 				EventRecord {
 					phase: Phase::Initialization,
 					event: Event::pallet_balances(
-						pallet_balances::Event::Transfer(addr.clone(), DJANGO, 93_654)
+						pallet_balances::Event::Transfer(addr.clone(), DJANGO, 93_582)
 					),
 					topics: vec![],
 				},
@@ -1735,7 +1733,7 @@ fn self_destruct_works() {
 
 			// check that the beneficiary (django) got remaining balance
 			// some rent was deducted before termination
-			assert_eq!(Balances::free_balance(DJANGO), 1_093_654);
+			assert_eq!(Balances::free_balance(DJANGO), 1_093_582);
 		});
 }
 

@@ -398,8 +398,6 @@ fn ensure_one_of_works() {
 	assert!(ensure_root_or_signed(RawOrigin::None).is_err())
 }
 
-// TODO @miguel: Enable it.
-#[ignore]
 #[test]
 fn extrinsics_root_is_calculated_correctly() {
 	new_test_ext().execute_with(|| {
@@ -417,7 +415,7 @@ fn extrinsics_root_is_calculated_correctly() {
 		let ext_root_hash = extrinsics_data_root::<BlakeTwo256>(&vec![vec![1], vec![2]]);
 		let ext_root = ExtrinsicsRoot {
 			hash: ext_root_hash,
-			commitment: hex!("a89d970155a3b2d147b0d4fcf4d2058a7f7a153428d0ab92df182b052d13c279d9431dcb73b650c8cef4cdb6d3ad7a5fa89d970155a3b2d147b0d4fcf4d2058a7f7a153428d0ab92df182b052d13c279d9431dcb73b650c8cef4cdb6d3ad7a5f").to_vec(), 
+			commitment: hex!("ab224e171a16ab3394fd558f8b4971dcb889c926b31cd281283a63d9030dd16bf1ba80e4ea637d852350ced791280ee0ab224e171a16ab3394fd558f8b4971dcb889c926b31cd281283a63d9030dd16bf1ba80e4ea637d852350ced791280ee0").to_vec(),
 			rows: 1, cols: 4
 		};
 		assert_eq!(ext_root, *header.extrinsics_root());

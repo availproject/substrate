@@ -299,8 +299,6 @@ mod tests {
 		assert_eq!(b3, Ok(BlockAddress::Bytes(vec![0, 0x12, 0x34, 0x5f])));
 	}
 
-	// TODO @miguel
-	#[ignore]
 	#[test]
 	fn should_parse_extrinsic_address() {
 		type BlockAddress = super::BlockAddress<Hash, u64>;

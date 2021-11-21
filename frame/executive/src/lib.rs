@@ -756,14 +756,12 @@ mod tests {
 		t.into()
 	}
 
-	// TODO @miguel: Enable it
-	#[ignore]
 	#[test]
 	fn block_import_works() {
 		new_test_ext(1).execute_with(|| {
 			let extrinsics_root = sp_runtime::generic::ExtrinsicsRoot {
 				hash: hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into(),
-				commitment: hex!("b208887554cf1bca4fd85d62f9354b316adbdcf74cf93542b0451e86fb1c01dab0ac96efca738f13d001a5ade4d24ce9b208887554cf1bca4fd85d62f9354b316adbdcf74cf93542b0451e86fb1c01dab0ac96efca738f13d001a5ade4d24ce9").to_vec(),
+				commitment: hex!("a90637e5ff41f7bc6be4b4dcffcb184d08f6697b821754611a69a19d91045ae19dba449c4fef3964777703cc90efe0e0a90637e5ff41f7bc6be4b4dcffcb184d08f6697b821754611a69a19d91045ae19dba449c4fef3964777703cc90efe0e0").to_vec(),
 				rows: 1,
 				cols: 4 
 			};

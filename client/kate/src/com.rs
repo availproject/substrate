@@ -30,7 +30,10 @@ pub fn flatten_and_pad_block(
 	extrinsics: &Vec<Vec<u8>>,
 	header_hash: &[u8]
 ) -> (Vec<u8>, BlockDimensions) {
-	let mut block:Vec<u8> = extrinsics.clone().into_iter().flatten().collect::<Vec<u8>>(); // TODO probably can be done more efficiently
+	let block_len = extrinsics.iter().map(|ext| ext.len()).sum();
+	let mut block:Vec<u8> = Vec::with_capacity(block_len);
+	extrinsics.iter().for_each(|ext| block.extend_from_slice(ext));
+
 	let block_dims = get_block_dimensions(block.len(), rows_num, cols_num, chunk_size);
 
 	if block.len() < block_dims.size {

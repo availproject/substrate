@@ -17,9 +17,6 @@
 
 //! Generic implementation of a block header.
 
-// TODO @miguel: Add docs
-#![allow(missing_docs)]
-
 use crate::codec::{Codec, Decode, Encode, EncodeAsRef, Error, HasCompact, Input, Output};
 use crate::generic::Digest;
 use crate::traits::{
@@ -65,6 +62,7 @@ impl<
 	> ExtrinsicRootHash for T
 {}
 
+/// Customized extrinsics root to save the commitment.
 #[derive(PartialEq, Eq, Clone, sp_core::RuntimeDebug, Default, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
@@ -72,8 +70,11 @@ impl<
 pub struct ExtrinsicsRoot<HashOutput> {
 	/// The merkle root of the extrinsics.
 	pub hash: HashOutput,
+	/// Plonk commitment.
 	pub commitment: Vec<u8>,
+	/// Rows
 	pub rows: u16,
+	/// Cols 
 	pub cols: u16,
 }
 
