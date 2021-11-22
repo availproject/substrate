@@ -32,6 +32,7 @@ sp-staking = { version = "3.0.0", default-features = false, path = "../../primit
 sp-std = { version = "3.0.0", default-features = false, path = "../../primitives/std" }
 sp-timestamp = { version = "3.0.0", default-features = false, path = "../../primitives/timestamp" }
 kate = { path = "../../client/kate", default-features = false }
+hex-literal = {  version = "0.3.1", default-features = false, optional = true }
 
 [dev-dependencies]
 frame-benchmarking = { version = "3.0.0", path = "../benchmarking" }
@@ -40,7 +41,6 @@ pallet-offences = { version = "3.0.0", path = "../offences" }
 pallet-staking = { version = "3.0.0", path = "../staking" }
 pallet-staking-reward-curve = { version = "3.0.0", path = "../staking/reward-curve" }
 sp-core = { version = "3.0.0", path = "../../primitives/core" }
-hex-literal = "0.3.1"
 hex = "0.4"
 
 [features]
@@ -65,4 +65,4 @@ std = [
 	"sp-std/std",
 	"sp-timestamp/std",
 ]
-runtime-benchmarks = ["frame-benchmarking"]
+runtime-benchmarks = ["frame-benchmarking", "hex-literal"]

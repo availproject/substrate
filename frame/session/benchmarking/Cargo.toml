@@ -22,6 +22,7 @@ frame-support = { version = "3.0.0", default-features = false, path = "../../sup
 pallet-staking = { version = "3.0.0", default-features = false, features = ["runtime-benchmarks"], path = "../../staking" }
 pallet-session = { version = "3.0.0", default-features = false, path = "../../session" }
 rand = { version = "0.8.4", default-features = false }
+rand_chacha = { version = "0.2", default-features = false }
 
 [dev-dependencies]
 serde = { version = "1.0.121" }

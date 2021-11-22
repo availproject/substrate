@@ -133,8 +133,7 @@ fn check_membership_proof_setup<T: Config>(
 		.into_iter()
 		.enumerate()
 	{
-		use rand::RngCore;
-		use rand::SeedableRng;
+		use rand_chacha::{ChaChaRng, rand_core::{ RngCore, SeedableRng}};
 
 		let validator = T::Lookup::lookup(who).unwrap();
 		let controller = pallet_staking::Module::<T>::bonded(validator).unwrap();
@@ -144,7 +143,7 @@ fn check_membership_proof_setup<T: Config>(
 
 			// we keep the keys for the first validator as 0x00000...
 			if n > 0 {
-				let mut rng = rand::rngs::StdRng::seed_from_u64(n as u64);
+				let mut rng = ChaChaRng::seed_from_u64(n as u64);
 				rng.fill_bytes(&mut keys);
 			}
 
