@@ -1,5 +1,6 @@
 use dusk_plonk::commitment_scheme::kzg10;
 use dusk_plonk::fft::{EvaluationDomain,Evaluations};
+use dusk_bytes::Serializable;
 use std::time::{Instant};
 use log::{info};
 use std::convert::{TryInto, TryFrom};
@@ -29,7 +30,10 @@ pub fn flatten_and_pad_block(
 	extrinsics: &Vec<Vec<u8>>,
 	header_hash: &[u8]
 ) -> (Vec<u8>, BlockDimensions) {
-	let mut block:Vec<u8> = extrinsics.clone().into_iter().flatten().collect::<Vec<u8>>(); // TODO probably can be done more efficiently
+	let block_len = extrinsics.iter().map(|ext| ext.len()).sum();
+	let mut block:Vec<u8> = Vec::with_capacity(block_len);
+	extrinsics.iter().for_each(|ext| block.extend_from_slice(ext));
+
 	let block_dims = get_block_dimensions(block.len(), rows_num, cols_num, chunk_size);
 
 	if block.len() < block_dims.size {
@@ -87,6 +91,7 @@ pub fn get_block_dimensions(
 	}
 }
 
+#[cfg(feature = "alloc")]
 /// build extended data matrix, by columns
 pub fn extend_data_matrix(
 	block_dims: BlockDimensions,
@@ -153,7 +158,7 @@ pub fn build_proof(
 		()
 	}
 
-	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
+	let public_params = kzg10::PublicParameters::from_slice(public_params_data.as_slice()).unwrap();
 	let (prover_key, _) = public_params.trim(cols_num).unwrap();
 
 	// Generate all the x-axis points of the domain on which all the row polynomials reside
@@ -227,8 +232,10 @@ pub fn build_proof(
 	Some(result_bytes)
 }
 
+// TODO @miguel Remove that param?
+#[cfg(feature = "alloc")]
 pub fn build_commitments(
-	public_params_data: &Vec<u8>,
+	_public_params_data: &Vec<u8>,
 	rows_num: usize,
 	cols_num: usize,
 	chunk_size: usize,
@@ -267,7 +274,7 @@ pub fn build_commitments(
 	);
 
 	// construct commitments in parallel
-	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
+	let public_params = testnet::public_params(block_dims.cols);
 	let (prover_key, _) = public_params.trim(block_dims.cols).unwrap();
 	let row_eval_domain = EvaluationDomain::new(block_dims.cols).unwrap();
 

@@ -27,7 +27,7 @@ frame-system = { version = "3.0.0", default-features = false, path = "../system"
 
 [dev-dependencies]
 hex-literal = "0.3.1"
-serde = "1.0.101"
+serde = "1.0.121"
 
 [features]
 default = [ "std" ]

@@ -66,24 +66,24 @@ pub fn generate_random_npos_result(
 
 	(1..=target_count).for_each(|acc| {
 		candidates.push(acc);
-		let stake_var = rng.gen_range(ed, 100 * ed);
+		let stake_var = rng.gen_range(ed..100 * ed);
 		stake_of.insert(acc, base_stake + stake_var);
 	});
 
 	let mut voters = Vec::with_capacity(voter_count as usize);
 	(prefix ..= (prefix + voter_count)).for_each(|acc| {
-		let edge_per_this_voter = rng.gen_range(1, candidates.len());
+		let edge_per_this_voter = rng.gen_range(1..candidates.len());
 		// all possible targets
 		let mut all_targets = candidates.clone();
 		// we remove and pop into `targets` `edge_per_this_voter` times.
 		let targets = (0..edge_per_this_voter).map(|_| {
 			let upper = all_targets.len() - 1;
-			let idx = rng.gen_range(0, upper);
+			let idx = rng.gen_range(0..upper);
 			all_targets.remove(idx)
 		})
 		.collect::<Vec<AccountId>>();
 
-		let stake_var = rng.gen_range(ed, 100 * ed) ;
+		let stake_var = rng.gen_range(ed..100 * ed) ;
 		let stake = base_stake + stake_var;
 		stake_of.insert(acc, stake);
 		voters.push((acc, stake, targets));

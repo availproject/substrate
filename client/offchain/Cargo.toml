@@ -26,7 +26,7 @@ sp-offchain = { version = "3.0.0", path = "../../primitives/offchain" }
 codec = { package = "parity-scale-codec", version = "2.0.0", features = ["derive"] }
 parking_lot = "0.11.1"
 sp-core = { version = "3.0.0", path = "../../primitives/core" }
-rand = "0.7.2"
+rand = "0.8.4"
 sp-runtime = { version = "3.0.0", path = "../../primitives/runtime" }
 sp-utils = { version = "3.0.0", path = "../../primitives/utils" }
 sc-network = { version = "0.9.0", path = "../network" }

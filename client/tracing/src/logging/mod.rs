@@ -335,7 +335,8 @@ mod tests {
 	#[test]
 	fn test_logger_filters() {
 		if env::var("RUN_TEST_LOGGER_FILTERS").is_ok() {
-			let test_directives = "afg=debug,sync=trace,client=warn,telemetry,something-with-dash=error";
+			let test_directives =
+				"afg=debug,sync=trace,client=warn,telemetry,something-with-dash=error";
 			init_logger(&test_directives);
 
 			tracing::dispatcher::get_default(|dispatcher| {
@@ -413,7 +414,7 @@ mod tests {
 	#[test]
 	fn prefix_in_log_lines() {
 		let re = regex::Regex::new(&format!(
-			r"^\d{{4}}-\d{{2}}-\d{{2}} \d{{2}}:\d{{2}}:\d{{2}}  \[{}\] {}$",
+			r"^\d{{4}}-\d{{2}}-\d{{2}} \d{{2}}:\d{{2}}:\d{{2}} \[{}\] {}$",
 			EXPECTED_NODE_NAME, EXPECTED_LOG_MESSAGE,
 		))
 		.unwrap();
@@ -425,10 +426,7 @@ mod tests {
 			.unwrap();
 
 		let output = String::from_utf8(output.stderr).unwrap();
-		assert!(
-			re.is_match(output.trim()),
-			"Expected:\n{}\nGot:\n{}", re, output,
-		);
+		assert!(re.is_match(output.trim()), "Expected:\n{}\nGot:\n{}", re, output);
 	}
 
 	/// This is not an actual test, it is used by the `prefix_in_log_lines` test.
@@ -461,7 +459,7 @@ mod tests {
 	#[test]
 	fn do_not_write_with_colors_on_tty() {
 		let re = regex::Regex::new(&format!(
-			r"^\d{{4}}-\d{{2}}-\d{{2}} \d{{2}}:\d{{2}}:\d{{2}}  {}$",
+			r"^\d{{4}}-\d{{2}}-\d{{2}} \d{{2}}:\d{{2}}:\d{{2}} {}$",
 			EXPECTED_LOG_MESSAGE,
 		))
 		.unwrap();
@@ -473,10 +471,7 @@ mod tests {
 			.unwrap();
 
 		let output = String::from_utf8(output.stderr).unwrap();
-		assert!(
-			re.is_match(output.trim()),
-			"Expected:\n{}\nGot:\n{}", re, output,
-		);
+		assert!(re.is_match(output.trim()), "Expected:\n{}\nGot:\n{}", re, output);
 	}
 
 	#[test]
@@ -514,18 +509,9 @@ mod tests {
 			eprint!("MAX_LOG_LEVEL={:?}", log::max_level());
 		} else {
 			assert_eq!("MAX_LOG_LEVEL=Info", run_test(None, None));
-			assert_eq!(
-				"MAX_LOG_LEVEL=Trace",
-				run_test(Some("test=trace".into()), None)
-			);
-			assert_eq!(
-				"MAX_LOG_LEVEL=Debug",
-				run_test(Some("test=debug".into()), None)
-			);
-			assert_eq!(
-				"MAX_LOG_LEVEL=Trace",
-				run_test(None, Some("test=info".into()))
-			);
+			assert_eq!("MAX_LOG_LEVEL=Trace", run_test(Some("test=trace".into()), None));
+			assert_eq!("MAX_LOG_LEVEL=Debug", run_test(Some("test=debug".into()), None));
+			assert_eq!("MAX_LOG_LEVEL=Trace", run_test(None, Some("test=info".into())));
 		}
 	}
 }

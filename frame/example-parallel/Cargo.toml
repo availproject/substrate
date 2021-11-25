@@ -22,7 +22,7 @@ sp-std = { version = "3.0.0", default-features = false, path = "../../primitives
 sp-tasks = { version = "3.0.0", default-features = false, path = "../../primitives/tasks" }
 
 [dev-dependencies]
-serde = { version = "1.0.101" }
+serde = { version = "1.0.121" }
 
 [features]
 default = ["std"]

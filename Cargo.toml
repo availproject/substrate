@@ -194,6 +194,9 @@ members = [
 	"utils/wasm-builder",
 ]
 
+[patch.crates-io]
+dusk-plonk = { git = "https://github.com/maticnetwork/plonk.git", tag = "v0.8.2-polygon-1" }
+
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
 # that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of
 # their debug info might be missing) or to require to be frequently recompiled. We compile these
@@ -210,8 +213,6 @@ members = [
 #
 # This list is ordered alphabetically.
 [profile.dev.package]
-aes-soft = { opt-level = 3 }
-aesni = { opt-level = 3 }
 blake2 = { opt-level = 3 }
 blake2-rfc = { opt-level = 3 }
 blake2b_simd = { opt-level = 3 }

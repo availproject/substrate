@@ -43,7 +43,7 @@ pallet-bounties = { version = "3.0.0", default-features = false, path = "../../.
 
 pallet-tips = { version = "3.0.0", default-features = false, path = "../../../frame/tips" }
 pallet-scheduler = { version = "3.0.0", default-features = false, path = "../../../frame/scheduler" }
-serde = { version = "1.0.101", optional = true, features = ["derive"] }
+serde = { version = "1.0.121", optional = true, features = ["derive"] }
 sp-api = { version = "3.0.0", default-features = false, path = "../../../primitives/api" }
 sp-block-builder = { path = "../../../primitives/block-builder", default-features = false, version = "3.0.0"}
 sp-consensus-babe = { version = "0.9.0", default-features = false, path = "../../../primitives/consensus/babe" }
