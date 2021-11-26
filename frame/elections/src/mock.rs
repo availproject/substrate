@@ -25,7 +25,7 @@ use frame_support::{
 };
 use sp_core::H256;
 use sp_runtime::{
-	BuildStorage, testing::Header, traits::{BlakeTwo256, IdentityLookup, Block as BlockT},
+	BuildStorage, testing::Header, traits::{BlakeTwo256, IdentityLookup},
 };
 use crate as elections;
 
@@ -38,7 +38,6 @@ parameter_types! {
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
-	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
 	type Call = Call;
@@ -52,7 +51,7 @@ impl frame_system::Config for Test {
 	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();

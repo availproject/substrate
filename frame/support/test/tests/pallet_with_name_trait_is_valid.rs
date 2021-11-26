@@ -46,7 +46,7 @@ frame_support::decl_module! {
 		const Foo: u32 = u32::max_value();
 
 		#[weight = 0]
-		fn accumulate_dummy(origin, increase_by: T::Balance) {
+		fn accumulate_dummy(_origin, _increase_by: T::Balance) {
 			unimplemented!();
 		}
 
@@ -88,7 +88,6 @@ mod tests {
 	use crate as pallet_test;
 
 	use frame_support::parameter_types;
-	use sp_runtime::traits::Block;
 
 	type SignedExtra = (
 		frame_system::CheckEra<Runtime>,
@@ -134,9 +133,8 @@ mod tests {
 		type BlockHashCount = BlockHashCount;
 		type DbWeight = ();
 		type BlockWeights = ();
-		type BlockLength = ();
 		type Version = ();
-		type PalletInfo = ();
+		type PalletInfo = PalletInfo;
 		type AccountData = ();
 		type OnNewAccount = ();
 		type OnKilledAccount = ();

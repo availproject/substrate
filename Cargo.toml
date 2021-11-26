@@ -5,7 +5,7 @@ members = [
 	"bin/node-template/pallets/kate-rpc-runtime-api",
 	"bin/node-template/runtime",
 	"bin/node/bench",
-	"bin/node/browser-testing",
+#	"bin/node/browser-testing",
 	"bin/node/cli",
 	"bin/node/executor",
 	"bin/node/primitives",
@@ -23,7 +23,6 @@ members = [
 	"client/chain-spec",
 	"client/chain-spec/derive",
 	"client/cli",
-	"client/cli/proc-macro",
 	"client/consensus/aura",
 	"client/consensus/babe",
 	"client/consensus/babe/rpc",
@@ -40,6 +39,7 @@ members = [
 	"client/executor/wasmi",
 	"client/executor/wasmtime",
 	"client/finality-grandpa",
+	"client/finality-grandpa-warp-sync",
 	"client/informant",
 	"client/keystore",
 	"client/light",
@@ -58,6 +58,7 @@ members = [
 	"client/sync-state-rpc",
 	"client/telemetry",
 	"client/tracing",
+	"client/tracing/proc-macro",
 	"client/transaction-pool",
 	"client/transaction-pool/graph",
 	"frame/assets",
@@ -86,6 +87,7 @@ members = [
 	"frame/lottery",
 	"frame/membership",
 	"frame/merkle-mountain-range",
+	"frame/merkle-mountain-range/primitives",
 	"frame/metadata",
 	"frame/multisig",
 	"frame/nicks",
@@ -141,6 +143,7 @@ members = [
 	"primitives/database",
 	"primitives/debug-derive",
 	"primitives/externalities",
+	"primitives/election-providers",
 	"primitives/finality-grandpa",
 	"primitives/inherents",
 	"primitives/io",
@@ -191,6 +194,9 @@ members = [
 	"utils/wasm-builder",
 ]
 
+[patch.crates-io]
+dusk-plonk = { git = "https://github.com/maticnetwork/plonk.git", tag = "v0.8.2-polygon-1" }
+
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
 # that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of
 # their debug info might be missing) or to require to be frequently recompiled. We compile these
@@ -207,8 +213,6 @@ members = [
 #
 # This list is ordered alphabetically.
 [profile.dev.package]
-aes-soft = { opt-level = 3 }
-aesni = { opt-level = 3 }
 blake2 = { opt-level = 3 }
 blake2-rfc = { opt-level = 3 }
 blake2b_simd = { opt-level = 3 }

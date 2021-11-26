@@ -117,7 +117,7 @@
 
 use sp_std::{prelude::*, marker::PhantomData};
 use frame_support::{
-	StorageValue, StorageMap, weights::{GetDispatchInfo, DispatchInfo, DispatchClass},
+	weights::{GetDispatchInfo, DispatchInfo, DispatchClass},
 	traits::{OnInitialize, OnFinalize, OnRuntimeUpgrade, OffchainWorker},
 	dispatch::PostDispatchInfo,
 };
@@ -261,11 +261,11 @@ where
 
 	/// Returns if the runtime was upgraded since the last time this function was called.
 	fn runtime_upgraded() -> bool {
-		let last = frame_system::LastRuntimeUpgrade::get();
+		let last = frame_system::LastRuntimeUpgrade::<System>::get();
 		let current = <System::Version as frame_support::traits::Get<_>>::get();
 
 		if last.map(|v| v.was_upgraded(&current)).unwrap_or(true) {
-			frame_system::LastRuntimeUpgrade::put(
+			frame_system::LastRuntimeUpgrade::<System>::put(
 				frame_system::LastRuntimeUpgradeInfo::from(current),
 			);
 			true
@@ -320,7 +320,7 @@ where
 	) {
 		extrinsics.into_iter().for_each(|e| if let Err(e) = Self::apply_extrinsic(e) {
 			let err: &'static str = e.into();
-			panic!(err)
+			panic!("{}", err)
 		});
 
 		// post-extrinsics book-keeping
@@ -483,7 +483,7 @@ mod tests {
 	use super::*;
 	use sp_core::H256;
 	use sp_runtime::{
-		generic::{Era, DigestItem}, DispatchError, testing::{Digest, Header, Block},
+		generic::{Era, DigestItem}, DispatchError, testing::{Digest, Header, Block}, Perbill,
 		traits::{Header as HeaderT, BlakeTwo256, IdentityLookup},
 		transaction_validity::{
 			InvalidTransaction, ValidTransaction, TransactionValidityError, UnknownTransaction
@@ -495,7 +495,7 @@ mod tests {
 		traits::{Currency, LockIdentifier, LockableCurrency, WithdrawReasons},
 	};
 	use frame_system::{
-		Call as SystemCall, ChainContext, LastRuntimeUpgradeInfo,
+		Call as SystemCall, ChainContext, LastRuntimeUpgradeInfo, limits::BlockLength,
 	};
 	use pallet_transaction_payment::CurrencyAdapter;
 	use pallet_balances::Call as BalancesCall;
@@ -557,7 +557,7 @@ mod tests {
 				}
 
 				#[weight = 0]
-				fn calculate_storage_root(origin) {
+				fn calculate_storage_root(_origin) {
 					let root = sp_io::storage::root();
 					sp_io::storage::set("storage_root".as_bytes(), &root);
 				}
@@ -607,7 +607,6 @@ mod tests {
 	impl frame_system::Config for Runtime {
 		type BaseCallFilter = ();
 		type BlockWeights = BlockWeights;
-		type BlockLength = ();
 		type DbWeight = ();
 		type Origin = Origin;
 		type Index = u64;
@@ -730,7 +729,7 @@ mod tests {
 		t.execute_with(|| {
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -743,22 +742,36 @@ mod tests {
 	}
 
 	fn new_test_ext(balance_factor: Balance) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+		let mut t = frame_system::GenesisConfig{
+			code: <_>::default(),
+			changes_trie_config: <_>::default(),
+			kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
+			block_length: BlockLength::with_normal_ratio(128, 256, 64, Perbill::from_percent(90))
+		}.build_storage::<Runtime>().unwrap();
+
 		pallet_balances::GenesisConfig::<Runtime> {
 			balances: vec![(1, 111 * balance_factor)],
 		}.assimilate_storage(&mut t).unwrap();
+
 		t.into()
 	}
 
 	#[test]
 	fn block_import_works() {
 		new_test_ext(1).execute_with(|| {
+			let extrinsics_root = sp_runtime::generic::ExtrinsicsRoot {
+				hash: hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into(),
+				commitment: hex!("a90637e5ff41f7bc6be4b4dcffcb184d08f6697b821754611a69a19d91045ae19dba449c4fef3964777703cc90efe0e0a90637e5ff41f7bc6be4b4dcffcb184d08f6697b821754611a69a19d91045ae19dba449c4fef3964777703cc90efe0e0").to_vec(),
+				rows: 1,
+				cols: 4 
+			};
+
 			Executive::execute_block(Block {
 				header: Header {
 					parent_hash: [69u8; 32].into(),
 					number: 1,
-					state_root: hex!("ba1a82a264b8007e0c04c9ea35e541593daad08b6e2bf7c0a6780a67d1c55018").into(),
-					extrinsics_root: hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into(),
+					state_root: hex!("05c161096e4f89db32bb74af97c1a2554f4d8d18e14a7f5a2c4730e49605e385").into(),
+					extrinsics_root,
 					digest: Digest { logs: vec![], },
 				},
 				extrinsics: vec![],
@@ -775,7 +788,7 @@ mod tests {
 					parent_hash: [69u8; 32].into(),
 					number: 1,
 					state_root: [0u8; 32].into(),
-					extrinsics_root: hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into(),
+					extrinsics_root: ExtrinsicsRoot::new(hex!("03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314").into()),
 					digest: Digest { logs: vec![], },
 				},
 				extrinsics: vec![],
@@ -792,7 +805,7 @@ mod tests {
 					parent_hash: [69u8; 32].into(),
 					number: 1,
 					state_root: hex!("49cd58a254ccf6abc4a023d9a22dcfc421e385527a250faec69f8ad0d8ed3e48").into(),
-					extrinsics_root: [0u8; 32].into(),
+					extrinsics_root: ExtrinsicsRoot::new([0u8; 32].into()),
 					digest: Digest { logs: vec![], },
 				},
 				extrinsics: vec![],
@@ -808,7 +821,7 @@ mod tests {
 		t.execute_with(|| {
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -834,7 +847,7 @@ mod tests {
 		t.execute_with(|| {
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -875,7 +888,7 @@ mod tests {
 
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -904,7 +917,7 @@ mod tests {
 			// New Block
 			Executive::initialize_block(&Header::new(
 				2,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -965,7 +978,7 @@ mod tests {
 					<Runtime as pallet_transaction_payment::Config>::WeightToFee::calc(&weight);
 				Executive::initialize_block(&Header::new(
 					1,
-					H256::default(),
+					<_>::default(),
 					H256::default(),
 					[69u8; 32].into(),
 					Digest::default(),
@@ -1006,7 +1019,7 @@ mod tests {
 		new_test_ext(1).execute_with(|| {
 			RUNTIME_VERSION.with(|v| *v.borrow_mut() = Default::default());
 			// It should be added at genesis
-			assert!(frame_system::LastRuntimeUpgrade::exists());
+			assert!(frame_system::LastRuntimeUpgrade::<Runtime>::exists());
 			assert!(!Executive::runtime_upgraded());
 
 			RUNTIME_VERSION.with(|v| *v.borrow_mut() = sp_version::RuntimeVersion {
@@ -1016,7 +1029,7 @@ mod tests {
 			assert!(Executive::runtime_upgraded());
 			assert_eq!(
 				Some(LastRuntimeUpgradeInfo { spec_version: 1.into(), spec_name: "".into() }),
-				frame_system::LastRuntimeUpgrade::get(),
+				frame_system::LastRuntimeUpgrade::<Runtime>::get(),
 			);
 
 			RUNTIME_VERSION.with(|v| *v.borrow_mut() = sp_version::RuntimeVersion {
@@ -1027,7 +1040,7 @@ mod tests {
 			assert!(Executive::runtime_upgraded());
 			assert_eq!(
 				Some(LastRuntimeUpgradeInfo { spec_version: 1.into(), spec_name: "test".into() }),
-				frame_system::LastRuntimeUpgrade::get(),
+				frame_system::LastRuntimeUpgrade::<Runtime>::get(),
 			);
 
 			RUNTIME_VERSION.with(|v| *v.borrow_mut() = sp_version::RuntimeVersion {
@@ -1038,11 +1051,11 @@ mod tests {
 			});
 			assert!(!Executive::runtime_upgraded());
 
-			frame_system::LastRuntimeUpgrade::take();
+			frame_system::LastRuntimeUpgrade::<Runtime>::take();
 			assert!(Executive::runtime_upgraded());
 			assert_eq!(
 				Some(LastRuntimeUpgradeInfo { spec_version: 1.into(), spec_name: "test".into() }),
-				frame_system::LastRuntimeUpgrade::get(),
+				frame_system::LastRuntimeUpgrade::<Runtime>::get(),
 			);
 		})
 	}
@@ -1084,7 +1097,7 @@ mod tests {
 
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -1108,7 +1121,7 @@ mod tests {
 
 			Executive::initialize_block(&Header::new(
 				block_number,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),
@@ -1144,7 +1157,7 @@ mod tests {
 
 			let header = Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				parent_hash,
 				digest.clone(),
@@ -1167,7 +1180,7 @@ mod tests {
 			// Let's build some fake block.
 			Executive::initialize_block(&Header::new(
 				1,
-				H256::default(),
+				<_>::default(),
 				H256::default(),
 				[69u8; 32].into(),
 				Digest::default(),

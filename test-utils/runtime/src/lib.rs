@@ -56,12 +56,12 @@ use frame_support::{
 	traits::KeyOwnerProofSystem,
 	weights::RuntimeDbWeight,
 };
-use frame_system::limits::{BlockWeights, BlockLength};
+use frame_system::limits::BlockWeights;
 use sp_inherents::{CheckInherentsResult, InherentData};
 use cfg_if::cfg_if;
 
 // Ensure Babe and Aura use the same crypto to simplify things a bit.
-pub use sp_consensus_babe::{AuthorityId, SlotNumber, AllowedSlots};
+pub use sp_consensus_babe::{AuthorityId, Slot, AllowedSlots};
 
 pub type AuraId = sp_consensus_aura::sr25519::AuthorityId;
 
@@ -149,6 +149,8 @@ pub enum Extrinsic {
 	IncludeData(Vec<u8>),
 	StorageChange(Vec<u8>, Option<Vec<u8>>),
 	ChangesTrieConfigUpdate(Option<ChangesTrieConfiguration>),
+	OffchainIndexSet(Vec<u8>, Vec<u8>),
+	OffchainIndexClear(Vec<u8>),
 }
 
 parity_util_mem::malloc_size_of_is_0!(Extrinsic); // non-opaque extrinsic does not need this
@@ -177,6 +179,10 @@ impl BlindCheckable for Extrinsic {
 			Extrinsic::StorageChange(key, value) => Ok(Extrinsic::StorageChange(key, value)),
 			Extrinsic::ChangesTrieConfigUpdate(new_config) =>
 				Ok(Extrinsic::ChangesTrieConfigUpdate(new_config)),
+			Extrinsic::OffchainIndexSet(key, value) =>
+				Ok(Extrinsic::OffchainIndexSet(key, value)),
+			Extrinsic::OffchainIndexClear(key) =>
+				Ok(Extrinsic::OffchainIndexClear(key)),
 		}
 	}
 }
@@ -427,6 +433,37 @@ impl From<frame_system::Event<Runtime>> for Event {
 	}
 }
 
+impl frame_support::traits::PalletInfo for Runtime {
+	fn index<P: 'static>() -> Option<usize> {
+		let type_id = sp_std::any::TypeId::of::<P>();
+		if type_id == sp_std::any::TypeId::of::<system::Module<Runtime>>() {
+			return Some(0)
+		}
+		if type_id == sp_std::any::TypeId::of::<pallet_timestamp::Module<Runtime>>() {
+			return Some(1)
+		}
+		if type_id == sp_std::any::TypeId::of::<pallet_babe::Module<Runtime>>() {
+			return Some(2)
+		}
+
+		None
+	}
+	fn name<P: 'static>() -> Option<&'static str> {
+		let type_id = sp_std::any::TypeId::of::<P>();
+		if type_id == sp_std::any::TypeId::of::<system::Module<Runtime>>() {
+			return Some("System")
+		}
+		if type_id == sp_std::any::TypeId::of::<pallet_timestamp::Module<Runtime>>() {
+			return Some("Timestamp")
+		}
+		if type_id == sp_std::any::TypeId::of::<pallet_babe::Module<Runtime>>() {
+			return Some("Babe")
+		}
+
+		None
+	}
+}
+
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	pub const MinimumPeriod: u64 = 5;
@@ -434,8 +471,6 @@ parameter_types! {
 		read: 100,
 		write: 1000,
 	};
-	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max(4 * 1024 * 1024);
 	pub RuntimeBlockWeights: BlockWeights =
 		BlockWeights::with_sensible_defaults(4 * 1024 * 1024, Perbill::from_percent(75));
 }
@@ -443,7 +478,6 @@ parameter_types! {
 impl frame_system::Config for Runtime {
 	type BaseCallFilter = ();
 	type BlockWeights = RuntimeBlockWeights;
-	type BlockLength = RuntimeBlockLength;
 	type Origin = Origin;
 	type Call = Extrinsic;
 	type Index = u64;
@@ -457,7 +491,7 @@ impl frame_system::Config for Runtime {
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = Self;
 	type AccountData = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
@@ -733,7 +767,7 @@ cfg_if! {
 					}
 				}
 
-				fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
+				fn current_epoch_start() -> Slot {
 					<pallet_babe::Module<Runtime>>::current_epoch_start()
 				}
 
@@ -755,7 +789,7 @@ cfg_if! {
 				}
 
 				fn generate_key_ownership_proof(
-					_slot_number: sp_consensus_babe::SlotNumber,
+					_slot: sp_consensus_babe::Slot,
 					_authority_id: sp_consensus_babe::AuthorityId,
 				) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
 					None
@@ -992,7 +1026,7 @@ cfg_if! {
 					}
 				}
 
-				fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
+				fn current_epoch_start() -> Slot {
 					<pallet_babe::Module<Runtime>>::current_epoch_start()
 				}
 
@@ -1014,7 +1048,7 @@ cfg_if! {
 				}
 
 				fn generate_key_ownership_proof(
-					_slot_number: sp_consensus_babe::SlotNumber,
+					_slot: sp_consensus_babe::Slot,
 					_authority_id: sp_consensus_babe::AuthorityId,
 				) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
 					None
@@ -1148,13 +1182,9 @@ fn test_witness(proof: StorageProof, root: crate::Hash) {
 		root,
 	);
 	let mut overlay = sp_state_machine::OverlayedChanges::default();
-	#[cfg(feature = "std")]
-	let mut offchain_overlay = Default::default();
 	let mut cache = sp_state_machine::StorageTransactionCache::<_, _, BlockNumber>::default();
 	let mut ext = sp_state_machine::Ext::new(
 		&mut overlay,
-		#[cfg(feature = "std")]
-		&mut offchain_overlay,
 		&mut cache,
 		&backend,
 		#[cfg(feature = "std")]

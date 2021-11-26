@@ -70,9 +70,8 @@ pub fn make_transcript(data: VRFTranscriptData) -> Transcript {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use rand::RngCore;
 	use rand_chacha::{
-		rand_core::SeedableRng,
+		rand_core::{SeedableRng, RngCore},
 		ChaChaRng,
 	};
 

@@ -17,63 +17,76 @@
 
 //! Generic implementation of a block header.
 
+use crate::codec::{Codec, Decode, Encode, EncodeAsRef, Error, HasCompact, Input, Output};
+use crate::generic::Digest;
+use crate::traits::{
+	self, AtLeast32BitUnsigned, Hash as HashT, MaybeDisplay, MaybeMallocSizeOf, MaybeSerialize,
+	MaybeSerializeDeserialize, Member, SimpleBitOps,
+};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use crate::codec::{Decode, Encode, Codec, Input, Output, HasCompact, EncodeAsRef, Error};
-use crate::traits::{
-	self, Member, AtLeast32BitUnsigned, SimpleBitOps, Hash as HashT,
-	MaybeSerializeDeserialize, MaybeSerialize, MaybeDisplay,
-	MaybeMallocSizeOf,
-};
-use crate::generic::Digest;
 use sp_core::U256;
-use sp_std::{
-	prelude::*,
-	convert::TryFrom,
-	fmt::Debug,
-	vec,
-};
+use sp_std::{convert::TryFrom, fmt::Debug, prelude::*, hash::Hash as StdHash};
 
-#[derive(PartialEq, Eq, Clone, sp_core::RuntimeDebug, Default)]
+/// Marker trait for types `T` that can be stored in storage as `RangeChunk<I, _>`.
+pub trait ExtrinsicRootHash:
+	Member
+	+ MaybeSerializeDeserialize
+	+ Debug
+	+ StdHash
+	+ Ord
+	+ Copy
+	+ MaybeDisplay
+	+ Default
+	+ SimpleBitOps
+	+ Codec
+	+ AsRef<[u8]>
+	+ AsMut<[u8]>
+	+ MaybeMallocSizeOf
+{}
+
+impl<
+	T: Member
+		+ MaybeSerializeDeserialize
+		+ Debug
+		+ MaybeDisplay
+		+ SimpleBitOps
+		+ Codec
+		+ MaybeMallocSizeOf
+		+ StdHash
+		+ Ord
+		+ Copy
+		+ Default
+		+ AsRef<[u8]>
+		+ AsMut<[u8]>,
+	> ExtrinsicRootHash for T
+{}
+
+/// Customized extrinsics root to save the commitment.
+#[derive(PartialEq, Eq, Clone, sp_core::RuntimeDebug, Default, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "std", serde(deny_unknown_fields))]
-pub struct ExtrinsicsRoot<HashOutput>
-{
+pub struct ExtrinsicsRoot<HashOutput> {
 	/// The merkle root of the extrinsics.
 	pub hash: HashOutput,
+	/// Plonk commitment.
 	pub commitment: Vec<u8>,
+	/// Rows
 	pub rows: u16,
+	/// Cols 
 	pub cols: u16,
 }
 
-impl<HashOutput> traits::ExtrinsicsRoot for ExtrinsicsRoot<HashOutput> where
-	HashOutput: Member + MaybeSerializeDeserialize + Debug + sp_std::hash::Hash + Ord
-		+ Copy + MaybeDisplay + Default + SimpleBitOps + Codec + AsRef<[u8]>
-		+ AsMut<[u8]> + MaybeMallocSizeOf,
-{
+impl<HashOutput: ExtrinsicRootHash> traits::ExtrinsicsRoot for ExtrinsicsRoot<HashOutput> {
 	type HashOutput = HashOutput;
 
 	fn hash(&self) -> &Self::HashOutput { &self.hash }
 	fn commitment(&self) -> &Vec<u8> { &self.commitment }
 
-	fn new(
-		hash: HashOutput
-	) -> Self {
-		Self {
-			hash,
-			commitment: Default::default(),
-			rows: 0,
-			cols: 0,
-		}
-	}
+	fn new(hash: HashOutput) -> Self { hash.into() }
 
-	fn new_with_commitment(
-		hash: HashOutput,
-		commitment: Vec<u8>,
-		rows: u16,
-		cols: u16,
-	) -> Self {
+	fn new_with_commitment(hash: HashOutput, commitment: Vec<u8>, rows: u16, cols: u16) -> Self {
 		Self {
 			hash,
 			commitment,
@@ -83,43 +96,25 @@ impl<HashOutput> traits::ExtrinsicsRoot for ExtrinsicsRoot<HashOutput> where
 	}
 }
 
+impl<Hash: ExtrinsicRootHash> From<Hash> for ExtrinsicsRoot<Hash> {
+	fn from(hash: Hash) -> Self {
+		Self {
+			hash,
+			commitment: Default::default(),
+			rows: 0,
+			cols: 0,
+		}
+	}
+}
+
 #[cfg(feature = "std")]
-impl<HashOutput> parity_util_mem::MallocSizeOf for ExtrinsicsRoot<HashOutput>  where
-	HashOutput: parity_util_mem::MallocSizeOf,
+impl<HashOutput> parity_util_mem::MallocSizeOf for ExtrinsicsRoot<HashOutput>
+where HashOutput: parity_util_mem::MallocSizeOf,
 {
 	fn size_of(&self, ops: &mut parity_util_mem::MallocSizeOfOps) -> usize {
-			self.hash.size_of(ops) +
-			self.commitment.size_of(ops)
+		self.hash.size_of(ops) + self.commitment.size_of(ops)
 	}
 }
-
-impl<HashOutput> Decode for ExtrinsicsRoot<HashOutput> where
-	HashOutput: Decode,
-{
-	fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
-		Ok(ExtrinsicsRoot {
-			hash: Decode::decode(input)?,
-			commitment: Decode::decode(input)?,
-			rows: Decode::decode(input)?,
-			cols: Decode::decode(input)?,
-		})
-	}
-}
-
-impl<HashOutput> Encode for ExtrinsicsRoot<HashOutput> where
-	HashOutput: Encode,
-{
-	fn encode_to<T: Output>(&self, dest: &mut T) {
-		dest.push(&self.hash);
-		dest.push(&self.commitment);
-		dest.push(&self.rows);
-		dest.push(&self.cols);
-	}
-}
-
-impl<HashOutput> codec::EncodeLike for ExtrinsicsRoot<HashOutput> where
-	HashOutput: Encode,
-{}
 
 /// Abstraction over a block header for a substrate chain.
 #[derive(PartialEq, Eq, Clone, sp_core::RuntimeDebug)]
@@ -145,23 +140,23 @@ pub struct Header<Number: Copy + Into<U256> + TryFrom<U256>, Hash: HashT> {
 #[cfg(feature = "std")]
 impl<Number, Hash> parity_util_mem::MallocSizeOf for Header<Number, Hash>
 where
-	Number: Copy + Into<U256> + TryFrom<U256> + parity_util_mem::MallocSizeOf,
-	Hash: HashT,
-	Hash::Output: parity_util_mem::MallocSizeOf,
+Number: Copy + Into<U256> + TryFrom<U256> + parity_util_mem::MallocSizeOf,
+Hash: HashT,
+Hash::Output: parity_util_mem::MallocSizeOf,
 {
 	fn size_of(&self, ops: &mut parity_util_mem::MallocSizeOfOps) -> usize {
-		self.parent_hash.size_of(ops) +
-			self.number.size_of(ops) +
-			self.state_root.size_of(ops) +
-			self.extrinsics_root.size_of(ops) +
-			self.digest.size_of(ops)
+		self.parent_hash.size_of(ops)
+			+ self.number.size_of(ops)
+			+ self.state_root.size_of(ops)
+			+ self.extrinsics_root.size_of(ops)
+			+ self.digest.size_of(ops)
 	}
 }
 
 #[cfg(feature = "std")]
 pub fn serialize_number<S, T: Copy + Into<U256> + TryFrom<U256>>(
 	val: &T, s: S,
-) -> Result<S::Ok, S::Error> where S: serde::Serializer {
+) -> Result<S::Ok, S::Error> where S: serde::Serializer, {
 	let u256: U256 = (*val).into();
 	serde::Serialize::serialize(&u256, s)
 }
@@ -195,12 +190,13 @@ impl<Number, Hash> Encode for Header<Number, Hash> where
 	Hash: HashT,
 	Hash::Output: Encode,
 {
-	fn encode_to<T: Output>(&self, dest: &mut T) {
-		dest.push(&self.parent_hash);
-		dest.push(&<<<Number as HasCompact>::Type as EncodeAsRef<_>>::RefType>::from(&self.number));
-		dest.push(&self.state_root);
-		dest.push(&self.extrinsics_root);
-		dest.push(&self.digest);
+	fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+		self.parent_hash.encode_to(dest);
+		<<<Number as HasCompact>::Type as EncodeAsRef<_>>::RefType>::from(&self.number)
+			.encode_to(dest);
+		self.state_root.encode_to(dest);
+		self.extrinsics_root.encode_to(dest);
+		self.digest.encode_to(dest);
 	}
 }
 
@@ -211,12 +207,30 @@ impl<Number, Hash> codec::EncodeLike for Header<Number, Hash> where
 {}
 
 impl<Number, Hash> traits::Header for Header<Number, Hash> where
-	Number: Member + MaybeSerializeDeserialize + Debug + sp_std::hash::Hash + MaybeDisplay +
-		AtLeast32BitUnsigned + Codec + Copy + Into<U256> + TryFrom<U256> + sp_std::str::FromStr +
-		MaybeMallocSizeOf,
+	Number: Member
+		+ MaybeSerializeDeserialize
+		+ Debug
+		+ sp_std::hash::Hash
+		+ MaybeDisplay
+		+ AtLeast32BitUnsigned
+		+ Codec
+		+ Copy
+		+ Into<U256>
+		+ TryFrom<U256>
+		+ sp_std::str::FromStr
+		+ MaybeMallocSizeOf,
 	Hash: HashT,
-	Hash::Output: Default + sp_std::hash::Hash + Copy + Member + Ord +
-		MaybeSerialize + Debug + MaybeDisplay + SimpleBitOps + Codec + MaybeMallocSizeOf,
+	Hash::Output: Default
+		+ sp_std::hash::Hash
+		+ Copy
+		+ Member
+		+ Ord
+		+ MaybeSerialize
+		+ Debug
+		+ MaybeDisplay
+		+ SimpleBitOps
+		+ Codec
+		+ MaybeMallocSizeOf,
 {
 	type Number = Number;
 	type Hash = <Hash as HashT>::Output;
@@ -260,12 +274,19 @@ impl<Number, Hash> traits::Header for Header<Number, Hash> where
 	}
 }
 
-impl<Number, Hash> Header<Number, Hash> where
-	Number: Member + sp_std::hash::Hash + Copy + MaybeDisplay + AtLeast32BitUnsigned + Codec +
-		Into<U256> + TryFrom<U256>,
+impl<Number, Hash> Header<Number, Hash>
+where
+	Number: Member
+		+ sp_std::hash::Hash
+		+ Copy
+		+ MaybeDisplay
+		+ AtLeast32BitUnsigned
+		+ Codec
+		+ Into<U256>
+		+ TryFrom<U256>,
 	Hash: HashT,
 	Hash::Output: Default + sp_std::hash::Hash + Copy + Member + MaybeDisplay + SimpleBitOps + Codec,
- {
+{
 	/// Convenience helper for computing the hash of the header without having
 	/// to import the trait.
 	pub fn hash(&self) -> Hash::Output {

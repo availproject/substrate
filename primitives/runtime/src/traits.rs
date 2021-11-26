@@ -16,6 +16,7 @@
 // limitations under the License.
 
 //! Primitives for the runtime modules.
+#![allow(missing_docs)]
 
 use sp_std::prelude::*;
 use sp_std::{self, marker::PhantomData, convert::{TryFrom, TryInto}, fmt::Debug};
@@ -150,6 +151,25 @@ pub struct BadOrigin;
 impl From<BadOrigin> for &'static str {
 	fn from(_: BadOrigin) -> &'static str {
 		"Bad origin"
+	}
+}
+
+/// Error that can be returned by our impl of `StoredMap`.
+#[derive(Encode, Decode, RuntimeDebug)]
+pub enum StoredMapError {
+	/// Attempt to create map value when it is a consumer and there are no providers in place.
+	NoProviders,
+	/// Attempt to anull/remove value when it is the last provider and there is still at
+	/// least one consumer left.
+	ConsumerRemaining,
+}
+
+impl From<StoredMapError> for &'static str {
+	fn from(e: StoredMapError) -> &'static str {
+		match e {
+			StoredMapError::NoProviders => "No providers",
+			StoredMapError::ConsumerRemaining => "Consumer remaining",
+		}
 	}
 }
 
@@ -1353,7 +1373,7 @@ impl Printable for usize {
 
 impl Printable for u64 {
 	fn print(&self) {
-		(*self as u64).print()
+		sp_io::misc::print_num(*self);
 	}
 }
 

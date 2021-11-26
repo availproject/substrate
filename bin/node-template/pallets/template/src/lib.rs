@@ -9,16 +9,13 @@ use frame_support::{
 	decl_storage,
 	decl_event,
 	decl_error,
-	dispatch,
-	traits::{ Get },
+	traits::Get,
 	ensure,
 	StorageMap,
 	weights::{DispatchClass, Pays, Weight},
 };
-use codec::{Encode};
 use frame_system::{ ensure_signed, limits::BlockLength };
 use sp_std::vec::Vec;
-use sp_core::storage::well_known_keys;
 use sp_runtime::Perbill;
 use libm::ceil;
 
@@ -129,7 +126,7 @@ decl_module! {
 			ensure!(cols >= 32, Error::<T>::BlockDimensionsTooSmall);
 
 			let block_length = BlockLength::with_normal_ratio(rows, cols, BLOCK_CHUNK_SIZE, NORMAL_DISPATCH_RATIO);
-			sp_io::storage::set(well_known_keys::BLOCK_LENGTH, &block_length.encode());
+			frame_system::Pallet::<T>::set_block_length(&block_length);
 
 			// let proposalId = BlockLengthProposalID::get() + 1;
 			// BlockLengthProposalID::put(proposalId);

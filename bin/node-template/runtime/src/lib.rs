@@ -15,10 +15,9 @@ use sp_runtime::{
 };
 use sp_runtime::transaction_validity::{TransactionValidity, TransactionSource, TransactionPriority};
 use sp_runtime::traits::{
-	self, BlakeTwo256, Block as BlockT, AccountIdLookup, Verify, IdentifyAccount, NumberFor,OpaqueKeys, Convert,
+	BlakeTwo256, Block as BlockT, Verify, IdentifyAccount, NumberFor,OpaqueKeys,
 };
 pub use sp_runtime::{Permill, Perbill, Percent, Perquintill};
-use sp_runtime::generic::Era;
 pub use frame_support::{
 	construct_runtime, parameter_types, StorageValue, debug, RuntimeDebug,
 	traits::{KeyOwnerProofSystem, Randomness, U128CurrencyToVote,
@@ -28,14 +27,11 @@ pub use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 	},
 };
-use frame_support::traits::StorageMapShim;
 use frame_system::{EnsureRoot, EnsureOneOf};
 use pallet_session::{historical as pallet_session_historical};
-use codec::{Decode};
 use sp_core::storage::well_known_keys;
 use sp_api::impl_runtime_apis;
 use sp_core::{	u32_trait::{_1, _2, _3, _4, _5},};
-use sp_inherents::{CheckInherentsResult, InherentData};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 
@@ -54,7 +50,7 @@ use static_assertions::const_assert;
 use currency::*;
 pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment, CurrencyAdapter};
 use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo;
-use sp_consensus_babe::AuthorityId as BabeId;
+use sp_consensus_babe::Slot;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use pallet_grandpa::fg_primitives;
@@ -169,19 +165,6 @@ pub mod currency {
 	}
 }
 
-// pub struct CurrencyToVoteHandler;
-
-// impl CurrencyToVoteHandler {
-// 	fn factor() -> Balance { (Balances::total_issuance() / u64::max_value() as Balance).max(1) }
-// }
-
-// impl Convert<Balance, u64> for CurrencyToVoteHandler {
-// 	fn convert(x: Balance) -> u64 { (x / Self::factor()) as u64 }
-// }
-
-// impl Convert<u128, Balance> for CurrencyToVoteHandler {
-// 	fn convert(x: u128) -> Balance { x * Self::factor() }
-// }
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
@@ -199,7 +182,7 @@ impl Filter<Call> for BaseFilter {
 			Call::System(_) | Call::Scheduler(_) | Call::Indices(_) |
 			Call::Babe(_) | Call::Timestamp(_) | Call::Balances(_) |
 			Call::Authorship(_) | Call::Staking(_) | Call::Tips(_) |
-			Call::Session(_) | Call::Grandpa(_) | Call::ImOnline(_) | 
+			Call::Session(_) | Call::Grandpa(_) | Call::ImOnline(_) |
 			Call::RandomnessCollectiveFlip(_) | Call::Elections(_) |
 			Call::Treasury(_) | Call::Bounties(_) | Call::AuthorityDiscovery(_) |
 			Call::Offences(_) | Call::Council(_) |  Call::DataAvailability(_)  |
@@ -208,13 +191,6 @@ impl Filter<Call> for BaseFilter {
 		}
 	}
 }
-// pub struct BaseFilter;
-// impl Filter<Call> for BaseFilter {
-// 	fn filter(call: &Call) -> bool {
-// 		// Avoid processing transactions from template module.
-// 		!matches!(call, Call::TemplateModule(_))
-// 	}
-// }
 
 pub struct Author;
 impl OnUnbalanced<NegativeImbalance> for Author {
@@ -247,8 +223,6 @@ parameter_types! {
 	/// We allow for 2 seconds of compute with a 6 second average block time.
 	pub BlockWeights: frame_system::limits::BlockWeights = frame_system::limits::BlockWeights
 		::with_sensible_defaults(2 * WEIGHT_PER_SECOND, da::NORMAL_DISPATCH_RATIO);
-	// pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
-	// 	::max_with_normal_ratio(kate::config::MAX_BLOCK_SIZE as u32, NORMAL_DISPATCH_RATIO);
 	pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
 	pub const SS58Prefix: u8 = 42;
 }
@@ -261,9 +235,6 @@ impl frame_system::Config for Runtime {
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = BlockWeights;
 	/// The maximum length of a block (in bytes).
-	// type BlockLength = BlockLength;
-	/// Maximum weight of each block.
-	//type MaximumBlockWeight = MaximumBlockWeight;
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The aggregated dispatch type that is available for extrinsics.
@@ -331,6 +302,8 @@ impl pallet_scheduler::Config for Runtime {
 parameter_types! {
 	pub const EpochDuration: u64 = EPOCH_DURATION_IN_SLOTS;
 	pub const ExpectedBlockTime: Moment = MILLISECS_PER_BLOCK;
+	pub const ReportLongevity: u64 =
+		BondingDuration::get() as u64 * SessionsPerEra::get() as u64 * EpochDuration::get();
 }
 
 impl pallet_babe::Config for Runtime {
@@ -350,7 +323,7 @@ impl pallet_babe::Config for Runtime {
 		pallet_babe::AuthorityId,
 	)>>::IdentificationTuple;
 
-	type HandleEquivocation = pallet_babe::EquivocationHandler<Self::KeyOwnerIdentification, Offences>;
+	type HandleEquivocation = pallet_babe::EquivocationHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
 
 	type WeightInfo = ();
 
@@ -372,7 +345,7 @@ impl pallet_grandpa::Config for Runtime {
 		GrandpaId,
 	)>>::IdentificationTuple;
 
-	type HandleEquivocation = pallet_grandpa::EquivocationHandler<Self::KeyOwnerIdentification, Offences>;
+	type HandleEquivocation = pallet_grandpa::EquivocationHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
 	
 	type WeightInfo = ();
 }
@@ -589,7 +562,10 @@ impl pallet_democracy::Config for Runtime {
 
 parameter_types! {
 	pub const CandidacyBond: Balance = 10 * DOLLARS;
-	pub const VotingBond: Balance = 1 * DOLLARS;
+	pub const VotingBondBase: Balance = deposit(1, 64);
+	// additional data per vote is 32 bytes (account id).
+	pub const VotingBondFactor: Balance = deposit(0, 32);
+
 	pub const TermDuration: BlockNumber = 1 * DAYS;
 	pub const DesiredMembers: u32 = 4;
 	pub const DesiredRunnersUp: u32 = 2;
@@ -609,9 +585,9 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type InitializeMembers = Council;
 	type CurrencyToVote = U128CurrencyToVote;
 	type CandidacyBond = CandidacyBond;
-	type VotingBond = VotingBond;
+	type VotingBondBase = VotingBondBase;
+	type VotingBondFactor = VotingBondFactor;
 	type LoserCandidate = Treasury;
-	type BadReport = ();
 	type KickedMember = Treasury;
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
@@ -634,10 +610,10 @@ parameter_types! {
 	pub const SessionDuration: BlockNumber = EPOCH_DURATION_IN_SLOTS as _;
 	pub const ImOnlineUnsignedPriority: TransactionPriority = TransactionPriority::max_value();
 }
-
 impl pallet_im_online::Config for Runtime {
 	type AuthorityId = ImOnlineId;
 	type Event = Event;
+	type ValidatorSet = Historical;
 	type SessionDuration = SessionDuration;
 	type ReportUnresponsiveness = Offences;
 	type UnsignedPriority = ImOnlineUnsignedPriority;
@@ -901,6 +877,7 @@ impl_runtime_apis! {
 		}
 	}
 
+
 	impl sp_consensus_babe::BabeApi<Block> for Runtime {
 		fn configuration() -> sp_consensus_babe::BabeGenesisConfiguration {
 			// The choice of `c` parameter (where `1 - c` represents the
@@ -917,7 +894,7 @@ impl_runtime_apis! {
 				allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryPlainSlots,
 			}
 		}
-		fn current_epoch_start() -> sp_consensus_babe::SlotNumber {
+		fn current_epoch_start() -> Slot {
 			Babe::current_epoch_start()
 		}
 		fn current_epoch() -> sp_consensus_babe::Epoch {
@@ -928,7 +905,7 @@ impl_runtime_apis! {
 		}
 
 		fn generate_key_ownership_proof(
-			_slot_number: sp_consensus_babe::SlotNumber,
+			_slot_number: Slot,
 			authority_id: sp_consensus_babe::AuthorityId,
 		) -> Option<sp_consensus_babe::OpaqueKeyOwnershipProof> {
 			use codec::Encode;
@@ -948,11 +925,7 @@ impl_runtime_apis! {
 				equivocation_proof,
 				key_owner_proof,
 			)
-		}	
-
-		// fn authorities() -> Vec<BabeId> {
-		// 	Babe::authorities()
-		// }
+		}
 	}
 
 	impl fg_primitives::GrandpaApi<Block> for Runtime {
@@ -1004,8 +977,17 @@ impl_runtime_apis! {
 		Block,
 		Balance,
 	> for Runtime {
-		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32) -> RuntimeDispatchInfo<Balance> {
+		fn query_info(
+			uxt: <Block as BlockT>::Extrinsic,
+			len: u32,
+		) -> RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
+		}
+		fn query_fee_details(
+			uxt: <Block as BlockT>::Extrinsic,
+			len: u32,
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
+			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
 
@@ -1029,7 +1011,10 @@ impl_runtime_apis! {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
 			use frame_system_benchmarking::Module as SystemBench;
+			use pallet_session_benchmarking::Module as SessionBench;
+
 			impl frame_system_benchmarking::Config for Runtime {}
+			impl pallet_session_benchmarking::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![
 				// Block Number
@@ -1070,7 +1055,7 @@ impl_runtime_apis! {
 		}
 
 		fn get_block_length() -> frame_system::limits::BlockLength {
-			frame_system::limits::BlockLength::decode(&mut &sp_io::storage::get(well_known_keys::BLOCK_LENGTH).unwrap_or_default()[..]).unwrap()
+			frame_system::Pallet::<Runtime>::block_length()
 		}
 	}
 }

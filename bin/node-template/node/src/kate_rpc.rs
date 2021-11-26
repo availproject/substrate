@@ -9,11 +9,9 @@ use sp_runtime::{generic::BlockId, traits::{Block as BlockT}};
 use sp_runtime::traits::{NumberFor, Header};
 use sp_rpc::number::NumberOrHex;
 use std::sync::RwLock;
-use codec::{Encode, Decode};
+use codec::Encode;
 use frame_system::limits::BlockLength;
-use sp_core::storage::well_known_keys;
 use kate_rpc_runtime_api::KateParamsGetter;
-use frame_benchmarking::frame_support::weights::DispatchClass;
 use kate::com::BlockDimensions;
 
 #[rpc]

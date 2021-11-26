@@ -15,8 +15,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use sp_runtime::traits::Block as _;
-
 pub trait SomeAssociation {
 	type A: frame_support::dispatch::Parameter + Default;
 }
@@ -108,7 +106,7 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	pub struct Pallet<T>(PhantomData<T>);
+	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
@@ -218,7 +216,6 @@ impl frame_system::Config for Runtime {
 	type Event = Event;
 	type BlockHashCount = BlockHashCount;
 	type BlockWeights = ();
-	type BlockLength = ();
 	type DbWeight = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;

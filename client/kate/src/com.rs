@@ -1,15 +1,11 @@
 use dusk_plonk::commitment_scheme::kzg10;
 use dusk_plonk::fft::{EvaluationDomain,Evaluations};
-use bls12_381::{G1Affine,G1Projective,Scalar};
-use std::ops::MulAssign;
-use frame_support::debug;
-use std::{vec, thread};
+use dusk_bytes::Serializable;
 use std::time::{Instant};
-use std::iter;
 use log::{info};
 use std::convert::{TryInto, TryFrom};
 use serde::{Serialize, Deserialize};
-use rand::{SeedableRng, rngs::StdRng, Rng};
+use rand::{rngs::StdRng, Rng};
 use super::*;
 use dusk_plonk::prelude::BlsScalar;
 
@@ -34,18 +30,19 @@ pub fn flatten_and_pad_block(
 	extrinsics: &Vec<Vec<u8>>,
 	header_hash: &[u8]
 ) -> (Vec<u8>, BlockDimensions) {
-	let mut block:Vec<u8> = extrinsics.clone().into_iter().flatten().collect::<Vec<u8>>(); // TODO probably can be done more efficiently
+	let block_len = extrinsics.iter().map(|ext| ext.len()).sum();
+	let mut block:Vec<u8> = Vec::with_capacity(block_len);
+	extrinsics.iter().for_each(|ext| block.extend_from_slice(ext));
+
 	let block_dims = get_block_dimensions(block.len(), rows_num, cols_num, chunk_size);
 
 	if block.len() < block_dims.size {
 		let more_elems = block_dims.size - block.len();
 		block.reserve_exact(more_elems);
 		let mut rng:StdRng = rand::SeedableRng::from_seed(<[u8; 32]>::try_from(header_hash).unwrap());
-		let mut byte_index = 0;
 		for _ in 0..more_elems {
 			// pseudo random values
 			block.push(rng.gen::<u8>());
-			byte_index += 1;
 		}
 	} else if block.len() > block_dims.size {
 		panic!("block is too big, must not happen!");
@@ -94,6 +91,7 @@ pub fn get_block_dimensions(
 	}
 }
 
+#[cfg(feature = "alloc")]
 /// build extended data matrix, by columns
 pub fn extend_data_matrix(
 	block_dims: BlockDimensions,
@@ -128,10 +126,10 @@ pub fn extend_data_matrix(
 	let column_eval_domain = EvaluationDomain::new(rows_num).unwrap();
 
 	for i in 0..cols_num {
-		let mut original_column = &mut chunk_elements[i * extended_rows_num..(i+1) * extended_rows_num - extended_rows_num / config::EXTENSION_FACTOR];
+		let original_column = &mut chunk_elements[i * extended_rows_num..(i+1) * extended_rows_num - extended_rows_num / config::EXTENSION_FACTOR];
 		column_eval_domain.ifft_slice(original_column);
 
-		let mut extended_column = &mut chunk_elements[i * extended_rows_num..(i+1) * extended_rows_num];
+		let extended_column = &mut chunk_elements[i * extended_rows_num..(i+1) * extended_rows_num];
 		extended_column_eval_domain.fft_slice(extended_column);
 	}
 
@@ -160,7 +158,7 @@ pub fn build_proof(
 		()
 	}
 
-	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
+	let public_params = kzg10::PublicParameters::from_slice(public_params_data.as_slice()).unwrap();
 	let (prover_key, _) = public_params.trim(cols_num).unwrap();
 
 	// Generate all the x-axis points of the domain on which all the row polynomials reside
@@ -234,8 +232,10 @@ pub fn build_proof(
 	Some(result_bytes)
 }
 
+// TODO @miguel Remove that param?
+#[cfg(feature = "alloc")]
 pub fn build_commitments(
-	public_params_data: &Vec<u8>,
+	_public_params_data: &Vec<u8>,
 	rows_num: usize,
 	cols_num: usize,
 	chunk_size: usize,
@@ -274,7 +274,7 @@ pub fn build_commitments(
 	);
 
 	// construct commitments in parallel
-	let public_params = kzg10::PublicParameters::from_bytes(public_params_data.as_slice()).unwrap();
+	let public_params = testnet::public_params(block_dims.cols);
 	let (prover_key, _) = public_params.trim(block_dims.cols).unwrap();
 	let row_eval_domain = EvaluationDomain::new(block_dims.cols).unwrap();
 

@@ -653,7 +653,7 @@ pub(crate) mod tests {
 
 	fn header_with_extrinsics_root(parent: &Hash, number: u64, extrinsics_root: Hash) -> Header {
 		let mut header = default_header(parent, number);
-		header.extrinsics_root = extrinsics_root;
+		header.extrinsics_root = extrinsics_root.into();
 		header
 	}
 

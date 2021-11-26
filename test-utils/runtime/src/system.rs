@@ -203,7 +203,7 @@ pub fn execute_transaction(utx: Extrinsic) -> ApplyExtrinsicResult {
 pub fn finalize_block() -> Header {
 	let extrinsic_index: u32 = storage::unhashed::take(well_known_keys::EXTRINSIC_INDEX).unwrap();
 	let txs: Vec<_> = (0..extrinsic_index).map(ExtrinsicData::take).collect();
-	let root_hash = trie::blake2_256_ordered_root(txs).into();
+	let root_hash = trie::blake2_256_ordered_root(&txs).into();
 	let number = <Number>::take().expect("Number is set by `initialize_block`");
 	let parent_hash = <ParentHash>::take();
 	let mut digest = <StorageDigest>::take().expect("StorageDigest is set by `initialize_block`");
@@ -264,6 +264,14 @@ fn execute_transaction_backend(utx: &Extrinsic, extrinsic_index: u32) -> ApplyEx
 			execute_storage_change(key, value.as_ref().map(|v| &**v)),
 		Extrinsic::ChangesTrieConfigUpdate(ref new_config) =>
 			execute_changes_trie_config_update(new_config.clone()),
+		Extrinsic::OffchainIndexSet(key, value) => {
+			sp_io::offchain_index::set(&key, &value);
+			Ok(Ok(()))
+		},
+		Extrinsic::OffchainIndexClear(key) => {
+			sp_io::offchain_index::clear(&key);
+			Ok(Ok(()))
+		}
 	}
 }
 
