@@ -107,13 +107,14 @@ pub fn extend_data_matrix(
 	chunk_elements.resize(extended_rows_num * cols_num, BlsScalar::zero());
 
 	// generate column by column and pack into extended array of scalars
-	let chunk_bytes_offset = rows_num * block_dims.chunk_size;
+	let chunk_bytes_offset = rows_num * config::CHUNK_SIZE;
 	let mut offset = 0;
 	for i in 0..cols_num {
-		let mut chunk = block[i * chunk_bytes_offset..(i+1) * chunk_bytes_offset].chunks_exact(config::SCALAR_SIZE_WIDE);
-		for _ in 0..rows_num {
-			// from_bytes_wide expects [u8;64]
-			chunk_elements[offset] = BlsScalar::from_bytes_wide(chunk.next().unwrap().try_into().expect("slice with incorrect length"));
+	        for _ in 0..rows_num {
+		        let chunk = &block[i * chunk_bytes_offset..(i+1) * chunk_bytes_offset];
+		        let mut bytes: Vec<u8> = vec![0];
+			bytes.extend_from_slice(chunk);
+			chunk_elements[offset] = BlsScalar::from_bytes(&bytes.try_into().expect("")).unwrap();
 			offset += 1;
 		}
 
