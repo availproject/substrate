@@ -193,7 +193,7 @@ pub fn testnet_genesis(
 			code: wasm_binary.to_vec(),
 			changes_trie_config: Default::default(),
 			kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
-			block_length: BlockLength::with_normal_ratio(128, 256, 64, 	Perbill::from_percent(90)),
+			block_length: BlockLength::with_normal_ratio(128, 256, 32, Perbill::from_percent(90)),
 		}),
 		pallet_balances: Some(BalancesConfig {
 			//Configure endowed accounts with initial balance of 20 << 60.
