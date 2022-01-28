@@ -71,7 +71,7 @@ pub fn get_block_dimensions(
 		size = nearest_power_2_size;
 
 		// we must minimize number of rows, to minimize header size (performance wise it doesn't matter)
-		let total_cells = (nearest_power_2_size as f32 / chunk_size as f32).ceil() as usize;
+		let total_cells = (nearest_power_2_size as f32 / config::CHUNK_SIZE as f32).ceil() as usize;
 		if total_cells > cols {
 			rows = total_cells / cols;
 			size = rows * cols * chunk_size;
