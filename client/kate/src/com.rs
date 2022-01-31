@@ -53,42 +53,35 @@ pub fn flatten_and_pad_block(
 
 pub fn get_block_dimensions(
 	block_size: usize,
-	rows_num: usize,
-	cols_num: usize,
+	max_rows_num: usize,
+	max_cols_num: usize,
 	chunk_size: usize
 ) -> BlockDimensions {
-	let max_block_size = rows_num * cols_num * chunk_size;
-	let mut size = block_size;
-	let mut rows = rows_num;
-	let mut cols = cols_num;
+	let max_block_size = max_rows_num * max_cols_num * chunk_size;
+	let mut rows = max_rows_num;
+	let mut cols = max_cols_num;
+        let mut size = block_size + (block_size as f32 / config::CHUNK_SIZE as f32).ceil() as usize;
 
-	if block_size < max_block_size {
-		let mut nearest_power_2_size = (2 as usize).pow((block_size as f32).log2().ceil() as u32);
+	if size < max_block_size {
+		let mut nearest_power_2_size = (2 as usize).pow((size as f32).log2().ceil() as u32);
 		if nearest_power_2_size < config::MINIMUM_BLOCK_SIZE {
 			nearest_power_2_size = config::MINIMUM_BLOCK_SIZE;
 		}
 
-		size = nearest_power_2_size;
-
+                let total_cells = (nearest_power_2_size as f32 / chunk_size as f32).ceil() as usize;
 		// we must minimize number of rows, to minimize header size (performance wise it doesn't matter)
-		let total_cells = (nearest_power_2_size as f32 / config::CHUNK_SIZE as f32).ceil() as usize;
-		if total_cells > cols {
-			rows = total_cells / cols;
-			size = rows * cols * chunk_size;
+		if total_cells > max_cols_num {
+			rows = total_cells / max_cols_num;
 		} else {
 			rows = 1;
 			cols = total_cells;
 		}
-	} else if block_size > max_block_size {
+		size = rows * cols * chunk_size;
+	} else if size > max_block_size {
 		panic!("block is too big, must not happen!");
 	}
 
-	return BlockDimensions{
-		cols,
-		rows,
-		size,
-		chunk_size
-	}
+	BlockDimensions{ cols, rows, size, chunk_size }
 }
 
 #[cfg(feature = "alloc")]
@@ -110,10 +103,12 @@ pub fn extend_data_matrix(
 	let chunk_bytes_offset = rows_num * config::CHUNK_SIZE;
 	let mut offset = 0;
 	for i in 0..cols_num {
-	        for _ in 0..rows_num {
-		        let chunk = &block[i * chunk_bytes_offset..(i+1) * chunk_bytes_offset];
-		        let mut bytes: Vec<u8> = vec![0];
-			bytes.extend_from_slice(chunk);
+		let mut chunk = block[i * chunk_bytes_offset..(i + 1) * chunk_bytes_offset]
+			.chunks_exact(config::CHUNK_SIZE);
+		for _ in 0..rows_num {
+			let mut bytes: Vec<u8> = vec![];
+			bytes.extend(chunk.next().unwrap());
+			bytes.extend(vec![0]);
 			chunk_elements[offset] = BlsScalar::from_bytes(&bytes.try_into().expect("")).unwrap();
 			offset += 1;
 		}
