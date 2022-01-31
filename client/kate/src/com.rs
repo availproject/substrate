@@ -60,7 +60,7 @@ pub fn get_block_dimensions(
 	let max_block_size = max_rows_num * max_cols_num * chunk_size;
 	let mut rows = max_rows_num;
 	let mut cols = max_cols_num;
-        let mut size = block_size + (block_size as f32 / config::CHUNK_SIZE as f32).ceil() as usize;
+	let mut size = block_size + (block_size as f32 / config::CHUNK_SIZE as f32).ceil() as usize;
 
 	if size < max_block_size {
 		let mut nearest_power_2_size = (2 as usize).pow((size as f32).log2().ceil() as u32);
@@ -68,7 +68,7 @@ pub fn get_block_dimensions(
 			nearest_power_2_size = config::MINIMUM_BLOCK_SIZE;
 		}
 
-                let total_cells = (nearest_power_2_size as f32 / chunk_size as f32).ceil() as usize;
+		let total_cells = (nearest_power_2_size as f32 / chunk_size as f32).ceil() as usize;
 		// we must minimize number of rows, to minimize header size (performance wise it doesn't matter)
 		if total_cells > max_cols_num {
 			rows = total_cells / max_cols_num;
