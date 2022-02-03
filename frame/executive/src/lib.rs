@@ -503,6 +503,7 @@ mod tests {
 	const TEST_KEY: &[u8] = &*b":test:key:";
 
 	mod custom {
+                use kate::config::{MAX_BLOCK_ROWS, MAX_BLOCK_COLUMNS};
 		use frame_support::weights::{Weight, DispatchClass};
 		use sp_runtime::transaction_validity::{
 			UnknownTransaction, TransactionSource, TransactionValidity
@@ -741,12 +742,12 @@ mod tests {
 		});
 	}
 
-	fn new_test_ext(balance_factor: Balance) -> sp_io::TestExternalities {
+        fn new_test_ext(balance_factor: Balance) -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig{
 			code: <_>::default(),
 			changes_trie_config: <_>::default(),
 			kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
-			block_length: BlockLength::with_normal_ratio(128, 256, 32, Perbill::from_percent(90))
+			block_length: BlockLength::with_normal_ratio(MAX_BLOCK_ROWS, MAX_BLOCK_COLUMNS, 32, Perbill::from_percent(90))
 		}.build_storage::<Runtime>().unwrap();
 
 		pallet_balances::GenesisConfig::<Runtime> {

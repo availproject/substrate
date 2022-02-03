@@ -1,3 +1,4 @@
+use kate::config::{MAX_BLOCK_ROWS, MAX_BLOCK_COLUMNS};
 use sp_core::{Pair, Public, sr25519};
 use node_template_runtime::{
 	AuthorityDiscoveryConfig, AccountId, BabeConfig, BalancesConfig, IndicesConfig, GenesisConfig, GrandpaConfig, DemocracyConfig,
@@ -187,13 +188,14 @@ pub fn testnet_genesis(
 			endowed_accounts.push(x.0.clone())
 		}
 	);
+
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
 			changes_trie_config: Default::default(),
 			kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
-			block_length: BlockLength::with_normal_ratio(128, 256, 32, Perbill::from_percent(90)),
+			block_length: BlockLength::with_normal_ratio(MAX_BLOCK_ROWS, MAX_BLOCK_COLUMNS, 32, Perbill::from_percent(90)),
 		}),
 		pallet_balances: Some(BalancesConfig {
 			//Configure endowed accounts with initial balance of 20 << 60.

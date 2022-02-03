@@ -15,6 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kate::config::{MAX_BLOCK_ROWS, MAX_BLOCK_COLUMNS};
 use crate::{self as frame_system, *, limits::BlockLength};
 use sp_std::cell::RefCell;
 use sp_core::H256;
@@ -115,7 +116,7 @@ pub const CALL: &<Test as Config>::Call = &Call::System(frame_system::Call::set_
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext: sp_io::TestExternalities = frame_system::GenesisConfig {
 		kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
-		block_length: BlockLength::with_normal_ratio(128, 256, 32, Perbill::from_percent(90)),
+		block_length: BlockLength::with_normal_ratio(MAX_BLOCK_ROWS, MAX_BLOCK_COLUMNS, 32, Perbill::from_percent(90)),
 		..Default::default()
 	}.build_storage::<Test>().unwrap().into();
 

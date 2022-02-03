@@ -18,6 +18,7 @@
 
 //! Substrate chain configurations.
 
+use kate::config::{MAX_BLOCK_ROWS, MAX_BLOCK_COLUMNS};
 use sc_chain_spec::ChainSpecExtension;
 use sp_core::{Pair, Public, crypto::UncheckedInto, sr25519};
 use serde::{Serialize, Deserialize};
@@ -245,15 +246,13 @@ pub fn testnet_genesis(
 
 	const ENDOWMENT: Balance = 10_000_000 * DOLLARS;
 	const STASH: Balance = ENDOWMENT / 1000;
-	const BLOCK_ROWS: u32  = if cfg!(feature = "extend-columns") { 128 } else { 256 };
-	const BLOCK_COLUMNS: u32  = if cfg!(feature = "extend-columns") { 512 } else { 256 };
 
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
 			code: wasm_binary_unwrap().to_vec(),
 			changes_trie_config: Default::default(),
 			kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(), 
-			block_length: BlockLength::with_normal_ratio(BLOCK_ROWS, BLOCK_COLUMNS, 32, Perbill::from_percent(90)),
+			block_length: BlockLength::with_normal_ratio(MAX_BLOCK_ROWS, MAX_BLOCK_COLUMNS, 32, Perbill::from_percent(90)),
 		}),
 		pallet_balances: Some(BalancesConfig {
 			balances: endowed_accounts.iter().cloned()

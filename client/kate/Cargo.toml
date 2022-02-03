@@ -42,3 +42,4 @@ std = [
 	"rand_core/std",
 	"frame-support/std"
 ]
+extended-columns = []

@@ -40,6 +40,7 @@ use node_runtime::{
 };
 use node_testing::keyring::*;
 use sp_externalities::Externalities;
+use kate::config::{MAX_BLOCK_ROWS, MAX_BLOCK_COLUMNS};
 
 pub const TEST_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"test");
 
@@ -133,7 +134,7 @@ pub fn new_test_ext(code: &[u8], support_changes_trie: bool) -> TestExternalitie
 
     let sys_gen = frame_system::GenesisConfig {
         kc_public_params: kate::testnet::KC_PUB_PARAMS.to_vec(),
-        block_length: BlockLength::with_normal_ratio(128, 256, 32, Perbill::from_percent(90)),
+        block_length: BlockLength::with_normal_ratio(MAX_BLOCK_ROWS, MAX_BLOCK_COLUMNS, 32, Perbill::from_percent(90)),
         ..Default::default()
     };
 
