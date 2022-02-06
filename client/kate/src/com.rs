@@ -1,13 +1,17 @@
-use dusk_plonk::commitment_scheme::kzg10;
-use dusk_plonk::fft::{EvaluationDomain,Evaluations};
-use dusk_bytes::Serializable;
-use std::time::{Instant};
-use log::{info};
-use std::convert::{TryInto, TryFrom};
-use serde::{Serialize, Deserialize};
-use rand::{rngs::StdRng, Rng};
 use super::*;
-use dusk_plonk::prelude::BlsScalar;
+use dusk_bytes::Serializable;
+use dusk_plonk::{
+	commitment_scheme::kzg10,
+	fft::{EvaluationDomain, Evaluations},
+	prelude::BlsScalar,
+};
+use log::info;
+use rand::{rngs::StdRng, Rng};
+use serde::{Deserialize, Serialize};
+use std::{
+	convert::{TryFrom, TryInto},
+	time::Instant,
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct Cell {
@@ -28,10 +32,10 @@ pub fn flatten_and_pad_block(
 	cols_num: usize,
 	chunk_size: usize,
 	extrinsics: &Vec<Vec<u8>>,
-	header_hash: &[u8]
+	header_hash: &[u8],
 ) -> (Vec<u8>, BlockDimensions) {
 	let block_len = extrinsics.iter().map(|ext| ext.len()).sum();
-	let mut block:Vec<u8> = Vec::with_capacity(block_len);
+	let mut block: Vec<u8> = Vec::with_capacity(block_len);
 	extrinsics.iter().for_each(|ext| block.extend_from_slice(ext));
 
 	let block_dims = get_block_dimensions(block.len(), rows_num, cols_num, chunk_size);
@@ -39,7 +43,8 @@ pub fn flatten_and_pad_block(
 	if block.len() < block_dims.size {
 		let more_elems = block_dims.size - block.len();
 		block.reserve_exact(more_elems);
-		let mut rng:StdRng = rand::SeedableRng::from_seed(<[u8; 32]>::try_from(header_hash).unwrap());
+		let mut rng: StdRng =
+			rand::SeedableRng::from_seed(<[u8; 32]>::try_from(header_hash).unwrap());
 		for _ in 0..more_elems {
 			// pseudo random values
 			block.push(rng.gen::<u8>());
@@ -55,7 +60,7 @@ pub fn get_block_dimensions(
 	block_size: usize,
 	max_rows_num: usize,
 	max_cols_num: usize,
-	chunk_size: usize
+	chunk_size: usize,
 ) -> BlockDimensions {
 	let max_block_size = max_rows_num * max_cols_num * chunk_size;
 	let mut rows = max_rows_num;
@@ -69,7 +74,8 @@ pub fn get_block_dimensions(
 		}
 
 		let total_cells = (nearest_power_2_size as f32 / chunk_size as f32).ceil() as usize;
-		// we must minimize number of rows, to minimize header size (performance wise it doesn't matter)
+		// we must minimize number of rows, to minimize header size (performance wise it doesn't
+		// matter)
 		if total_cells > max_cols_num {
 			rows = total_cells / max_cols_num;
 		} else {
@@ -81,7 +87,7 @@ pub fn get_block_dimensions(
 		panic!("block is too big, must not happen!");
 	}
 
-	BlockDimensions{ cols, rows, size, chunk_size }
+	BlockDimensions { cols, rows, size, chunk_size }
 }
 
 #[cfg(feature = "alloc")]
@@ -140,7 +146,7 @@ pub fn build_proof(
 	public_params_data: &Vec<u8>,
 	block_dims: BlockDimensions,
 	ext_data_matrix: &Vec<BlsScalar>,
-	cells: Vec<Cell>
+	cells: Vec<Cell>,
 ) -> Option<Vec<u8>> {
 	let rows_num = block_dims.rows;
 	let cols_num = block_dims.cols;
@@ -176,7 +182,7 @@ pub fn build_proof(
 		num_cpus::get()
 	);
 	// generate proof only for requested cells
-	let total_start= Instant::now();
+	let total_start = Instant::now();
 	Iterator::enumerate(cells.iter()).for_each(|(_, cell)| {
 		let row_index = cell.row as usize;
 		let col_index = cell.col as usize;
@@ -197,13 +203,15 @@ pub fn build_proof(
 				std::ptr::copy(
 					commitment_to_witness.to_bytes().as_ptr(),
 					result_bytes.as_mut_ptr().add(cell_index * serialized_proof_size),
-					config::PROOF_SIZE
+					config::PROOF_SIZE,
 				);
 
 				std::ptr::copy(
 					evaluated_point.to_bytes().as_ptr(),
-					result_bytes.as_mut_ptr().add(cell_index * serialized_proof_size + config::PROOF_SIZE),
-					config::SCALAR_SIZE
+					result_bytes
+						.as_mut_ptr()
+						.add(cell_index * serialized_proof_size + config::PROOF_SIZE),
+					config::SCALAR_SIZE,
 				);
 			}
 
@@ -232,18 +240,13 @@ pub fn build_commitments(
 	cols_num: usize,
 	chunk_size: usize,
 	extrinsics: &Vec<Vec<u8>>,
-	header_hash: &[u8]
+	header_hash: &[u8],
 ) -> (Vec<u8>, BlockDimensions) {
-	let start= Instant::now();
+	let start = Instant::now();
 
 	// generate data matrix first
-	let (block, block_dims) = flatten_and_pad_block(
-		rows_num,
-		cols_num,
-		chunk_size,
-		extrinsics,
-		header_hash
-	);
+	let (block, block_dims) =
+		flatten_and_pad_block(rows_num, cols_num, chunk_size, extrinsics, header_hash);
 
 	info!(
 		target: "system",
@@ -253,10 +256,7 @@ pub fn build_commitments(
 		block.len()
 	);
 
-	let ext_data_matrix = extend_data_matrix(
-		block_dims,
-		&block
-	);
+	let ext_data_matrix = extend_data_matrix(block_dims, &block);
 	let extended_rows_num = block_dims.rows * config::EXTENSION_FACTOR;
 
 	info!(
@@ -297,7 +297,7 @@ pub fn build_commitments(
 			std::ptr::copy(
 				key_bytes.as_ptr(),
 				result_bytes.as_mut_ptr().add(i * config::PROVER_KEY_SIZE),
-				config::PROVER_KEY_SIZE
+				config::PROVER_KEY_SIZE,
 			);
 		}
 	}
