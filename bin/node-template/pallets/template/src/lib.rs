@@ -34,7 +34,7 @@ pub trait Config: frame_system::Config {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 }
 
-pub const BLOCK_CHUNK_SIZE: u32 = 64;
+pub const BLOCK_CHUNK_SIZE: u32 = 32;
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(90);
 
 // The pallet's runtime storage items.

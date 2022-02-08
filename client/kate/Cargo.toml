@@ -34,3 +34,4 @@ std = [
 	"getrandom/std",
 	"frame-support/std"
 ]
+extended-columns = []
