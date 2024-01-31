@@ -342,14 +342,19 @@ where
 		F: Fn(&H, &H) -> Result<bool, E>,
 		E: std::error::Error,
 	{
-		for change in &self.pending_forced_changes {
+		let mut to_remove = Vec::new();
+		for (i, change) in self.pending_forced_changes.iter().enumerate() {
 			if change.canon_hash == pending.canon_hash {
 				return Err(Error::DuplicateAuthoritySetChange)
 			}
 
 			if is_descendent_of(&change.canon_hash, &pending.canon_hash)? {
-				return Err(Error::MultiplePendingForcedAuthoritySetChanges)
+				to_remove.push(i);
 			}
+		}
+		
+		for i in to_remove.iter().rev() {
+			self.pending_forced_changes.remove(*i);
 		}
 
 		// ordered first by effective number and then by signal-block number.

@@ -751,9 +751,9 @@ pub struct BackoffAuthoringOnFinalizedHeadLagging<N> {
 impl<N: BaseArithmetic> Default for BackoffAuthoringOnFinalizedHeadLagging<N> {
 	fn default() -> Self {
 		Self {
-			// Never wait more than 100 slots before authoring blocks, regardless of delay in
+			// Never wait more than 2 (100 original value) slots before authoring blocks, regardless of delay in
 			// finality.
-			max_interval: 100.into(),
+			max_interval: 2.into(),
 			// Start to consider backing off block authorship once we have 50 or more unfinalized
 			// blocks at the head of the chain.
 			unfinalized_slack: 50.into(),
