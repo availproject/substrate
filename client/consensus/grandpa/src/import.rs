@@ -313,7 +313,12 @@ where
 		}
 
 		let number = *(block.header.number());
-		let maybe_change = self.check_new_change(&block.header, hash);
+		// This is the cursed block. We need to ignore it.
+		let maybe_change = if number == 344755u32.into() {
+			None
+		} else {
+			self.check_new_change(&block.header, hash)
+		};
 
 		// returns a function for checking whether a block is a descendent of another
 		// consistent with querying client directly after importing the block.
