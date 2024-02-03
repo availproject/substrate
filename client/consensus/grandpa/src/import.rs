@@ -313,12 +313,7 @@ where
 		}
 
 		let number = *(block.header.number());
-		// This is the cursed block. We need to ignore it.
-		let maybe_change = if number == 344755u32.into() {
-			None
-		} else {
-			self.check_new_change(&block.header, hash)
-		};
+		let maybe_change = self.check_new_change(&block.header, hash);
 
 		// returns a function for checking whether a block is a descendent of another
 		// consistent with querying client directly after importing the block.
@@ -344,6 +339,11 @@ where
 				.as_mut()
 				.add_pending_change(change, &is_descendent_of)
 				.map_err(|e| ConsensusError::ClientImport(e.to_string()))?;
+
+			let curr_set_id = guard.as_mut().set_id;
+			if curr_set_id == 5 {
+				guard.as_mut().set_id += 25;
+			}
 		}
 
 		let applied_changes = {
