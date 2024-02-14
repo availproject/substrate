@@ -557,19 +557,24 @@ where
 			)
 		};
 
+		let block_number = block.header().number();
+		let proposing_time = block_took.as_millis();
+		let block_hash = <Block as BlockT>::Hash::from(block.header().hash());
+
 		info!(
 			"🎁 Prepared block for proposing at {} ({} ms) [hash: {:?}; parent_hash: {}; {extrinsics_summary}",
-			block.header().number(),
-			block_took.as_millis(),
-			<Block as BlockT>::Hash::from(block.header().hash()),
+			block_number,
+			proposing_time,
+			block_hash,
 			block.header().parent_hash(),
 		);
 		telemetry!(
 			self.telemetry;
 			CONSENSUS_INFO;
 			"prepared_block_for_proposing";
-			"number" => ?block.header().number(),
-			"hash" => ?<Block as BlockT>::Hash::from(block.header().hash()),
+			"number" => ?block_number,
+			"hash" => ?block_hash,
+			"proposing_time" => ?proposing_time
 		);
 	}
 }
