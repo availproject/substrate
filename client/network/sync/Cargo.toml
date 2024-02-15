@@ -42,6 +42,7 @@ sp-consensus = { version = "0.10.0-dev", path = "../../../primitives/consensus/c
 sp-core = { version = "21.0.0", path = "../../../primitives/core" }
 sp-consensus-grandpa = { version = "4.0.0-dev", path = "../../../primitives/consensus/grandpa" }
 sp-runtime = { version = "24.0.0", path = "../../../primitives/runtime" }
+block-metrics = {  path = "../../metrics" }
 
 [dev-dependencies]
 tokio = { version = "1.22.0", features = ["macros"] }

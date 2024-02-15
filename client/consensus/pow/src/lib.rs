@@ -53,6 +53,7 @@ use sc_consensus::{
 	BasicQueue, BlockCheckParams, BlockImport, BlockImportParams, BoxBlockImport,
 	BoxJustificationImport, ForkChoiceStrategy, ImportResult, Verifier,
 };
+use sc_telemetry::TelemetryHandle;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder as BlockBuilderApi;
 use sp_blockchain::HeaderBackend;
@@ -470,6 +471,7 @@ pub fn import_queue<B, Transaction, Algorithm>(
 	algorithm: Algorithm,
 	spawner: &impl sp_core::traits::SpawnEssentialNamed,
 	registry: Option<&Registry>,
+	telemetry: Option<TelemetryHandle>,
 ) -> Result<PowImportQueue<B, Transaction>, sp_consensus::Error>
 where
 	B: BlockT,
@@ -479,7 +481,7 @@ where
 {
 	let verifier = PowVerifier::new(algorithm);
 
-	Ok(BasicQueue::new(verifier, block_import, justification_import, spawner, registry))
+	Ok(BasicQueue::new(verifier, block_import, justification_import, spawner, registry, telemetry))
 }
 
 /// Start the mining worker for PoW. This function provides the necessary helper functions that can

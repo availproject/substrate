@@ -790,6 +790,7 @@ where
 			justification_import,
 			&sp_core::testing::TaskExecutor::new(),
 			None,
+			None,
 		));
 
 		let listen_addr = build_multiaddr![Memory(rand::random::<u64>())];

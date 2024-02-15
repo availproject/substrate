@@ -1,0 +1,11 @@
+[package]
+description = "Block Metrics"
+name = "block-metrics"
+version = "0.1.0"
+edition = "2021"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[features]
+default = []

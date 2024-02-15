@@ -377,11 +377,18 @@ where
 		client,
 		create_inherent_data_providers,
 		check_for_equivocation,
-		telemetry,
+		telemetry: telemetry.clone(),
 		compatibility_mode,
 	});
 
-	Ok(BasicQueue::new(verifier, Box::new(block_import), justification_import, spawner, registry))
+	Ok(BasicQueue::new(
+		verifier,
+		Box::new(block_import),
+		justification_import,
+		spawner,
+		registry,
+		telemetry,
+	))
 }
 
 /// Parameters of [`build_verifier`].

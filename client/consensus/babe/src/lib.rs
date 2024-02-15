@@ -1864,7 +1864,7 @@ where
 		create_inherent_data_providers,
 		config: babe_link.config.clone(),
 		epoch_changes: babe_link.epoch_changes.clone(),
-		telemetry,
+		telemetry: telemetry.clone(),
 		client: client.clone(),
 		offchain_tx_pool_factory,
 	};
@@ -1877,7 +1877,14 @@ where
 	spawner.spawn_essential("babe-worker", Some("babe"), answer_requests.boxed());
 
 	Ok((
-		BasicQueue::new(verifier, Box::new(block_import), justification_import, spawner, registry),
+		BasicQueue::new(
+			verifier,
+			Box::new(block_import),
+			justification_import,
+			spawner,
+			registry,
+			telemetry,
+		),
 		BabeWorkerHandle(worker_tx),
 	))
 }

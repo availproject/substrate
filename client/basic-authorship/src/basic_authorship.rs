@@ -20,6 +20,7 @@
 
 // FIXME #1021 move this into sp-consensus
 
+use block_metrics::BlockMetrics;
 use codec::Encode;
 use futures::{
 	channel::oneshot,
@@ -355,6 +356,13 @@ where
 			self.apply_extrinsics(&mut block_builder, deadline, block_size_limit).await?;
 		let (block, storage_changes, proof) = block_builder.build()?.into_inner();
 		let block_took = block_timer.elapsed();
+		if let Ok(block_number) = block.header().number().clone().try_into() {
+			BlockMetrics::observe_proposal_end_timestamp(block_number);
+			BlockMetrics::observe_proposal_time(
+				block_number,
+				propose_with_timer.elapsed().as_millis(),
+			);
+		}
 
 		let proof =
 			PR::into_proof(proof).map_err(|e| sp_blockchain::Error::Application(Box::new(e)))?;
