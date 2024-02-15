@@ -187,7 +187,7 @@ where
 			Ok(dxt) => dxt,
 			Err(e) => {
 				let _ = sink.reject(JsonRpseeError::from(e));
-				return Ok(())
+				return Ok(());
 			},
 		};
 
@@ -205,7 +205,7 @@ where
 				Ok(stream) => stream,
 				Err(err) => {
 					let _ = sink.reject(JsonRpseeError::from(err));
-					return
+					return;
 				},
 			};
 

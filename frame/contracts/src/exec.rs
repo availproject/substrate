@@ -781,11 +781,11 @@ where
 
 		// `Relaxed` will only be ever set in case of off-chain execution.
 		// Instantiations are never allowed even when executing off-chain.
-		if !(executable.is_deterministic() ||
-			(matches!(determinism, Determinism::Relaxed) &&
-				matches!(entry_point, ExportedFunction::Call)))
+		if !(executable.is_deterministic()
+			|| (matches!(determinism, Determinism::Relaxed)
+				&& matches!(entry_point, ExportedFunction::Call)))
 		{
-			return Err(Error::<T>::Indeterministic.into())
+			return Err(Error::<T>::Indeterministic.into());
 		}
 
 		let frame = Frame {
@@ -811,7 +811,7 @@ where
 		deposit_limit: BalanceOf<T>,
 	) -> Result<E, ExecError> {
 		if self.frames.len() == T::CallStack::size() {
-			return Err(Error::<T>::MaxCallDepthReached.into())
+			return Err(Error::<T>::MaxCallDepthReached.into());
 		}
 
 		// We need to make sure that changes made to the contract info are not discarded.
@@ -874,7 +874,7 @@ where
 
 			// Avoid useless work that would be reverted anyways.
 			if output.did_revert() {
-				return Ok(output)
+				return Ok(output);
 			}
 
 			// Storage limit is normally enforced as late as possible (when the last frame returns)
@@ -894,7 +894,7 @@ where
 				(ExportedFunction::Constructor, _) => {
 					// It is not allowed to terminate a contract inside its constructor.
 					if matches!(frame.contract_info, CachedContract::Terminated(_)) {
-						return Err(Error::<T>::TerminatedInConstructor.into())
+						return Err(Error::<T>::TerminatedInConstructor.into());
 					}
 
 					// If a special limit was set for the sub-call, we enforce it here.
@@ -946,8 +946,9 @@ where
 			with_transaction(|| -> TransactionOutcome<Result<_, DispatchError>> {
 				let output = do_transaction();
 				match &output {
-					Ok(result) if !result.did_revert() =>
-						TransactionOutcome::Commit(Ok((true, output))),
+					Ok(result) if !result.did_revert() => {
+						TransactionOutcome::Commit(Ok((true, output)))
+					},
 					_ => TransactionOutcome::Rollback(Ok((false, output))),
 				}
 			});
@@ -989,7 +990,7 @@ where
 
 			// Only gas counter changes are persisted in case of a failure.
 			if !persist {
-				return
+				return;
 			}
 
 			// Record the storage meter changes of the nested call into the parent meter.
@@ -1018,7 +1019,7 @@ where
 				// trigger a rollback.
 				if prev.account_id == *account_id {
 					prev.contract_info = CachedContract::Cached(contract);
-					return
+					return;
 				}
 
 				// Predecessor is a different contract: We persist the info and invalidate the first
@@ -1041,7 +1042,7 @@ where
 			}
 			self.gas_meter.absorb_nested(mem::take(&mut self.first_frame.nested_gas));
 			if !persist {
-				return
+				return;
 			}
 			let deposit_account = self.first_frame.contract_info.deposit_account().expect(
 				"Is only `None` when the info is invalidated. The first frame can't be invalidated.
@@ -1081,7 +1082,7 @@ where
 		// If it is a delegate call, then we've already transferred tokens in the
 		// last non-delegate frame.
 		if frame.delegate_caller.is_some() {
-			return Ok(())
+			return Ok(());
 		}
 
 		let value = frame.value_transferred;
@@ -1161,7 +1162,7 @@ where
 
 		let try_call = || {
 			if !self.allows_reentry(&to) {
-				return Err(<Error<T>>::ReentranceDenied.into())
+				return Err(<Error<T>>::ReentranceDenied.into());
 			}
 			// We ignore instantiate frames in our search for a cached contract.
 			// Otherwise it would be possible to recursively call a contract from its own
@@ -1244,7 +1245,7 @@ where
 	fn terminate(&mut self, beneficiary: &AccountIdOf<Self::T>) -> Result<(), DispatchError> {
 		use frame_support::traits::fungible::Inspect;
 		if self.is_recursive() {
-			return Err(Error::<T>::TerminatedWhileReentrant.into())
+			return Err(Error::<T>::TerminatedWhileReentrant.into());
 		}
 		let frame = self.top_frame_mut();
 		let info = frame.terminate();
@@ -1431,7 +1432,7 @@ where
 	fn set_code_hash(&mut self, hash: CodeHash<Self::T>) -> Result<(), DispatchError> {
 		let frame = top_frame_mut!(self);
 		if !E::from_storage(hash, &mut frame.nested_gas)?.is_deterministic() {
-			return Err(<Error<T>>::Indeterministic.into())
+			return Err(<Error<T>>::Indeterministic.into());
 		}
 		E::increment_refcount(hash)?;
 		let prev_hash = frame.contract_info().code_hash;

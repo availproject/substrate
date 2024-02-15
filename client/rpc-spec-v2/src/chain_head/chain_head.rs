@@ -100,7 +100,7 @@ impl<BE: Backend<Block>, Block: BlockT, Client> ChainHead<BE, Block, Client> {
 
 		let Some(sub_id) = sink.subscription_id() else {
 			// This can only happen if the subscription was not accepted.
-			return Err(SubscriptionEmptyError)
+			return Err(SubscriptionEmptyError);
 		};
 
 		// Get the string representation for the subscription.
@@ -122,7 +122,7 @@ fn parse_hex_param(
 ) -> Result<Vec<u8>, SubscriptionEmptyError> {
 	// Methods can accept empty parameters.
 	if param.is_empty() {
-		return Ok(Default::default())
+		return Ok(Default::default());
 	}
 
 	match array_bytes::hex2bytes(&param) {
@@ -158,16 +158,17 @@ where
 			Ok(sub_id) => sub_id,
 			Err(err) => {
 				sink.close(ChainHeadRpcError::InvalidSubscriptionID);
-				return Err(err)
+				return Err(err);
 			},
 		};
 		// Keep track of the subscription.
-		let Some(rx_stop) = self.subscriptions.insert_subscription(sub_id.clone(), with_runtime) else {
+		let Some(rx_stop) = self.subscriptions.insert_subscription(sub_id.clone(), with_runtime)
+		else {
 			// Inserting the subscription can only fail if the JsonRPSee
 			// generated a duplicate subscription ID.
 			debug!(target: LOG_TARGET, "[follow][id={:?}] Subscription already accepted", sub_id);
 			let _ = sink.send(&FollowEvent::<Block::Hash>::Stop);
-			return Ok(())
+			return Ok(());
 		};
 		debug!(target: LOG_TARGET, "[follow][id={:?}] Subscription accepted", sub_id);
 
@@ -208,18 +209,18 @@ where
 			Err(SubscriptionManagementError::SubscriptionAbsent) => {
 				// Invalid invalid subscription ID.
 				let _ = sink.send(&ChainHeadEvent::<String>::Disjoint);
-				return Ok(())
+				return Ok(());
 			},
 			Err(SubscriptionManagementError::BlockHashAbsent) => {
 				// Block is not part of the subscription.
 				let _ = sink.reject(ChainHeadRpcError::InvalidBlock);
-				return Ok(())
+				return Ok(());
 			},
 			Err(error) => {
 				let _ = sink.send(&ChainHeadEvent::<String>::Error(ErrorEvent {
 					error: error.to_string(),
 				}));
-				return Ok(())
+				return Ok(());
 			},
 		};
 
@@ -260,11 +261,11 @@ where
 			Ok(block) => block,
 			Err(SubscriptionManagementError::SubscriptionAbsent) => {
 				// Invalid invalid subscription ID.
-				return Ok(None)
+				return Ok(None);
 			},
 			Err(SubscriptionManagementError::BlockHashAbsent) => {
 				// Block is not part of the subscription.
-				return Err(ChainHeadRpcError::InvalidBlock.into())
+				return Err(ChainHeadRpcError::InvalidBlock.into());
 			},
 			Err(_) => return Err(ChainHeadRpcError::InvalidBlock.into()),
 		};
@@ -304,18 +305,18 @@ where
 			Err(SubscriptionManagementError::SubscriptionAbsent) => {
 				// Invalid invalid subscription ID.
 				let _ = sink.send(&ChainHeadEvent::<String>::Disjoint);
-				return Ok(())
+				return Ok(());
 			},
 			Err(SubscriptionManagementError::BlockHashAbsent) => {
 				// Block is not part of the subscription.
 				let _ = sink.reject(ChainHeadRpcError::InvalidBlock);
-				return Ok(())
+				return Ok(());
 			},
 			Err(error) => {
 				let _ = sink.send(&ChainHeadEvent::<String>::Error(ErrorEvent {
 					error: error.to_string(),
 				}));
-				return Ok(())
+				return Ok(());
 			},
 		};
 
@@ -325,12 +326,12 @@ where
 			if let Some(child_key) = child_key {
 				// The child key must not be prefixed with ":child_storage:" nor
 				// ":child_storage:default:".
-				if well_known_keys::is_default_child_storage_key(child_key.storage_key()) ||
-					well_known_keys::is_child_storage_key(child_key.storage_key())
+				if well_known_keys::is_default_child_storage_key(child_key.storage_key())
+					|| well_known_keys::is_child_storage_key(child_key.storage_key())
 				{
 					let _ = sink
 						.send(&ChainHeadEvent::Done(ChainHeadResult { result: None::<String> }));
-					return
+					return;
 				}
 
 				let res = client
@@ -344,17 +345,17 @@ where
 						ChainHeadEvent::Error(ErrorEvent { error: error.to_string() })
 					});
 				let _ = sink.send(&res);
-				return
+				return;
 			}
 
 			// The main key must not be prefixed with b":child_storage:" nor
 			// b":child_storage:default:".
-			if well_known_keys::is_default_child_storage_key(&key.0) ||
-				well_known_keys::is_child_storage_key(&key.0)
+			if well_known_keys::is_default_child_storage_key(&key.0)
+				|| well_known_keys::is_child_storage_key(&key.0)
 			{
 				let _ =
 					sink.send(&ChainHeadEvent::Done(ChainHeadResult { result: None::<String> }));
-				return
+				return;
 			}
 
 			// Main root trie storage query.
@@ -394,18 +395,18 @@ where
 			Err(SubscriptionManagementError::SubscriptionAbsent) => {
 				// Invalid invalid subscription ID.
 				let _ = sink.send(&ChainHeadEvent::<String>::Disjoint);
-				return Ok(())
+				return Ok(());
 			},
 			Err(SubscriptionManagementError::BlockHashAbsent) => {
 				// Block is not part of the subscription.
 				let _ = sink.reject(ChainHeadRpcError::InvalidBlock);
-				return Ok(())
+				return Ok(());
 			},
 			Err(error) => {
 				let _ = sink.send(&ChainHeadEvent::<String>::Error(ErrorEvent {
 					error: error.to_string(),
 				}));
-				return Ok(())
+				return Ok(());
 			},
 		};
 
@@ -415,7 +416,7 @@ where
 				let _ = sink.reject(ChainHeadRpcError::InvalidParam(
 					"The runtime updates flag must be set".into(),
 				));
-				return
+				return;
 			}
 
 			let res = client

@@ -179,7 +179,7 @@ impl ProcessMessage for RecordingMessageProcessor {
 				if (b'0'..=b'9').contains(&c) {
 					w = w * 10 + (c - b'0') as u64;
 				} else {
-					break
+					break;
 				}
 			}
 			w
@@ -203,7 +203,7 @@ impl ProcessMessage for RecordingMessageProcessor {
 /// `yield` will fail with an error respectively.
 fn processing_message(msg: &[u8], origin: &MessageOrigin) -> Result<(), ProcessMessageError> {
 	if YieldingQueues::get().contains(&origin) {
-		return Err(ProcessMessageError::Yield)
+		return Err(ProcessMessageError::Yield);
 	}
 
 	let msg = String::from_utf8_lossy(msg);
@@ -241,7 +241,7 @@ impl ProcessMessage for CountingMessageProcessor {
 	) -> Result<bool, ProcessMessageError> {
 		if let Err(e) = processing_message(message, &origin) {
 			NumMessagesErrored::set(NumMessagesErrored::get() + 1);
-			return Err(e)
+			return Err(e);
 		}
 		let required = Weight::from_parts(1, 1);
 

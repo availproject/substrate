@@ -228,14 +228,14 @@ pub mod v2 {
 						Some(x) => x,
 						None => {
 							log!(error, "pool {} has no member! deleting it..", id);
-							return None
+							return None;
 						},
 					};
 					let bonded_pool = match BondedPools::<T>::get(id) {
 						Some(x) => x,
 						None => {
 							log!(error, "pool {} has no bonded pool! deleting it..", id);
-							return None
+							return None;
 						},
 					};
 
@@ -250,7 +250,7 @@ pub mod v2 {
 								Some(x) => x,
 								None => {
 									log!(error, "pool {} for member {:?} does not exist!", id, who);
-									return None
+									return None;
 								},
 							};
 
@@ -362,8 +362,8 @@ pub mod v2 {
 			// all reward accounts must have more than ED.
 			RewardPools::<T>::iter().try_for_each(|(id, _)| -> Result<(), TryRuntimeError> {
 				ensure!(
-					T::Currency::free_balance(&Pallet::<T>::create_reward_account(id)) >=
-						T::Currency::minimum_balance(),
+					T::Currency::free_balance(&Pallet::<T>::create_reward_account(id))
+						>= T::Currency::minimum_balance(),
 					"Reward accounts must have greater balance than ED."
 				);
 				Ok(())
@@ -657,8 +657,8 @@ pub mod v5 {
 				"There are undecodable BondedPools in storage. This migration will not fix that."
 			);
 			ensure!(
-				SubPoolsStorage::<T>::iter_keys().count() ==
-					SubPoolsStorage::<T>::iter_values().count(),
+				SubPoolsStorage::<T>::iter_keys().count()
+					== SubPoolsStorage::<T>::iter_values().count(),
 				"There are undecodable SubPools in storage. This migration will not fix that."
 			);
 			ensure!(
@@ -691,10 +691,10 @@ pub mod v5 {
 			// `total_commission_claimed` field.
 			ensure!(
 				RewardPools::<T>::iter().all(|(_, reward_pool)| reward_pool
-					.total_commission_pending >=
-					Zero::zero() && reward_pool
-					.total_commission_claimed >=
-					Zero::zero()),
+					.total_commission_pending
+					>= Zero::zero() && reward_pool
+					.total_commission_claimed
+					>= Zero::zero()),
 				"a commission value has been incorrectly set"
 			);
 			ensure!(
@@ -712,8 +712,8 @@ pub mod v5 {
 				"There are undecodable BondedPools in storage."
 			);
 			ensure!(
-				SubPoolsStorage::<T>::iter_keys().count() ==
-					SubPoolsStorage::<T>::iter_values().count(),
+				SubPoolsStorage::<T>::iter_keys().count()
+					== SubPoolsStorage::<T>::iter_values().count(),
 				"There are undecodable SubPools in storage."
 			);
 			ensure!(

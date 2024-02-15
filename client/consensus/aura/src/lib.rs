@@ -422,7 +422,7 @@ where
 					self.client.info().finalized_number,
 					slot,
 					self.logging_target(),
-				)
+				);
 			}
 		}
 		false
@@ -525,7 +525,7 @@ where
 	match compatibility_mode {
 		CompatibilityMode::None => {},
 		// Use `initialize_block` until we hit the block that should disable the mode.
-		CompatibilityMode::UseInitializeBlock { until } =>
+		CompatibilityMode::UseInitializeBlock { until } => {
 			if *until > context_block_number {
 				runtime_api
 					.initialize_block(
@@ -539,7 +539,8 @@ where
 						),
 					)
 					.map_err(|_| ConsensusError::InvalidAuthoritiesSet)?;
-			},
+			}
+		},
 	}
 
 	runtime_api

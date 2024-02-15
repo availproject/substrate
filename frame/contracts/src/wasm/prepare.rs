@@ -106,18 +106,19 @@ impl LoadedModule {
 					match export.name() {
 						"call" => call_found = true,
 						"deploy" => deploy_found = true,
-						_ =>
+						_ => {
 							return Err(
 								"unknown function export: expecting only deploy and call functions",
-							),
+							)
+						},
 					}
 					// Check the signature.
 					// Both "call" and "deploy" have the () -> () function type.
 					// We still support () -> (i32) for backwards compatibility.
-					if !(ft.params().is_empty() &&
-						(ft.results().is_empty() || ft.results() == [WasmiValueType::I32]))
+					if !(ft.params().is_empty()
+						&& (ft.results().is_empty() || ft.results() == [WasmiValueType::I32]))
 					{
-						return Err("entry point has wrong signature")
+						return Err("entry point has wrong signature");
 					}
 				},
 				ExternType::Memory(_) => return Err("memory export is forbidden"),
@@ -127,10 +128,10 @@ impl LoadedModule {
 		}
 
 		if !deploy_found {
-			return Err("deploy function isn't exported")
+			return Err("deploy function isn't exported");
 		}
 		if !call_found {
-			return Err("call function isn't exported")
+			return Err("call function isn't exported");
 		}
 
 		Ok(())
@@ -167,22 +168,24 @@ impl LoadedModule {
 				ExternType::Func(_) => {
 					let _ = import.ty().func().ok_or("expected a function")?;
 
-					if !<T as Config>::ChainExtension::enabled() &&
-						(import.name().as_bytes() == b"seal_call_chain_extension" ||
-							import.name().as_bytes() == b"call_chain_extension")
+					if !<T as Config>::ChainExtension::enabled()
+						&& (import.name().as_bytes() == b"seal_call_chain_extension"
+							|| import.name().as_bytes() == b"call_chain_extension")
 					{
-						return Err("Module uses chain extensions but chain extensions are disabled")
+						return Err(
+							"Module uses chain extensions but chain extensions are disabled",
+						);
 					}
 				},
 				ExternType::Memory(mt) => {
 					if import.module().as_bytes() != IMPORT_MODULE_MEMORY.as_bytes() {
-						return Err("Invalid module for imported memory")
+						return Err("Invalid module for imported memory");
 					}
 					if import.name().as_bytes() != b"memory" {
-						return Err("Memory import must have the field name 'memory'")
+						return Err("Memory import must have the field name 'memory'");
 					}
 					if memory_limits.is_some() {
-						return Err("Multiple memory imports defined")
+						return Err("Multiple memory imports defined");
 					}
 					// Parse memory limits defaulting it to (0,0).
 					// Any access to it will then lead to out of bounds trap.
@@ -196,14 +199,14 @@ impl LoadedModule {
 					if initial > maximum {
 						return Err(
 						"Requested initial number of memory pages should not exceed the requested maximum",
-					)
+					);
 					}
 					if maximum > schedule.limits.memory_pages {
-						return Err("Maximum number of memory pages should not exceed the maximum configured in the Schedule")
+						return Err("Maximum number of memory pages should not exceed the maximum configured in the Schedule");
 					}
 
 					memory_limits = Some((initial, maximum));
-					continue
+					continue;
 				},
 			}
 		}

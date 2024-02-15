@@ -158,8 +158,9 @@ impl<
 		match <VersionedPostUpgradeData>::decode_all(&mut &versioned_post_upgrade_data_bytes[..])
 			.map_err(|_| "VersionedRuntimeUpgrade post_upgrade failed to decode PreUpgradeData")?
 		{
-			VersionedPostUpgradeData::MigrationExecuted(inner_bytes) =>
-				Inner::post_upgrade(inner_bytes),
+			VersionedPostUpgradeData::MigrationExecuted(inner_bytes) => {
+				Inner::post_upgrade(inner_bytes)
+			},
 			VersionedPostUpgradeData::Noop => Ok(()),
 		}
 	}
@@ -340,7 +341,7 @@ impl<P: Get<&'static str>, DbWeight: Get<RuntimeDbWeight>> frame_support::traits
 		match contains_prefixed_key(&hashed_prefix) {
 			true => {
 				log::error!("{} has keys remaining post-removal ❗", P::get());
-				return Err("Keys remaining post-removal, this should never happen 🚨".into())
+				return Err("Keys remaining post-removal, this should never happen 🚨".into());
 			},
 			false => log::info!("No {} keys found post-removal 🎉", P::get()),
 		};

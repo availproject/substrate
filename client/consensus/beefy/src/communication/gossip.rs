@@ -151,12 +151,13 @@ impl<B: Block> Filter<B> {
 				f.start = cfg.start;
 				f.end = cfg.end;
 			},
-			_ =>
+			_ => {
 				self.inner = Some(FilterInner {
 					start: cfg.start,
 					end: cfg.end,
 					validator_set: cfg.validator_set.clone(),
-				}),
+				})
+			},
 		}
 	}
 
@@ -294,7 +295,7 @@ where
 			}
 
 			if filter.is_known_vote(round, &msg_hash) {
-				return Action::Keep(self.votes_topic, benefit::KNOWN_VOTE_MESSAGE)
+				return Action::Keep(self.votes_topic, benefit::KNOWN_VOTE_MESSAGE);
 			}
 
 			// ensure authority is part of the set.
@@ -304,7 +305,7 @@ where
 				.unwrap_or(false)
 			{
 				debug!(target: LOG_TARGET, "Message from voter not in validator set: {}", vote.id);
-				return Action::Discard(cost::UNKNOWN_VOTER)
+				return Action::Discard(cost::UNKNOWN_VOTER);
 			}
 		}
 
@@ -443,7 +444,7 @@ where
 		let filter = self.gossip_filter.read();
 		Box::new(move |_who, intent, _topic, mut data| {
 			if let MessageIntent::PeriodicRebroadcast = intent {
-				return do_rebroadcast
+				return do_rebroadcast;
 			}
 
 			match GossipMessage::<B>::decode(&mut data) {

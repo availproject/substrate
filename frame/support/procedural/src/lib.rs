@@ -1858,7 +1858,7 @@ pub fn import_section(attr: TokenStream, tokens: TokenStream) -> TokenStream {
 			"`#[import_section]` can only be applied to a valid pallet module",
 		)
 		.to_compile_error()
-		.into()
+		.into();
 	}
 
 	if let Some(ref mut content) = internal_mod.content {

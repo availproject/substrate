@@ -41,7 +41,7 @@ pub(crate) fn check() -> Result<CargoCommandVersioned, String> {
 		return Err(print_error_message(
 			"Cannot compile the WASM runtime: no compatible Rust compiler found!\n\
 			 Install at least Rust 1.68.0 or a recent nightly version.",
-		))
+		));
 	}
 
 	check_wasm_toolchain_installed(cargo_command)
@@ -163,8 +163,9 @@ fn check_wasm_toolchain_installed(
 			))
 		} else {
 			match String::from_utf8(s.stderr) {
-				Ok(ref err) if err.contains("linker `rust-lld` not found") =>
-					Err(print_error_message("`rust-lld` not found, please install it!")),
+				Ok(ref err) if err.contains("linker `rust-lld` not found") => {
+					Err(print_error_message("`rust-lld` not found, please install it!"))
+				},
 				Ok(ref err) => Err(format!(
 					"{}\n\n{}\n{}\n{}{}\n",
 					err_msg,

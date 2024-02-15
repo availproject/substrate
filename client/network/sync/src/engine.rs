@@ -286,16 +286,16 @@ where
 	) -> Result<(Self, SyncingService<B>, NonDefaultSetConfig), ClientError> {
 		let mode = net_config.network_config.sync_mode;
 		let max_parallel_downloads = net_config.network_config.max_parallel_downloads;
-		let max_blocks_per_request = if net_config.network_config.max_blocks_per_request >
-			crate::MAX_BLOCKS_IN_RESPONSE as u32
+		let max_blocks_per_request = if net_config.network_config.max_blocks_per_request
+			> crate::MAX_BLOCKS_IN_RESPONSE as u32
 		{
 			log::info!(target: "sync", "clamping maximum blocks per request to {}", crate::MAX_BLOCKS_IN_RESPONSE);
 			crate::MAX_BLOCKS_IN_RESPONSE as u32
 		} else {
 			net_config.network_config.max_blocks_per_request
 		};
-		let cache_capacity = (net_config.network_config.default_peers_set.in_peers +
-			net_config.network_config.default_peers_set.out_peers)
+		let cache_capacity = (net_config.network_config.default_peers_set.in_peers
+			+ net_config.network_config.default_peers_set.out_peers)
 			.max(1);
 		let important_peers = {
 			let mut imp_p = HashSet::new();
@@ -337,8 +337,8 @@ where
 		let default_peers_set_num_full =
 			net_config.network_config.default_peers_set_num_full as usize;
 		let default_peers_set_num_light = {
-			let total = net_config.network_config.default_peers_set.out_peers +
-				net_config.network_config.default_peers_set.in_peers;
+			let total = net_config.network_config.default_peers_set.out_peers
+				+ net_config.network_config.default_peers_set.in_peers;
 			total.saturating_sub(net_config.network_config.default_peers_set_num_full) as usize
 		};
 
@@ -502,7 +502,7 @@ where
 			None => {
 				log::error!(target: "sync", "Received block announce from disconnected peer {}", who);
 				debug_assert!(false);
-				return
+				return;
 			},
 		};
 		peer.known_blocks.insert(hash);
@@ -527,17 +527,17 @@ where
 			Ok(Some(header)) => header,
 			Ok(None) => {
 				log::warn!(target: "sync", "Trying to announce unknown block: {}", hash);
-				return
+				return;
 			},
 			Err(e) => {
 				log::warn!(target: "sync", "Error reading block header {}: {}", hash, e);
-				return
+				return;
 			},
 		};
 
 		// don't announce genesis block since it will be ignored
 		if header.number().is_zero() {
-			return
+			return;
 		}
 
 		let is_best = self.client.info().best_hash == hash;
@@ -597,7 +597,7 @@ where
 			// they're still waiting to receive enough relaychain blocks to start producing blocks.
 			if let Some(started) = self.syncing_started {
 				if started.elapsed() < INITIAL_EVICTION_WAIT_PERIOD {
-					continue
+					continue;
 				}
 
 				// reset the peer activity timers so they don't expire right away after
@@ -621,7 +621,7 @@ where
 				// multiple times. To prevent this from happening (until the underlying issue is
 				// fixed), keep track of evicted peers and report and disconnect them only once.
 				if self.evicted.contains(id) {
-					continue
+					continue;
 				}
 
 				let last_received_late =
@@ -645,10 +645,12 @@ where
 					self.chain_sync.set_sync_fork_request(peers, &hash, number);
 				},
 				ToServiceCommand::EventStream(tx) => self.event_streams.push(tx),
-				ToServiceCommand::RequestJustification(hash, number) =>
-					self.chain_sync.request_justification(&hash, number),
-				ToServiceCommand::ClearJustificationRequests =>
-					self.chain_sync.clear_justification_requests(),
+				ToServiceCommand::RequestJustification(hash, number) => {
+					self.chain_sync.request_justification(&hash, number)
+				},
+				ToServiceCommand::ClearJustificationRequests => {
+					self.chain_sync.clear_justification_requests()
+				},
 				ToServiceCommand::BlocksProcessed(imported, count, results) => {
 					for result in self.chain_sync.on_blocks_processed(imported, count, results) {
 						match result {
@@ -674,8 +676,9 @@ where
 					}
 				},
 				ToServiceCommand::AnnounceBlock(hash, data) => self.announce_block(hash, data),
-				ToServiceCommand::NewBestBlockImported(hash, number) =>
-					self.new_best_block_imported(hash, number),
+				ToServiceCommand::NewBestBlockImported(hash, number) => {
+					self.new_best_block_imported(hash, number)
+				},
 				ToServiceCommand::Status(tx) => {
 					let mut status = self.chain_sync.status();
 					status.num_connected_peers = self.peers.len() as u32;
@@ -707,8 +710,9 @@ where
 						self.peers.iter().map(|(id, peer)| (*id, peer.info.clone())).collect();
 					let _ = tx.send(peers_info);
 				},
-				ToServiceCommand::OnBlockFinalized(hash, header) =>
-					self.chain_sync.on_block_finalized(&hash, *header.number()),
+				ToServiceCommand::OnBlockFinalized(hash, header) => {
+					self.chain_sync.on_block_finalized(&hash, *header.number())
+				},
 			}
 		}
 
@@ -821,7 +825,7 @@ where
 		if self.peers.contains_key(&who) {
 			log::error!(target: "sync", "Called on_sync_peer_connected with already connected peer {}", who);
 			debug_assert!(false);
-			return Err(())
+			return Err(());
 		}
 
 		if status.genesis_hash != self.genesis_hash {
@@ -851,28 +855,28 @@ where
 				);
 			}
 
-			return Err(())
+			return Err(());
 		}
 
 		let no_slot_peer = self.default_peers_set_no_slot_peers.contains(&who);
 		let this_peer_reserved_slot: usize = if no_slot_peer { 1 } else { 0 };
 
-		if status.roles.is_full() &&
-			self.chain_sync.num_peers() >=
-				self.default_peers_set_num_full +
-					self.default_peers_set_no_slot_connected_peers.len() +
-					this_peer_reserved_slot
+		if status.roles.is_full()
+			&& self.chain_sync.num_peers()
+				>= self.default_peers_set_num_full
+					+ self.default_peers_set_no_slot_connected_peers.len()
+					+ this_peer_reserved_slot
 		{
 			log::debug!(target: "sync", "Too many full nodes, rejecting {}", who);
-			return Err(())
+			return Err(());
 		}
 
-		if status.roles.is_light() &&
-			(self.peers.len() - self.chain_sync.num_peers()) >= self.default_peers_set_num_light
+		if status.roles.is_light()
+			&& (self.peers.len() - self.chain_sync.num_peers()) >= self.default_peers_set_num_light
 		{
 			// Make sure that not all slots are occupied by light clients.
 			log::debug!(target: "sync", "Too many light nodes, rejecting {}", who);
-			return Err(())
+			return Err(());
 		}
 
 		let peer = Peer {
@@ -894,7 +898,7 @@ where
 				Ok(req) => req,
 				Err(BadPeer(id, repu)) => {
 					self.network_service.report_peer(id, repu);
-					return Err(())
+					return Err(());
 				},
 			}
 		} else {

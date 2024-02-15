@@ -90,8 +90,9 @@ pub enum WarpSyncPhase<Block: BlockT> {
 impl<Block: BlockT> fmt::Display for WarpSyncPhase<Block> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			Self::AwaitingPeers { required_peers } =>
-				write!(f, "Waiting for {required_peers} peers to be connected"),
+			Self::AwaitingPeers { required_peers } => {
+				write!(f, "Waiting for {required_peers} peers to be connected")
+			},
 			Self::AwaitingTargetBlock => write!(f, "Waiting for target block to be received"),
 			Self::DownloadingWarpProofs => write!(f, "Downloading finality proofs"),
 			Self::DownloadingTargetBlock => write!(f, "Downloading target block"),

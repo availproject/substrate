@@ -986,7 +986,7 @@ where
 
 		let num_peers = self.peers().len();
 		if self.peers().iter().all(|p| p.num_peers() == num_peers - 1) {
-			return Poll::Ready(())
+			return Poll::Ready(());
 		}
 
 		Poll::Pending
@@ -997,13 +997,13 @@ where
 		let peers = self.peers_mut();
 
 		for peer in peers {
-			if peer.sync_service.is_major_syncing() ||
-				peer.sync_service.num_queued_blocks().await.unwrap() != 0
+			if peer.sync_service.is_major_syncing()
+				|| peer.sync_service.num_queued_blocks().await.unwrap() != 0
 			{
-				return false
+				return false;
 			}
 			if peer.sync_service.num_sync_requests().await.unwrap() != 0 {
-				return false
+				return false;
 			}
 			match (highest, peer.client.info().best_hash) {
 				(None, b) => highest = Some(b),
@@ -1019,10 +1019,10 @@ where
 		let peers = self.peers_mut();
 		for peer in peers {
 			if peer.sync_service.num_queued_blocks().await.unwrap() != 0 {
-				return false
+				return false;
 			}
 			if peer.sync_service.num_sync_requests().await.unwrap() != 0 {
-				return false
+				return false;
 			}
 		}
 
@@ -1043,7 +1043,7 @@ where
 				.await;
 
 				if self.is_in_sync().await {
-					break
+					break;
 				}
 			}
 		})
@@ -1063,7 +1063,7 @@ where
 			.await;
 
 			if self.is_idle().await {
-				break
+				break;
 			}
 		}
 	}
@@ -1089,7 +1089,7 @@ where
 					let net_poll_future = peer.network.next_action();
 					pin_mut!(net_poll_future);
 					if let Poll::Pending = net_poll_future.poll(cx) {
-						break
+						break;
 					}
 				}
 				trace!(target: "sync", "-- Polling complete {}: {}", i, peer.id());

@@ -109,7 +109,7 @@ impl<H: ExHashT> Future for PendingTransaction<H> {
 
 	fn poll(mut self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
 		if let Poll::Ready(import_result) = self.validation.poll_unpin(cx) {
-			return Poll::Ready((self.tx_hash.clone(), import_result))
+			return Poll::Ready((self.tx_hash.clone(), import_result));
 		}
 
 		Poll::Pending
@@ -373,7 +373,7 @@ where
 			Event::NotificationsReceived { remote, messages } => {
 				for (protocol, message) in messages {
 					if protocol != self.protocol_name {
-						continue
+						continue;
 					}
 
 					if let Ok(m) =
@@ -396,7 +396,7 @@ where
 		// Accept transactions only when node is not major syncing
 		if self.sync.is_major_syncing() {
 			trace!(target: "sync", "{} Ignoring transactions while major syncing", who);
-			return
+			return;
 		}
 
 		trace!(target: "sync", "Received {} transactions from {}", transactions.len(), who);
@@ -408,7 +408,7 @@ where
 						"Ignoring any further transactions that exceed `MAX_PENDING_TRANSACTIONS`({}) limit",
 						MAX_PENDING_TRANSACTIONS,
 					);
-					break
+					break;
 				}
 
 				let hash = self.transaction_pool.hash_of(&t);
@@ -434,8 +434,9 @@ where
 
 	fn on_handle_transaction_import(&mut self, who: PeerId, import: TransactionImport) {
 		match import {
-			TransactionImport::KnownGood =>
-				self.network.report_peer(who, rep::ANY_TRANSACTION_REFUND),
+			TransactionImport::KnownGood => {
+				self.network.report_peer(who, rep::ANY_TRANSACTION_REFUND)
+			},
 			TransactionImport::NewGood => self.network.report_peer(who, rep::GOOD_TRANSACTION),
 			TransactionImport::Bad => self.network.report_peer(who, rep::BAD_TRANSACTION),
 			TransactionImport::None => {},
@@ -446,7 +447,7 @@ where
 	pub fn propagate_transaction(&mut self, hash: &H) {
 		// Accept transactions only when node is not major syncing
 		if self.sync.is_major_syncing() {
-			return
+			return;
 		}
 
 		debug!(target: "sync", "Propagating transaction [{:?}]", hash);
@@ -466,7 +467,7 @@ where
 		for (who, peer) in self.peers.iter_mut() {
 			// never send transactions to the light node
 			if matches!(peer.role, ObservedRole::Light) {
-				continue
+				continue;
 			}
 
 			let (hashes, to_send): (Vec<_>, Vec<_>) = transactions
@@ -498,7 +499,7 @@ where
 	fn propagate_transactions(&mut self) {
 		// Accept transactions only when node is not major syncing
 		if self.sync.is_major_syncing() {
-			return
+			return;
 		}
 
 		debug!(target: "sync", "Propagating transactions");

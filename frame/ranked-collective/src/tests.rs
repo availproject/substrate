@@ -111,8 +111,9 @@ impl Polling<TallyOf<Test>> for TestPolls {
 		let mut polls = Polls::get();
 		let entry = polls.get_mut(&index);
 		let r = match entry {
-			Some(Ongoing(ref mut tally_mut_ref, class)) =>
-				f(PollStatus::Ongoing(tally_mut_ref, *class)),
+			Some(Ongoing(ref mut tally_mut_ref, class)) => {
+				f(PollStatus::Ongoing(tally_mut_ref, *class))
+			},
 			Some(Completed(when, succeeded)) => f(PollStatus::Completed(*when, *succeeded)),
 			None => f(PollStatus::None),
 		};
@@ -128,8 +129,9 @@ impl Polling<TallyOf<Test>> for TestPolls {
 		let mut polls = Polls::get();
 		let entry = polls.get_mut(&index);
 		let r = match entry {
-			Some(Ongoing(ref mut tally_mut_ref, class)) =>
-				f(PollStatus::Ongoing(tally_mut_ref, *class)),
+			Some(Ongoing(ref mut tally_mut_ref, class)) => {
+				f(PollStatus::Ongoing(tally_mut_ref, *class))
+			},
 			Some(Completed(when, succeeded)) => f(PollStatus::Completed(*when, *succeeded)),
 			None => f(PollStatus::None),
 		}?;

@@ -411,8 +411,9 @@ pub mod body {
 					*offset += *increment_by;
 					vec![Instruction::I32Const(current as i32)]
 				},
-				DynInstr::RandomI64Repeated(num) =>
-					(&mut rng).sample_iter(Standard).take(*num).map(Instruction::I64Const).collect(),
+				DynInstr::RandomI64Repeated(num) => {
+					(&mut rng).sample_iter(Standard).take(*num).map(Instruction::I64Const).collect()
+				},
 			})
 			.chain(sp_std::iter::once(Instruction::End))
 			.collect();

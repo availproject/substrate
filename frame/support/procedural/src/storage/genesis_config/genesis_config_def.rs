@@ -137,7 +137,7 @@ impl GenesisConfigDef {
 						return Err(syn::Error::new(
 							attr.meta.span(),
 							"extra genesis config items do not support `cfg` attribute",
-						))
+						));
 					}
 					Ok(attr.meta.clone())
 				})

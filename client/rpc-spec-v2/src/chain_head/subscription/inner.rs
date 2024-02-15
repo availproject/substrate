@@ -185,7 +185,7 @@ impl<Block: BlockT> SubscriptionState<Block> {
 
 				// Cannot unpin a block twice.
 				if block_state.state_machine.was_unpinned() {
-					return false
+					return false;
 				}
 
 				block_state.state_machine.advance_unpin();
@@ -208,7 +208,7 @@ impl<Block: BlockT> SubscriptionState<Block> {
 	fn contains_block(&self, hash: Block::Hash) -> bool {
 		let Some(state) = self.blocks.get(&hash) else {
 			// Block was not tracked.
-			return false
+			return false;
 		};
 
 		// Subscription no longer contains the block if `unpin` was called.
@@ -328,9 +328,7 @@ impl<Block: BlockT, BE: Backend<Block>> SubscriptionsInner<Block, BE> {
 
 	/// Remove the subscription ID with associated pinned blocks.
 	pub fn remove_subscription(&mut self, sub_id: &str) {
-		let Some(mut sub) = self.subs.remove(sub_id) else {
-			return
-		};
+		let Some(mut sub) = self.subs.remove(sub_id) else { return };
 
 		// The `Stop` event can be generated only once.
 		sub.stop();
@@ -355,7 +353,7 @@ impl<Block: BlockT, BE: Backend<Block>> SubscriptionsInner<Block, BE> {
 	/// Returns true if the given subscription is also terminated.
 	fn ensure_block_space(&mut self, request_sub_id: &str) -> bool {
 		if self.global_blocks.len() < self.global_max_pinned_blocks {
-			return false
+			return false;
 		}
 
 		// Terminate all subscriptions that have blocks older than
@@ -386,7 +384,7 @@ impl<Block: BlockT, BE: Backend<Block>> SubscriptionsInner<Block, BE> {
 
 		// Make sure we have enough space after first pass of terminating subscriptions.
 		if self.global_blocks.len() < self.global_max_pinned_blocks {
-			return is_terminated
+			return is_terminated;
 		}
 
 		// Sanity check: cannot uphold `chainHead` guarantees anymore. We have not
@@ -398,7 +396,7 @@ impl<Block: BlockT, BE: Backend<Block>> SubscriptionsInner<Block, BE> {
 			}
 			self.remove_subscription(&sub_id);
 		}
-		return is_terminated
+		return is_terminated;
 	}
 
 	pub fn pin_block(
@@ -407,20 +405,20 @@ impl<Block: BlockT, BE: Backend<Block>> SubscriptionsInner<Block, BE> {
 		hash: Block::Hash,
 	) -> Result<bool, SubscriptionManagementError> {
 		let Some(sub) = self.subs.get_mut(sub_id) else {
-			return Err(SubscriptionManagementError::SubscriptionAbsent)
+			return Err(SubscriptionManagementError::SubscriptionAbsent);
 		};
 
 		// Block was already registered for this subscription and therefore
 		// globally tracked.
 		if !sub.register_block(hash) {
-			return Ok(false)
+			return Ok(false);
 		}
 
 		// Ensure we have enough space only if the hash is not globally registered.
 		if !self.global_blocks.contains_key(&hash) {
 			// Subscription ID was terminated while ensuring enough space.
 			if self.ensure_block_space(sub_id) {
-				return Err(SubscriptionManagementError::ExceededLimits)
+				return Err(SubscriptionManagementError::ExceededLimits);
 			}
 		}
 
@@ -475,13 +473,13 @@ impl<Block: BlockT, BE: Backend<Block>> SubscriptionsInner<Block, BE> {
 		hash: Block::Hash,
 	) -> Result<(), SubscriptionManagementError> {
 		let Some(sub) = self.subs.get_mut(sub_id) else {
-			return Err(SubscriptionManagementError::SubscriptionAbsent)
+			return Err(SubscriptionManagementError::SubscriptionAbsent);
 		};
 
 		// Check that unpin was not called before and the block was pinned
 		// for this subscription.
 		if !sub.unregister_block(hash) {
-			return Err(SubscriptionManagementError::BlockHashAbsent)
+			return Err(SubscriptionManagementError::BlockHashAbsent);
 		}
 
 		self.global_unregister_block(hash);
@@ -494,11 +492,11 @@ impl<Block: BlockT, BE: Backend<Block>> SubscriptionsInner<Block, BE> {
 		hash: Block::Hash,
 	) -> Result<BlockGuard<Block, BE>, SubscriptionManagementError> {
 		let Some(sub) = self.subs.get(sub_id) else {
-			return Err(SubscriptionManagementError::SubscriptionAbsent)
+			return Err(SubscriptionManagementError::SubscriptionAbsent);
 		};
 
 		if !sub.contains_block(hash) {
-			return Err(SubscriptionManagementError::BlockHashAbsent)
+			return Err(SubscriptionManagementError::BlockHashAbsent);
 		}
 
 		BlockGuard::new(hash, sub.with_runtime, self.backend.clone())
