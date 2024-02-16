@@ -947,6 +947,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "block-metrics"
+version = "0.1.0"
+
+[[package]]
 name = "block-modes"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8967,6 +8971,7 @@ dependencies = [
 name = "sc-basic-authorship"
 version = "0.10.0-dev"
 dependencies = [
+ "block-metrics",
  "futures",
  "futures-timer",
  "log",
@@ -9139,6 +9144,7 @@ name = "sc-consensus"
 version = "0.10.0-dev"
 dependencies = [
  "async-trait",
+ "block-metrics",
  "futures",
  "futures-timer",
  "libp2p-identity",
@@ -9146,6 +9152,7 @@ dependencies = [
  "mockall",
  "parking_lot 0.12.1",
  "sc-client-api",
+ "sc-telemetry",
  "sc-utils",
  "serde",
  "sp-api",
@@ -9432,6 +9439,7 @@ dependencies = [
  "sc-consensus-aura",
  "sc-consensus-babe",
  "sc-consensus-epochs",
+ "sc-telemetry",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
  "serde",
@@ -9465,6 +9473,7 @@ dependencies = [
  "parking_lot 0.12.1",
  "sc-client-api",
  "sc-consensus",
+ "sc-telemetry",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -9482,6 +9491,7 @@ name = "sc-consensus-slots"
 version = "0.10.0-dev"
 dependencies = [
  "async-trait",
+ "block-metrics",
  "futures",
  "futures-timer",
  "log",
@@ -9760,6 +9770,7 @@ dependencies = [
  "array-bytes",
  "async-channel",
  "async-trait",
+ "block-metrics",
  "fork-tree",
  "futures",
  "futures-timer",

@@ -145,7 +145,7 @@ where
 	) -> Option<RuntimeEvent> {
 		// No runtime versions should be reported.
 		if !self.with_runtime {
-			return None
+			return None;
 		}
 
 		let block_rt = match self.client.runtime_version_at(block) {
@@ -278,7 +278,7 @@ where
 		});
 
 		if !is_best_block {
-			return vec![new_block]
+			return vec![new_block];
 		}
 
 		// If this is the new best block, then we need to generate two events.
@@ -311,12 +311,12 @@ where
 	) -> Result<Vec<FollowEvent<Block::Hash>>, SubscriptionManagementError> {
 		// The block was already pinned by the initial block events or by the finalized event.
 		if !self.sub_handle.pin_block(&self.sub_id, notification.hash)? {
-			return Ok(Default::default())
+			return Ok(Default::default());
 		}
 
 		// Ensure we are only reporting blocks after the starting point.
 		if *notification.header.number() < startup_point.finalized_number {
-			return Ok(Default::default())
+			return Ok(Default::default());
 		}
 
 		Ok(self.generate_import_events(
@@ -339,13 +339,11 @@ where
 		let mut events = Vec::new();
 
 		// Nothing to be done if no finalized hashes are provided.
-		let Some(first_hash) = finalized_block_hashes.get(0) else {
-			return Ok(Default::default())
-		};
+		let Some(first_hash) = finalized_block_hashes.get(0) else { return Ok(Default::default()) };
 
 		// Find the parent header.
 		let Some(first_header) = self.client.header(*first_hash)? else {
-			return Err(SubscriptionManagementError::BlockHeaderAbsent)
+			return Err(SubscriptionManagementError::BlockHeaderAbsent);
 		};
 
 		let parents =
@@ -353,7 +351,7 @@ where
 		for (i, (hash, parent)) in finalized_block_hashes.iter().zip(parents).enumerate() {
 			// Check if the block was already reported and thus, is already pinned.
 			if !self.sub_handle.pin_block(&self.sub_id, *hash)? {
-				continue
+				continue;
 			}
 
 			// Generate `NewBlock` events for all blocks beside the last block in the list
@@ -378,7 +376,7 @@ where
 					if ancestor.hash == *hash {
 						return Err(SubscriptionManagementError::Custom(
 							"A descendent of the finalized block was already reported".into(),
-						))
+						));
 					}
 				}
 
@@ -432,7 +430,7 @@ where
 
 		// Ensure we are only reporting blocks after the starting point.
 		if *notification.header.number() < startup_point.finalized_number {
-			return Ok(Default::default())
+			return Ok(Default::default());
 		}
 
 		// The tree route contains the exclusive path from the last finalized block to the block
@@ -458,7 +456,7 @@ where
 				// If the best block wasn't pruned, we are done here.
 				if !pruned_block_hashes.iter().any(|hash| *hash == block_cache) {
 					events.push(finalized_event);
-					return Ok(events)
+					return Ok(events);
 				}
 
 				// The best block is reported as pruned. Therefore, we need to signal a new
@@ -513,10 +511,12 @@ where
 		{
 			let events = match event {
 				NotificationType::InitialEvents(events) => Ok(events),
-				NotificationType::NewBlock(notification) =>
-					self.handle_import_blocks(notification, &startup_point),
-				NotificationType::Finalized(notification) =>
-					self.handle_finalized_blocks(notification, &mut to_ignore, &startup_point),
+				NotificationType::NewBlock(notification) => {
+					self.handle_import_blocks(notification, &startup_point)
+				},
+				NotificationType::Finalized(notification) => {
+					self.handle_finalized_blocks(notification, &mut to_ignore, &startup_point)
+				},
 			};
 
 			let events = match events {
@@ -529,7 +529,7 @@ where
 						err
 					);
 					let _ = sink.send(&FollowEvent::<String>::Stop);
-					return
+					return;
 				},
 			};
 
@@ -552,12 +552,12 @@ where
 					);
 
 					let _ = sink.send(&FollowEvent::<String>::Stop);
-					return
+					return;
 				}
 
 				if let Ok(false) = result {
 					// Client disconnected or subscription was closed.
-					return
+					return;
 				}
 			}
 
@@ -598,7 +598,7 @@ where
 					err
 				);
 				let _ = sink.send(&FollowEvent::<Block::Hash>::Stop);
-				return
+				return;
 			},
 		};
 

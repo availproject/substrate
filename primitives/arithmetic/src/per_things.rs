@@ -146,7 +146,7 @@ pub trait PerThing:
 	/// Return the next lower value to `self` or `self` if it is already zero.
 	fn less_epsilon(self) -> Self {
 		if self.is_zero() {
-			return self
+			return self;
 		}
 		Self::from_parts(self.deconstruct() - One::one())
 	}
@@ -155,7 +155,7 @@ pub trait PerThing:
 	/// zero.
 	fn try_less_epsilon(self) -> Result<Self, Self> {
 		if self.is_zero() {
-			return Err(self)
+			return Err(self);
 		}
 		Ok(Self::from_parts(self.deconstruct() - One::one()))
 	}
@@ -163,7 +163,7 @@ pub trait PerThing:
 	/// Return the next higher value to `self` or `self` if it is already one.
 	fn plus_epsilon(self) -> Self {
 		if self.is_one() {
-			return self
+			return self;
 		}
 		Self::from_parts(self.deconstruct() + One::one())
 	}
@@ -172,7 +172,7 @@ pub trait PerThing:
 	/// one.
 	fn try_plus_epsilon(self) -> Result<Self, Self> {
 		if self.is_one() {
-			return Err(self)
+			return Err(self);
 		}
 		Ok(Self::from_parts(self.deconstruct() + One::one()))
 	}
@@ -455,10 +455,12 @@ impl Rounding {
 		match (rounding, negative) {
 			(Low, true) | (Major, _) | (High, false) => Up,
 			(High, true) | (Minor, _) | (Low, false) => Down,
-			(NearestPrefMajor, _) | (NearestPrefHigh, false) | (NearestPrefLow, true) =>
-				NearestPrefUp,
-			(NearestPrefMinor, _) | (NearestPrefLow, false) | (NearestPrefHigh, true) =>
-				NearestPrefDown,
+			(NearestPrefMajor, _) | (NearestPrefHigh, false) | (NearestPrefLow, true) => {
+				NearestPrefUp
+			},
+			(NearestPrefMinor, _) | (NearestPrefLow, false) | (NearestPrefHigh, true) => {
+				NearestPrefDown
+			},
 		}
 	}
 }

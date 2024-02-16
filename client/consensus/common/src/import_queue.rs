@@ -27,8 +27,10 @@
 //! instantiated. The `BasicQueue` and `BasicVerifier` traits allow serial
 //! queues to be instantiated simply.
 
+use block_metrics::{BlockMetrics, BlockMetricsTelemetry};
 use log::{debug, trace};
 
+use sc_telemetry::{telemetry, TelemetryHandle, SUBSTRATE_INFO};
 use sp_consensus::{error::Error as ConsensusError, BlockOrigin};
 use sp_runtime::{
 	traits::{Block as BlockT, Header as _, NumberFor},
@@ -180,8 +182,8 @@ impl<N: std::fmt::Debug + PartialEq> BlockImportStatus<N> {
 	/// Returns the imported block number.
 	pub fn number(&self) -> &N {
 		match self {
-			BlockImportStatus::ImportedKnown(n, _) |
-			BlockImportStatus::ImportedUnknown(n, _, _) => n,
+			BlockImportStatus::ImportedKnown(n, _)
+			| BlockImportStatus::ImportedUnknown(n, _, _) => n,
 		}
 	}
 }
@@ -226,8 +228,9 @@ pub async fn import_single_block<B: BlockT, V: Verifier<B>, Transaction: Send + 
 	block_origin: BlockOrigin,
 	block: IncomingBlock<B>,
 	verifier: &mut V,
+	telemetry: Option<TelemetryHandle>,
 ) -> BlockImportResult<B> {
-	import_single_block_metered(import_handle, block_origin, block, verifier, None).await
+	import_single_block_metered(import_handle, block_origin, block, verifier, None, telemetry).await
 }
 
 /// Single block import function with metering.
@@ -241,6 +244,7 @@ pub(crate) async fn import_single_block_metered<
 	block: IncomingBlock<B>,
 	verifier: &mut V,
 	metrics: Option<Metrics>,
+	telemetry: Option<TelemetryHandle>,
 ) -> BlockImportResult<B> {
 	let peer = block.origin;
 
@@ -252,7 +256,7 @@ pub(crate) async fn import_single_block_metered<
 			} else {
 				debug!(target: LOG_TARGET, "Header {} was not provided ", block.hash);
 			}
-			return Err(BlockImportError::IncompleteHeader(peer))
+			return Err(BlockImportError::IncompleteHeader(peer));
 		},
 	};
 
@@ -267,8 +271,9 @@ pub(crate) async fn import_single_block_metered<
 			trace!(target: LOG_TARGET, "Block already in chain {}: {:?}", number, hash);
 			Ok(BlockImportStatus::ImportedKnown(number, peer))
 		},
-		Ok(ImportResult::Imported(aux)) =>
-			Ok(BlockImportStatus::ImportedUnknown(number, aux, peer)),
+		Ok(ImportResult::Imported(aux)) => {
+			Ok(BlockImportStatus::ImportedUnknown(number, aux, peer))
+		},
 		Ok(ImportResult::MissingState) => {
 			debug!(
 				target: LOG_TARGET,
@@ -310,6 +315,9 @@ pub(crate) async fn import_single_block_metered<
 	}
 
 	let started = std::time::Instant::now();
+	if let Ok(block_number) = number.try_into() {
+		BlockMetrics::observe_import_block_start_timestamp(block_number);
+	}
 
 	let mut import_block = BlockImportParams::new(block_origin, header);
 	import_block.body = block.body;
@@ -352,8 +360,24 @@ pub(crate) async fn import_single_block_metered<
 
 	let import_block = import_block.clear_storage_changes_and_mutate();
 	let imported = import_handle.import_block(import_block).await;
+
+	if let Ok(block_number) = number.try_into() {
+		BlockMetrics::observe_import_block_end_timestamp(block_number);
+	}
 	if let Some(metrics) = metrics.as_ref() {
 		metrics.report_verification_and_import(started.elapsed());
 	}
+	if let Some(data) = BlockMetrics::take().to_block_metrics_telemetry() {
+		println!("{:?}", data);
+		telemetry!(
+			telemetry;
+			SUBSTRATE_INFO;
+			"block.metrics";
+			"proposal_timestamps" => data.proposal_timestamps,
+			"sync_block_timestamps" => data.sync_block_timestamps,
+			"import_block_timestamps" => data.import_block_timestamps,
+		);
+	}
+
 	import_handler(imported)
 }

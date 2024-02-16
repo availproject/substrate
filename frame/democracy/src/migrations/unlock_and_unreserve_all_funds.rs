@@ -139,8 +139,8 @@ where
 		let bugged_deposits = all_accounts
 			.iter()
 			.filter(|account| {
-				account_deposits.get(&account).unwrap_or(&Zero::zero()) >
-					account_reserved_before.get(&account).unwrap_or(&Zero::zero())
+				account_deposits.get(&account).unwrap_or(&Zero::zero())
+					> account_reserved_before.get(&account).unwrap_or(&Zero::zero())
 			})
 			.count();
 
@@ -180,7 +180,7 @@ where
 		for (account, unreserve_amount) in account_deposits.iter() {
 			if unreserve_amount.is_zero() {
 				log::warn!(target: LOG_TARGET, "Unexpected zero amount to unreserve!");
-				continue
+				continue;
 			}
 			T::Currency::unreserve(&account, *unreserve_amount);
 		}

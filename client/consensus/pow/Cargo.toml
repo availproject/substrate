@@ -31,3 +31,4 @@ sp-consensus-pow = { version = "0.10.0-dev", path = "../../../primitives/consens
 sp-core = { version = "21.0.0", path = "../../../primitives/core" }
 sp-inherents = { version = "4.0.0-dev", path = "../../../primitives/inherents" }
 sp-runtime = { version = "24.0.0", path = "../../../primitives/runtime" }
+sc-telemetry = { version = "4.0.0-dev", path = "../../telemetry" }

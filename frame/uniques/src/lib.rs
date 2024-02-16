@@ -694,10 +694,10 @@ pub mod pallet {
 					if T::Currency::reserve(&collection_details.owner, deposit - old).is_err() {
 						// NOTE: No alterations made to collection_details in this iteration so far,
 						// so this is OK to do.
-						continue
+						continue;
 					}
 				} else {
-					continue
+					continue;
 				}
 				collection_details.total_deposit.saturating_accrue(deposit);
 				collection_details.total_deposit.saturating_reduce(old);
@@ -863,7 +863,7 @@ pub mod pallet {
 				let details = maybe_details.as_mut().ok_or(Error::<T, I>::UnknownCollection)?;
 				ensure!(origin == details.owner, Error::<T, I>::NoPermission);
 				if details.owner == owner {
-					return Ok(())
+					return Ok(());
 				}
 
 				// Move the deposit to the new owner.
@@ -1113,8 +1113,9 @@ pub mod pallet {
 			}
 			let maybe_is_frozen = match maybe_item {
 				None => CollectionMetadataOf::<T, I>::get(collection.clone()).map(|v| v.is_frozen),
-				Some(item) =>
-					ItemMetadataOf::<T, I>::get(collection.clone(), item).map(|v| v.is_frozen),
+				Some(item) => {
+					ItemMetadataOf::<T, I>::get(collection.clone(), item).map(|v| v.is_frozen)
+				},
 			};
 			ensure!(!maybe_is_frozen.unwrap_or(false), Error::<T, I>::Frozen);
 
@@ -1176,8 +1177,9 @@ pub mod pallet {
 			}
 			let maybe_is_frozen = match maybe_item {
 				None => CollectionMetadataOf::<T, I>::get(collection.clone()).map(|v| v.is_frozen),
-				Some(item) =>
-					ItemMetadataOf::<T, I>::get(collection.clone(), item).map(|v| v.is_frozen),
+				Some(item) => {
+					ItemMetadataOf::<T, I>::get(collection.clone(), item).map(|v| v.is_frozen)
+				},
 			};
 			ensure!(!maybe_is_frozen.unwrap_or(false), Error::<T, I>::Frozen);
 

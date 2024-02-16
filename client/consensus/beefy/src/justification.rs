@@ -32,8 +32,9 @@ pub(crate) fn proof_block_num_and_set_id<Block: BlockT>(
 	proof: &BeefyVersionedFinalityProof<Block>,
 ) -> (NumberFor<Block>, ValidatorSetId) {
 	match proof {
-		VersionedFinalityProof::V1(sc) =>
-			(sc.commitment.block_number, sc.commitment.validator_set_id),
+		VersionedFinalityProof::V1(sc) => {
+			(sc.commitment.block_number, sc.commitment.validator_set_id)
+		},
 	}
 }
 
@@ -57,11 +58,11 @@ pub(crate) fn verify_with_validator_set<Block: BlockT>(
 	let mut signatures_checked = 0u32;
 	match proof {
 		VersionedFinalityProof::V1(signed_commitment) => {
-			if signed_commitment.signatures.len() != validator_set.len() ||
-				signed_commitment.commitment.validator_set_id != validator_set.id() ||
-				signed_commitment.commitment.block_number != target_number
+			if signed_commitment.signatures.len() != validator_set.len()
+				|| signed_commitment.commitment.validator_set_id != validator_set.id()
+				|| signed_commitment.commitment.block_number != target_number
 			{
-				return Err((ConsensusError::InvalidJustification, 0))
+				return Err((ConsensusError::InvalidJustification, 0));
 			}
 
 			// Arrangement of signatures in the commitment should be in the same order

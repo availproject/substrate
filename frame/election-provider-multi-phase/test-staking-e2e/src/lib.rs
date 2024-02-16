@@ -191,7 +191,7 @@ fn continous_slashes_below_offending_threshold() {
 				// failed due to election minimum score.
 				if start_next_active_era().is_err() {
 					assert!(ElectionProviderMultiPhase::current_phase().is_emergency());
-					break
+					break;
 				}
 
 				active_validator_set = Session::validators();

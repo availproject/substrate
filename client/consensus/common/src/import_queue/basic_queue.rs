@@ -22,6 +22,7 @@ use futures::{
 use futures_timer::Delay;
 use log::{debug, trace};
 use prometheus_endpoint::Registry;
+use sc_telemetry::TelemetryHandle;
 use sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 use sp_consensus::BlockOrigin;
 use sp_runtime::{
@@ -68,6 +69,7 @@ impl<B: BlockT, Transaction: Send + 'static> BasicQueue<B, Transaction> {
 		justification_import: Option<BoxJustificationImport<B>>,
 		spawner: &impl sp_core::traits::SpawnEssentialNamed,
 		prometheus_registry: Option<&Registry>,
+		telemetry: Option<TelemetryHandle>,
 	) -> Self {
 		let (result_sender, result_port) = buffered_link::buffered_link(100_000);
 
@@ -85,6 +87,7 @@ impl<B: BlockT, Transaction: Send + 'static> BasicQueue<B, Transaction> {
 			block_import,
 			justification_import,
 			metrics,
+			telemetry,
 		);
 
 		spawner.spawn_essential_blocking(
@@ -126,7 +129,7 @@ impl<B: BlockT> BasicQueueHandle<B> {
 impl<B: BlockT> ImportQueueService<B> for BasicQueueHandle<B> {
 	fn import_blocks(&mut self, origin: BlockOrigin, blocks: Vec<IncomingBlock<B>>) {
 		if blocks.is_empty() {
-			return
+			return;
 		}
 
 		trace!(target: LOG_TARGET, "Scheduling {} blocks for import", blocks.len());
@@ -194,7 +197,7 @@ impl<B: BlockT, Transaction: Send> ImportQueue<B> for BasicQueue<B, Transaction>
 		loop {
 			if let Err(_) = self.result_port.next_action(&mut *link).await {
 				log::error!(target: "sync", "poll_actions: Background import task is no longer alive");
-				return
+				return;
 			}
 		}
 	}
@@ -227,6 +230,7 @@ async fn block_import_process<B: BlockT, Transaction: Send + 'static>(
 	mut block_import_receiver: TracingUnboundedReceiver<worker_messages::ImportBlocks<B>>,
 	metrics: Option<Metrics>,
 	delay_between_blocks: Duration,
+	telemetry: Option<TelemetryHandle>,
 ) {
 	loop {
 		let worker_messages::ImportBlocks(origin, blocks) = match block_import_receiver.next().await
@@ -237,7 +241,7 @@ async fn block_import_process<B: BlockT, Transaction: Send + 'static>(
 					target: LOG_TARGET,
 					"Stopping block import because the import channel was closed!",
 				);
-				return
+				return;
 			},
 		};
 
@@ -248,6 +252,7 @@ async fn block_import_process<B: BlockT, Transaction: Send + 'static>(
 			&mut verifier,
 			delay_between_blocks,
 			metrics.clone(),
+			telemetry.clone(),
 		)
 		.await;
 
@@ -268,6 +273,7 @@ impl<B: BlockT> BlockImportWorker<B> {
 		block_import: BoxBlockImport<B, Transaction>,
 		justification_import: Option<BoxJustificationImport<B>>,
 		metrics: Option<Metrics>,
+		telemetry: Option<TelemetryHandle>,
 	) -> (
 		impl Future<Output = ()> + Send,
 		TracingUnboundedSender<worker_messages::ImportJustification<B>>,
@@ -300,6 +306,7 @@ impl<B: BlockT> BlockImportWorker<B> {
 				block_import_port,
 				worker.metrics.clone(),
 				delay_between_blocks,
+				telemetry,
 			);
 			futures::pin_mut!(block_import_process);
 
@@ -311,26 +318,27 @@ impl<B: BlockT> BlockImportWorker<B> {
 						target: LOG_TARGET,
 						"Stopping block import because result channel was closed!",
 					);
-					return
+					return;
 				}
 
 				// Make sure to first process all justifications
 				while let Poll::Ready(justification) = futures::poll!(justification_port.next()) {
 					match justification {
-						Some(ImportJustification(who, hash, number, justification)) =>
-							worker.import_justification(who, hash, number, justification).await,
+						Some(ImportJustification(who, hash, number, justification)) => {
+							worker.import_justification(who, hash, number, justification).await
+						},
 						None => {
 							log::debug!(
 								target: LOG_TARGET,
 								"Stopping block import because justification channel was closed!",
 							);
-							return
+							return;
 						},
 					}
 				}
 
 				if let Poll::Ready(()) = futures::poll!(&mut block_import_process) {
-					return
+					return;
 				}
 
 				// All futures that we polled are now pending.
@@ -398,6 +406,7 @@ async fn import_many_blocks<B: BlockT, V: Verifier<B>, Transaction: Send + 'stat
 	verifier: &mut V,
 	delay_between_blocks: Duration,
 	metrics: Option<Metrics>,
+	telemetry: Option<TelemetryHandle>,
 ) -> ImportManyBlocksResult<B> {
 	let count = blocks.len();
 
@@ -424,7 +433,7 @@ async fn import_many_blocks<B: BlockT, V: Verifier<B>, Transaction: Send + 'stat
 			Some(b) => b,
 			None => {
 				// No block left to import, success!
-				return ImportManyBlocksResult { block_count: count, imported, results }
+				return ImportManyBlocksResult { block_count: count, imported, results };
 			},
 		};
 
@@ -440,6 +449,7 @@ async fn import_many_blocks<B: BlockT, V: Verifier<B>, Transaction: Send + 'stat
 				block,
 				verifier,
 				metrics.clone(),
+				telemetry.clone(),
 			)
 			.await
 		};
@@ -596,7 +606,7 @@ mod tests {
 		let (result_sender, mut result_port) = buffered_link::buffered_link(100_000);
 
 		let (worker, finality_sender, block_import_sender) =
-			BlockImportWorker::new(result_sender, (), Box::new(()), Some(Box::new(())), None);
+			BlockImportWorker::new(result_sender, (), Box::new(()), Some(Box::new(())), None, None);
 		futures::pin_mut!(worker);
 
 		let import_block = |n| {

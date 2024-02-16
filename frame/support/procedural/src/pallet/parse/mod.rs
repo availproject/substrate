@@ -100,14 +100,15 @@ impl Def {
 			let pallet_attr: Option<PalletAttr> = helper::take_first_item_pallet_attr(item)?;
 
 			match pallet_attr {
-				Some(PalletAttr::Config(span, with_default)) if config.is_none() =>
+				Some(PalletAttr::Config(span, with_default)) if config.is_none() => {
 					config = Some(config::ConfigDef::try_from(
 						&frame_system,
 						span,
 						index,
 						item,
 						with_default,
-					)?),
+					)?)
+				},
 				Some(PalletAttr::Pallet(span)) if pallet_struct.is_none() => {
 					let p = pallet_struct::PalletStructDef::try_from(span, index, item)?;
 					pallet_struct = Some(p);
@@ -116,12 +117,15 @@ impl Def {
 					let m = hooks::HooksDef::try_from(span, index, item)?;
 					hooks = Some(m);
 				},
-				Some(PalletAttr::RuntimeCall(cw, span)) if call.is_none() =>
-					call = Some(call::CallDef::try_from(span, index, item, dev_mode, cw)?),
-				Some(PalletAttr::Error(span)) if error.is_none() =>
-					error = Some(error::ErrorDef::try_from(span, index, item)?),
-				Some(PalletAttr::RuntimeEvent(span)) if event.is_none() =>
-					event = Some(event::EventDef::try_from(span, index, item)?),
+				Some(PalletAttr::RuntimeCall(cw, span)) if call.is_none() => {
+					call = Some(call::CallDef::try_from(span, index, item, dev_mode, cw)?)
+				},
+				Some(PalletAttr::Error(span)) if error.is_none() => {
+					error = Some(error::ErrorDef::try_from(span, index, item)?)
+				},
+				Some(PalletAttr::RuntimeEvent(span)) if event.is_none() => {
+					event = Some(event::EventDef::try_from(span, index, item)?)
+				},
 				Some(PalletAttr::GenesisConfig(_)) if genesis_config.is_none() => {
 					let g = genesis_config::GenesisConfigDef::try_from(index, item)?;
 					genesis_config = Some(g);
@@ -130,21 +134,26 @@ impl Def {
 					let g = genesis_build::GenesisBuildDef::try_from(span, index, item)?;
 					genesis_build = Some(g);
 				},
-				Some(PalletAttr::RuntimeOrigin(_)) if origin.is_none() =>
-					origin = Some(origin::OriginDef::try_from(index, item)?),
-				Some(PalletAttr::Inherent(_)) if inherent.is_none() =>
-					inherent = Some(inherent::InherentDef::try_from(index, item)?),
-				Some(PalletAttr::Storage(span)) =>
-					storages.push(storage::StorageDef::try_from(span, index, item, dev_mode)?),
+				Some(PalletAttr::RuntimeOrigin(_)) if origin.is_none() => {
+					origin = Some(origin::OriginDef::try_from(index, item)?)
+				},
+				Some(PalletAttr::Inherent(_)) if inherent.is_none() => {
+					inherent = Some(inherent::InherentDef::try_from(index, item)?)
+				},
+				Some(PalletAttr::Storage(span)) => {
+					storages.push(storage::StorageDef::try_from(span, index, item, dev_mode)?)
+				},
 				Some(PalletAttr::ValidateUnsigned(_)) if validate_unsigned.is_none() => {
 					let v = validate_unsigned::ValidateUnsignedDef::try_from(index, item)?;
 					validate_unsigned = Some(v);
 				},
-				Some(PalletAttr::TypeValue(span)) =>
-					type_values.push(type_value::TypeValueDef::try_from(span, index, item)?),
-				Some(PalletAttr::ExtraConstants(_)) =>
+				Some(PalletAttr::TypeValue(span)) => {
+					type_values.push(type_value::TypeValueDef::try_from(span, index, item)?)
+				},
+				Some(PalletAttr::ExtraConstants(_)) => {
 					extra_constants =
-						Some(extra_constants::ExtraConstantsDef::try_from(index, item)?),
+						Some(extra_constants::ExtraConstantsDef::try_from(index, item)?)
+				},
 				Some(PalletAttr::Composite(span)) => {
 					let composite =
 						composite::CompositeDef::try_from(span, index, &frame_support, item)?;
@@ -153,10 +162,10 @@ impl Def {
 							(
 								CompositeKeyword::FreezeReason(_),
 								CompositeKeyword::FreezeReason(_),
-							) |
-							(CompositeKeyword::HoldReason(_), CompositeKeyword::HoldReason(_)) |
-							(CompositeKeyword::LockId(_), CompositeKeyword::LockId(_)) |
-							(
+							)
+							| (CompositeKeyword::HoldReason(_), CompositeKeyword::HoldReason(_))
+							| (CompositeKeyword::LockId(_), CompositeKeyword::LockId(_))
+							| (
 								CompositeKeyword::SlashReason(_),
 								CompositeKeyword::SlashReason(_),
 							) => true,
@@ -167,13 +176,13 @@ impl Def {
 							"Invalid duplicated `{}` definition",
 							composite.composite_keyword
 						);
-						return Err(syn::Error::new(composite.composite_keyword.span(), &msg))
+						return Err(syn::Error::new(composite.composite_keyword.span(), &msg));
 					}
 					composites.push(composite);
 				},
 				Some(attr) => {
 					let msg = "Invalid duplicated attribute";
-					return Err(syn::Error::new(attr.span(), msg))
+					return Err(syn::Error::new(attr.span(), msg));
 				},
 				None => (),
 			}
@@ -187,7 +196,7 @@ impl Def {
 				genesis_config.as_ref().map_or("unused", |_| "used"),
 				genesis_build.as_ref().map_or("unused", |_| "used"),
 			);
-			return Err(syn::Error::new(item_span, msg))
+			return Err(syn::Error::new(item_span, msg));
 		}
 
 		let def = Def {
@@ -276,7 +285,7 @@ impl Def {
 
 		let mut errors = instances.into_iter().filter_map(|instances| {
 			if instances.has_instance == self.config.has_instance {
-				return None
+				return None;
 			}
 			let msg = if self.config.has_instance {
 				"Invalid generic declaration, trait is defined with instance but generic use none"
@@ -586,7 +595,7 @@ impl syn::parse::Parse for InheritedCallWeightAttr {
 			content.parse::<syn::Token![=]>().expect("peeked");
 			content
 		} else {
-			return Err(lookahead.error())
+			return Err(lookahead.error());
 		};
 
 		Ok(Self { typename: buffer.parse()?, span: input.span() })

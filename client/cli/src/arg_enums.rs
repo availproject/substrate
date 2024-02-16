@@ -84,16 +84,21 @@ pub fn execution_method_from_cli(
 
 	sc_service::config::WasmExecutionMethod::Compiled {
 		instantiation_strategy: match instantiation_strategy {
-			WasmtimeInstantiationStrategy::PoolingCopyOnWrite =>
-				sc_service::config::WasmtimeInstantiationStrategy::PoolingCopyOnWrite,
-			WasmtimeInstantiationStrategy::RecreateInstanceCopyOnWrite =>
-				sc_service::config::WasmtimeInstantiationStrategy::RecreateInstanceCopyOnWrite,
-			WasmtimeInstantiationStrategy::Pooling =>
-				sc_service::config::WasmtimeInstantiationStrategy::Pooling,
-			WasmtimeInstantiationStrategy::RecreateInstance =>
-				sc_service::config::WasmtimeInstantiationStrategy::RecreateInstance,
-			WasmtimeInstantiationStrategy::LegacyInstanceReuse =>
-				sc_service::config::WasmtimeInstantiationStrategy::LegacyInstanceReuse,
+			WasmtimeInstantiationStrategy::PoolingCopyOnWrite => {
+				sc_service::config::WasmtimeInstantiationStrategy::PoolingCopyOnWrite
+			},
+			WasmtimeInstantiationStrategy::RecreateInstanceCopyOnWrite => {
+				sc_service::config::WasmtimeInstantiationStrategy::RecreateInstanceCopyOnWrite
+			},
+			WasmtimeInstantiationStrategy::Pooling => {
+				sc_service::config::WasmtimeInstantiationStrategy::Pooling
+			},
+			WasmtimeInstantiationStrategy::RecreateInstance => {
+				sc_service::config::WasmtimeInstantiationStrategy::RecreateInstance
+			},
+			WasmtimeInstantiationStrategy::LegacyInstanceReuse => {
+				sc_service::config::WasmtimeInstantiationStrategy::LegacyInstanceReuse
+			},
 		},
 	}
 }

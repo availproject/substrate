@@ -104,8 +104,9 @@ impl<T> TracingUnboundedSender<T> {
 		self.inner.try_send(msg).map(|s| {
 			UNBOUNDED_CHANNELS_COUNTER.with_label_values(&[self.name, "send"]).inc();
 
-			if self.inner.len() >= self.queue_size_warning &&
-				self.warning_fired
+			if self.inner.len() >= self.queue_size_warning
+				&& self
+					.warning_fired
 					.compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed)
 					.is_ok()
 			{

@@ -30,6 +30,7 @@ sp-core = { version = "21.0.0", path = "../../../primitives/core" }
 sp-inherents = { version = "4.0.0-dev", path = "../../../primitives/inherents" }
 sp-runtime = { version = "24.0.0", path = "../../../primitives/runtime" }
 sp-state-machine = { version = "0.28.0", path = "../../../primitives/state-machine" }
+block-metrics = { path = "../../metrics" }
 
 [dev-dependencies]
 substrate-test-runtime-client = { version = "2.0.0", path = "../../../test-utils/runtime/client" }

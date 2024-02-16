@@ -732,8 +732,8 @@ pub(crate) fn add_slash(who: &AccountId) {
 pub(crate) fn slash_through_offending_threshold() {
 	let validators = Session::validators();
 	let mut remaining_slashes =
-		<Runtime as pallet_staking::Config>::OffendingValidatorsThreshold::get() *
-			validators.len() as u32;
+		<Runtime as pallet_staking::Config>::OffendingValidatorsThreshold::get()
+			* validators.len() as u32;
 
 	for v in validators.into_iter() {
 		if remaining_slashes != 0 {

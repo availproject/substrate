@@ -97,7 +97,7 @@ impl<B: BlockT> Snapshot<B> {
 				if snapshot_version != SNAPSHOT_VERSION {
 					return Err(
 						"Unsupported snapshot version detected. Please create a new snapshot.",
-					)
+					);
 				}
 				match Decode::decode(&mut &*bytes) {
 					Ok(snapshot) => return Ok(snapshot),
@@ -429,7 +429,7 @@ where
 
 			if page_len < Self::DEFAULT_KEY_DOWNLOAD_PAGE as usize {
 				log::debug!(target: LOG_TARGET, "last page received: {}", page_len);
-				break all_keys
+				break all_keys;
 			} else {
 				let new_last_key =
 					all_keys.last().expect("all_keys is populated; has .last(); qed");
@@ -501,7 +501,7 @@ where
 	) -> Result<Vec<Option<StorageData>>, String> {
 		// All payloads have been processed
 		if payloads.is_empty() {
-			return Ok(vec![])
+			return Ok(vec![]);
 		};
 
 		log::debug!(
@@ -525,7 +525,7 @@ where
 			Ok(batch_response) => batch_response,
 			Err(e) => {
 				if batch_size < 2 {
-					return Err(e.to_string())
+					return Err(e.to_string());
 				}
 
 				log::debug!(
@@ -540,7 +540,7 @@ where
 					max(1, (batch_size as f32 * Self::BATCH_SIZE_DECREASE_FACTOR) as usize),
 					bar,
 				)
-				.await
+				.await;
 			},
 		};
 
@@ -591,7 +591,7 @@ where
 			start.elapsed().as_secs_f32()
 		));
 		if keys.is_empty() {
-			return Ok(Default::default())
+			return Ok(Default::default());
 		}
 
 		let client = self.as_online().rpc_client();
@@ -627,7 +627,7 @@ where
 			Ok(storage_data) => storage_data.into_iter().flatten().collect::<Vec<_>>(),
 			Err(e) => {
 				log::error!(target: LOG_TARGET, "Error while getting storage data: {}", e);
-				return Err("Error while getting storage data")
+				return Err("Error while getting storage data");
 			},
 		};
 		bar.finish_with_message("✅ Downloaded key values");
@@ -701,7 +701,7 @@ where
 			Ok(storage_data) => storage_data,
 			Err(e) => {
 				log::error!(target: LOG_TARGET, "batch processing failed: {:?}", e);
-				return Err("batch processing failed")
+				return Err("batch processing failed");
 			},
 		};
 
@@ -780,7 +780,7 @@ where
 				target: LOG_TARGET,
 				"👩‍👦 no child roots found to scrape",
 			);
-			return Ok(Default::default())
+			return Ok(Default::default());
 		}
 
 		info!(
@@ -807,7 +807,7 @@ where
 				Some((ChildType::ParentKeyId, storage_key)) => storage_key,
 				None => {
 					log::error!(target: LOG_TARGET, "invalid key: {:?}", prefixed_top_key);
-					return Err("Invalid child key")
+					return Err("Invalid child key");
 				},
 			};
 
@@ -975,7 +975,7 @@ where
 				self.overwrite_state_version.unwrap_or(state_version),
 			);
 			pending_ext.from_raw_snapshot(raw_storage, storage_root);
-			return Ok(pending_ext)
+			return Ok(pending_ext);
 		}
 
 		Ok(pending_ext)
@@ -1268,8 +1268,8 @@ mod remote_tests {
 
 		// there should be more keys in the child ext.
 		assert!(
-			child_ext.as_backend().backend_storage().keys().len() >
-				ext.as_backend().backend_storage().keys().len()
+			child_ext.as_backend().backend_storage().keys().len()
+				> ext.as_backend().backend_storage().keys().len()
 		);
 	}
 
@@ -1416,7 +1416,7 @@ mod remote_tests {
 	#[tokio::test]
 	async fn can_build_big_pallet() {
 		if std::option_env!("TEST_WS").is_none() {
-			return
+			return;
 		}
 		init_logger();
 		Builder::<Block>::new()
@@ -1435,7 +1435,7 @@ mod remote_tests {
 	#[tokio::test]
 	async fn can_fetch_all() {
 		if std::option_env!("TEST_WS").is_none() {
-			return
+			return;
 		}
 		init_logger();
 		Builder::<Block>::new()

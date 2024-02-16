@@ -293,7 +293,7 @@ pub async fn start_beefy_gadget<B, BE, C, N, P, R, S>(
 			Ok(state) => state,
 			Err(e) => {
 				error!(target: LOG_TARGET, "Error: {:?}. Terminating.", e);
-				return
+				return;
 			},
 		};
 	// Update the gossip validator with the right starting round and set id.
@@ -302,7 +302,7 @@ pub async fn start_beefy_gadget<B, BE, C, N, P, R, S>(
 		.map(|f| gossip_validator.update_filter(f))
 	{
 		error!(target: LOG_TARGET, "Error: {:?}. Terminating.", e);
-		return
+		return;
 	}
 
 	let worker = worker::BeefyWorker {
@@ -417,7 +417,7 @@ where
 				beefy_genesis,
 			)
 			.ok_or_else(|| ClientError::Backend("Invalid BEEFY chain".into()))?;
-			break state
+			break state;
 		}
 
 		if *header.number() == beefy_genesis {
@@ -439,7 +439,7 @@ where
 				min_block_delta,
 				beefy_genesis,
 			)
-			.ok_or_else(|| ClientError::Backend("Invalid BEEFY chain".into()))?
+			.ok_or_else(|| ClientError::Backend("Invalid BEEFY chain".into()))?;
 		}
 
 		if let Some(active) = worker::find_authorities_change::<B>(&header) {

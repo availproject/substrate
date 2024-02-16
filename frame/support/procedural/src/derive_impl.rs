@@ -94,14 +94,14 @@ fn combine_impls(
 		if let Some(ident) = impl_item_ident(&item) {
 			if existing_local_keys.contains(&ident) {
 				// do not copy colliding items that have an ident
-				return None
+				return None;
 			}
 			if matches!(item, ImplItem::Type(_)) {
 				// modify and insert uncolliding type items
 				let modified_item: ImplItem = parse_quote! {
 					type #ident = <#default_impl_path as #disambiguation_path>::#ident;
 				};
-				return Some(modified_item)
+				return Some(modified_item);
 			}
 			// copy uncolliding non-type items that have an ident
 			Some(item)
@@ -142,12 +142,13 @@ pub fn derive_impl(
 	let disambiguation_path = match (disambiguation_path, foreign_impl.clone().trait_) {
 		(Some(disambiguation_path), _) => disambiguation_path,
 		(None, Some((_, foreign_impl_path, _))) => foreign_impl_path,
-		_ =>
+		_ => {
 			return Err(syn::Error::new(
 				foreign_impl.span(),
 				"Impl statement must have a defined type being implemented \
 				for a defined type such as `impl A for B`",
-			)),
+			))
+		},
 	};
 
 	// generate the combined impl

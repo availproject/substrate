@@ -29,6 +29,7 @@ mod aux_schema;
 mod slots;
 
 pub use aux_schema::{check_equivocation, MAX_SLOT_CAPACITY, PRUNING_BOUND};
+use block_metrics::{BlockMetrics, BlockMetricsTelemetry};
 pub use slots::SlotInfo;
 use slots::Slots;
 
@@ -36,7 +37,9 @@ use futures::{future::Either, Future, TryFutureExt};
 use futures_timer::Delay;
 use log::{debug, info, warn};
 use sc_consensus::{BlockImport, JustificationSyncLink};
-use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_DEBUG, CONSENSUS_INFO, CONSENSUS_WARN};
+use sc_telemetry::{
+	telemetry, TelemetryHandle, CONSENSUS_DEBUG, CONSENSUS_INFO, CONSENSUS_WARN, SUBSTRATE_INFO,
+};
 use sp_arithmetic::traits::BaseArithmetic;
 use sp_consensus::{Proposal, Proposer, SelectChain, SyncOracle};
 use sp_consensus_slots::{Slot, SlotDuration};
@@ -231,7 +234,7 @@ pub trait SimpleSlotWorker<B: BlockT> {
 			Either::Left((Err(err), _)) => {
 				warn!(target: log_target, "Proposing failed: {}", err);
 
-				return None
+				return None;
 			},
 			Either::Right(_) => {
 				info!(
@@ -251,7 +254,7 @@ pub trait SimpleSlotWorker<B: BlockT> {
 					"slot" => *slot,
 				);
 
-				return None
+				return None;
 			},
 		};
 
@@ -277,7 +280,7 @@ pub trait SimpleSlotWorker<B: BlockT> {
 					err,
 				);
 
-				return None
+				return None;
 			},
 			Either::Left(_) => {
 				warn!(
@@ -287,7 +290,7 @@ pub trait SimpleSlotWorker<B: BlockT> {
 					slot_info.chain_head.hash(),
 				);
 
-				return None
+				return None;
 			},
 		};
 
@@ -314,7 +317,7 @@ pub trait SimpleSlotWorker<B: BlockT> {
 				"Skipping proposal slot {} since there's no time left to propose", slot,
 			);
 
-			return None
+			return None;
 		} else {
 			Instant::now() + proposing_remaining_duration
 		};
@@ -337,7 +340,7 @@ pub trait SimpleSlotWorker<B: BlockT> {
 					"err" => ?err,
 				);
 
-				return None
+				return None;
 			},
 		};
 
@@ -345,9 +348,9 @@ pub trait SimpleSlotWorker<B: BlockT> {
 
 		let authorities_len = self.authorities_len(&aux_data);
 
-		if !self.force_authoring() &&
-			self.sync_oracle().is_offline() &&
-			authorities_len.map(|a| a > 1).unwrap_or(false)
+		if !self.force_authoring()
+			&& self.sync_oracle().is_offline()
+			&& authorities_len.map(|a| a > 1).unwrap_or(false)
 		{
 			debug!(target: logging_target, "Skipping proposal slot. Waiting for the network.");
 			telemetry!(
@@ -357,13 +360,13 @@ pub trait SimpleSlotWorker<B: BlockT> {
 				"authorities_len" => authorities_len,
 			);
 
-			return None
+			return None;
 		}
 
 		let claim = self.claim_slot(&slot_info.chain_head, slot, &aux_data).await?;
 
 		if self.should_backoff(slot, &slot_info.chain_head) {
-			return None
+			return None;
 		}
 
 		debug!(target: logging_target, "Starting authorship at slot: {slot}");
@@ -383,7 +386,7 @@ pub trait SimpleSlotWorker<B: BlockT> {
 					"err" => ?err
 				);
 
-				return None
+				return None;
 			},
 		};
 
@@ -410,7 +413,7 @@ pub trait SimpleSlotWorker<B: BlockT> {
 			Err(err) => {
 				warn!(target: logging_target, "Failed to create block import params: {}", err);
 
-				return None
+				return None;
 			},
 		};
 
@@ -432,6 +435,9 @@ pub trait SimpleSlotWorker<B: BlockT> {
 		);
 
 		let header = block_import_params.post_header();
+		if let Ok(block_number) = header_num.try_into() {
+			BlockMetrics::observe_import_block_start_timestamp(block_number);
+		}
 		match self.block_import().import_block(block_import_params).await {
 			Ok(res) => {
 				res.handle_justification(
@@ -454,6 +460,22 @@ pub trait SimpleSlotWorker<B: BlockT> {
 					"err" => ?err,
 				);
 			},
+		}
+
+		if let Ok(block_number) = header_num.try_into() {
+			BlockMetrics::observe_import_block_end_timestamp(block_number);
+		}
+
+		if let Some(data) = BlockMetrics::take().to_block_metrics_telemetry() {
+			println!("{:?}", data);
+			telemetry!(
+				telemetry;
+				SUBSTRATE_INFO;
+				"block.metrics";
+				"proposal_timestamps" => data.proposal_timestamps,
+				"sync_block_timestamps" => data.sync_block_timestamps,
+				"import_block_timestamps" => data.import_block_timestamps,
+			);
 		}
 
 		Some(SlotResult { block: B::new(header, body), storage_proof })
@@ -536,7 +558,7 @@ pub async fn start_slot_worker<B, C, W, SO, CIDP, Proof>(
 
 		if sync_oracle.is_major_syncing() {
 			debug!(target: LOG_TARGET, "Skipping proposal slot due to sync.");
-			continue
+			continue;
 		}
 
 		let _ = worker.on_slot(slot_info).await;
@@ -616,7 +638,7 @@ pub fn proposing_remaining_duration<Block: BlockT>(
 
 	// If parent is genesis block, we don't require any lenience factor.
 	if slot_info.chain_head.number().is_zero() {
-		return proposing_duration
+		return proposing_duration;
 	}
 
 	let parent_slot = match parent_slot {
@@ -779,7 +801,7 @@ where
 	) -> bool {
 		// This should not happen, but we want to keep the previous behaviour if it does.
 		if slot_now <= chain_head_slot {
-			return false
+			return false;
 		}
 
 		// There can be race between getting the finalized number and getting the best number.

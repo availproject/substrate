@@ -133,8 +133,8 @@ impl<B: BlockT> Protocol<B> {
 				out_peers: network_config.default_peers_set.out_peers,
 				bootnodes,
 				reserved_nodes: default_sets_reserved.clone(),
-				reserved_only: network_config.default_peers_set.non_reserved_mode ==
-					NonReservedPeerMode::Deny,
+				reserved_only: network_config.default_peers_set.non_reserved_mode
+					== NonReservedPeerMode::Deny,
 			});
 
 			for set_cfg in &notification_protocols {
@@ -436,12 +436,15 @@ impl<B: BlockT> NetworkBehaviour for Protocol<B> {
 			Poll::Pending => return Poll::Pending,
 			Poll::Ready(ToSwarm::GenerateEvent(ev)) => ev,
 			Poll::Ready(ToSwarm::Dial { opts }) => return Poll::Ready(ToSwarm::Dial { opts }),
-			Poll::Ready(ToSwarm::NotifyHandler { peer_id, handler, event }) =>
-				return Poll::Ready(ToSwarm::NotifyHandler { peer_id, handler, event }),
-			Poll::Ready(ToSwarm::ReportObservedAddr { address, score }) =>
-				return Poll::Ready(ToSwarm::ReportObservedAddr { address, score }),
-			Poll::Ready(ToSwarm::CloseConnection { peer_id, connection }) =>
-				return Poll::Ready(ToSwarm::CloseConnection { peer_id, connection }),
+			Poll::Ready(ToSwarm::NotifyHandler { peer_id, handler, event }) => {
+				return Poll::Ready(ToSwarm::NotifyHandler { peer_id, handler, event })
+			},
+			Poll::Ready(ToSwarm::ReportObservedAddr { address, score }) => {
+				return Poll::Ready(ToSwarm::ReportObservedAddr { address, score })
+			},
+			Poll::Ready(ToSwarm::CloseConnection { peer_id, connection }) => {
+				return Poll::Ready(ToSwarm::CloseConnection { peer_id, connection })
+			},
 		};
 
 		let outcome = match event {
@@ -478,12 +481,13 @@ impl<B: BlockT> NetworkBehaviour for Protocol<B> {
 							);
 							self.sync_substream_validations.push(Box::pin(async move {
 								match rx.await {
-									Ok(accepted) =>
+									Ok(accepted) => {
 										if accepted {
 											Ok((peer_id, roles))
 										} else {
 											Err(peer_id)
-										},
+										}
+									},
 									Err(_) => Err(peer_id),
 								}
 							}));
@@ -518,12 +522,13 @@ impl<B: BlockT> NetworkBehaviour for Protocol<B> {
 									);
 									self.sync_substream_validations.push(Box::pin(async move {
 										match rx.await {
-											Ok(accepted) =>
+											Ok(accepted) => {
 												if accepted {
 													Ok((peer_id, roles))
 												} else {
 													Err(peer_id)
-												},
+												}
+											},
 											Err(_) => Err(peer_id),
 										}
 									}));
@@ -582,7 +587,7 @@ impl<B: BlockT> NetworkBehaviour for Protocol<B> {
 					}
 				}
 			},
-			NotificationsOut::CustomProtocolReplaced { peer_id, notifications_sink, set_id } =>
+			NotificationsOut::CustomProtocolReplaced { peer_id, notifications_sink, set_id } => {
 				if self.bad_handshake_substreams.contains(&(peer_id, set_id)) {
 					CustomMessageOutcome::None
 				} else if set_id == HARDCODED_PEERSETS_SYNC {
@@ -597,7 +602,8 @@ impl<B: BlockT> NetworkBehaviour for Protocol<B> {
 						protocol: self.notification_protocols[usize::from(set_id)].clone(),
 						notifications_sink,
 					}
-				},
+				}
+			},
 			NotificationsOut::CustomProtocolClosed { peer_id, set_id } => {
 				if self.bad_handshake_substreams.remove(&(peer_id, set_id)) {
 					// The substream that has just been closed had been opened with a bad
@@ -637,7 +643,7 @@ impl<B: BlockT> NetworkBehaviour for Protocol<B> {
 		};
 
 		if !matches!(outcome, CustomMessageOutcome::None) {
-			return Poll::Ready(ToSwarm::GenerateEvent(outcome))
+			return Poll::Ready(ToSwarm::GenerateEvent(outcome));
 		}
 
 		// This block can only be reached if an event was pulled from the behaviour and that

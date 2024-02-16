@@ -54,7 +54,7 @@ impl BitOr for Reasons {
 	type Output = Reasons;
 	fn bitor(self, other: Reasons) -> Reasons {
 		if self == other {
-			return self
+			return self;
 		}
 		Reasons::All
 	}

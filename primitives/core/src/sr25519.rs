@@ -154,7 +154,7 @@ impl TryFrom<&[u8]> for Public {
 
 	fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
 		if data.len() != Self::LEN {
-			return Err(())
+			return Err(());
 		}
 		let mut r = [0u8; 32];
 		r.copy_from_slice(data);
@@ -337,7 +337,7 @@ impl Signature {
 	/// you are certain that the array actually is a signature. GIGO!
 	pub fn from_slice(data: &[u8]) -> Option<Self> {
 		if data.len() != 64 {
-			return None
+			return None;
 		}
 		let mut r = [0u8; 64];
 		r.copy_from_slice(data);
@@ -505,12 +505,8 @@ impl TraitPair for Pair {
 	}
 
 	fn verify<M: AsRef<[u8]>>(sig: &Self::Signature, message: M, pubkey: &Self::Public) -> bool {
-		let Ok(signature) = schnorrkel::Signature::from_bytes(sig.as_ref()) else {
-			return false
-		};
-		let Ok(public) = PublicKey::from_bytes(pubkey.as_ref()) else {
-			return false
-		};
+		let Ok(signature) = schnorrkel::Signature::from_bytes(sig.as_ref()) else { return false };
+		let Ok(public) = PublicKey::from_bytes(pubkey.as_ref()) else { return false };
 		public.verify_simple(SIGNING_CTX, message.as_ref(), &signature).is_ok()
 	}
 
@@ -766,25 +762,34 @@ pub mod vrf {
 			ScalarFormatError => "Signature error: `ScalarFormatError`".into(),
 			NotMarkedSchnorrkel => "Signature error: `NotMarkedSchnorrkel`".into(),
 			BytesLengthError { .. } => "Signature error: `BytesLengthError`".into(),
-			MuSigAbsent { musig_stage: Commitment } =>
-				"Signature error: `MuSigAbsent` at stage `Commitment`".into(),
-			MuSigAbsent { musig_stage: Reveal } =>
-				"Signature error: `MuSigAbsent` at stage `Reveal`".into(),
-			MuSigAbsent { musig_stage: Cosignature } =>
-				"Signature error: `MuSigAbsent` at stage `Commitment`".into(),
-			MuSigInconsistent { musig_stage: Commitment, duplicate: true } =>
-				"Signature error: `MuSigInconsistent` at stage `Commitment` on duplicate".into(),
-			MuSigInconsistent { musig_stage: Commitment, duplicate: false } =>
-				"Signature error: `MuSigInconsistent` at stage `Commitment` on not duplicate".into(),
-			MuSigInconsistent { musig_stage: Reveal, duplicate: true } =>
-				"Signature error: `MuSigInconsistent` at stage `Reveal` on duplicate".into(),
-			MuSigInconsistent { musig_stage: Reveal, duplicate: false } =>
-				"Signature error: `MuSigInconsistent` at stage `Reveal` on not duplicate".into(),
-			MuSigInconsistent { musig_stage: Cosignature, duplicate: true } =>
-				"Signature error: `MuSigInconsistent` at stage `Cosignature` on duplicate".into(),
-			MuSigInconsistent { musig_stage: Cosignature, duplicate: false } =>
+			MuSigAbsent { musig_stage: Commitment } => {
+				"Signature error: `MuSigAbsent` at stage `Commitment`".into()
+			},
+			MuSigAbsent { musig_stage: Reveal } => {
+				"Signature error: `MuSigAbsent` at stage `Reveal`".into()
+			},
+			MuSigAbsent { musig_stage: Cosignature } => {
+				"Signature error: `MuSigAbsent` at stage `Commitment`".into()
+			},
+			MuSigInconsistent { musig_stage: Commitment, duplicate: true } => {
+				"Signature error: `MuSigInconsistent` at stage `Commitment` on duplicate".into()
+			},
+			MuSigInconsistent { musig_stage: Commitment, duplicate: false } => {
+				"Signature error: `MuSigInconsistent` at stage `Commitment` on not duplicate".into()
+			},
+			MuSigInconsistent { musig_stage: Reveal, duplicate: true } => {
+				"Signature error: `MuSigInconsistent` at stage `Reveal` on duplicate".into()
+			},
+			MuSigInconsistent { musig_stage: Reveal, duplicate: false } => {
+				"Signature error: `MuSigInconsistent` at stage `Reveal` on not duplicate".into()
+			},
+			MuSigInconsistent { musig_stage: Cosignature, duplicate: true } => {
+				"Signature error: `MuSigInconsistent` at stage `Cosignature` on duplicate".into()
+			},
+			MuSigInconsistent { musig_stage: Cosignature, duplicate: false } => {
 				"Signature error: `MuSigInconsistent` at stage `Cosignature` on not duplicate"
-					.into(),
+					.into()
+			},
 		}
 	}
 

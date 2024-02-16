@@ -129,16 +129,21 @@ impl NetworkServiceProvider {
 	pub async fn run(mut self, service: Arc<dyn Network + Send + Sync>) {
 		while let Some(inner) = self.rx.next().await {
 			match inner {
-				ToServiceCommand::DisconnectPeer(peer, protocol_name) =>
-					service.disconnect_peer(peer, protocol_name),
-				ToServiceCommand::ReportPeer(peer, reputation_change) =>
-					service.report_peer(peer, reputation_change),
-				ToServiceCommand::StartRequest(peer, protocol, request, tx, connect) =>
-					service.start_request(peer, protocol, request, tx, connect),
-				ToServiceCommand::WriteNotification(peer, protocol, message) =>
-					service.write_notification(peer, protocol, message),
-				ToServiceCommand::SetNotificationHandshake(protocol, handshake) =>
-					service.set_notification_handshake(protocol, handshake),
+				ToServiceCommand::DisconnectPeer(peer, protocol_name) => {
+					service.disconnect_peer(peer, protocol_name)
+				},
+				ToServiceCommand::ReportPeer(peer, reputation_change) => {
+					service.report_peer(peer, reputation_change)
+				},
+				ToServiceCommand::StartRequest(peer, protocol, request, tx, connect) => {
+					service.start_request(peer, protocol, request, tx, connect)
+				},
+				ToServiceCommand::WriteNotification(peer, protocol, message) => {
+					service.write_notification(peer, protocol, message)
+				},
+				ToServiceCommand::SetNotificationHandshake(protocol, handshake) => {
+					service.set_notification_handshake(protocol, handshake)
+				},
 			}
 		}
 	}

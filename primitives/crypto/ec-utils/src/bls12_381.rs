@@ -131,7 +131,7 @@ mod tests {
 			if let Some(p) = G1Affine::get_point_from_x_unchecked(x, greatest) {
 				if !<G1Projective as ark_std::Zero>::is_zero(&p.mul_bigint(Fr::characteristic())) {
 					assert!(!p.is_in_correct_subgroup_assuming_on_curve());
-					return
+					return;
 				}
 			}
 		}
@@ -154,7 +154,7 @@ mod tests {
 			if let Some(p) = G2Affine::get_point_from_x_unchecked(x, greatest) {
 				if !<G2Projective as Zero>::is_zero(&p.mul_bigint(Fr::characteristic())) {
 					assert!(!p.is_in_correct_subgroup_assuming_on_curve());
-					return
+					return;
 				}
 			}
 		}

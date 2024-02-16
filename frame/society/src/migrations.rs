@@ -241,7 +241,7 @@ pub fn from_original<T: Config<I>, I: Instance + 'static>(
 	if !old::Members::<T, I>::exists() {
 		log::warn!(target: TARGET, "Skipping MigrateToV2 migration since it appears unapplicable");
 		// Already migrated or no data to migrate: Bail.
-		return T::DbWeight::get().reads(1)
+		return T::DbWeight::get().reads(1);
 	}
 
 	// Migrate Bids from old::Bids (just a trunctation).
