@@ -9491,6 +9491,7 @@ name = "sc-consensus-slots"
 version = "0.10.0-dev"
 dependencies = [
  "async-trait",
+ "block-metrics",
  "futures",
  "futures-timer",
  "log",

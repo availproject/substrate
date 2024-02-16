@@ -367,14 +367,15 @@ pub(crate) async fn import_single_block_metered<
 	if let Some(metrics) = metrics.as_ref() {
 		metrics.report_verification_and_import(started.elapsed());
 	}
-	if let Ok(data) = BlockMetricsTelemetry::try_from(BlockMetrics::take()) {
+	if let Some(data) = BlockMetrics::take().to_block_metrics_telemetry() {
+		println!("{:?}", data);
 		telemetry!(
 			telemetry;
 			SUBSTRATE_INFO;
 			"block.metrics";
-			"proposalTimestamps" => data.proposal_timestamps,
-			"syncBlockTimestamps" => data.sync_block_start_timestamps,
-			"importBlockTimestamps" => data.import_block_timestamps,
+			"proposal_timestamps" => data.proposal_timestamps,
+			"sync_block_timestamps" => data.sync_block_timestamps,
+			"import_block_timestamps" => data.import_block_timestamps,
 		);
 	}
 
