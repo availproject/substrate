@@ -368,7 +368,6 @@ pub(crate) async fn import_single_block_metered<
 		metrics.report_verification_and_import(started.elapsed());
 	}
 	if let Some(data) = BlockMetrics::take().to_block_metrics_telemetry() {
-		println!("{:?}", data);
 		telemetry!(
 			telemetry;
 			SUBSTRATE_INFO;

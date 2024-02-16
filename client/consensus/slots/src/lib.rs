@@ -467,7 +467,6 @@ pub trait SimpleSlotWorker<B: BlockT> {
 		}
 
 		if let Some(data) = BlockMetrics::take().to_block_metrics_telemetry() {
-			println!("{:?}", data);
 			telemetry!(
 				telemetry;
 				SUBSTRATE_INFO;
