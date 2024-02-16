@@ -34,7 +34,7 @@ use crate::{
 	state::StateSync,
 	warp::{WarpProofImportResult, WarpSync},
 };
-use block_metrics::BlockMetrics;
+use block_metrics::{MetricActions, MetricKind};
 
 use codec::{Decode, DecodeAll, Encode};
 use extra_requests::ExtraRequests;
@@ -1546,11 +1546,15 @@ where
 			if origin == BlockOrigin::NetworkBroadcast && new_blocks.len() == 1 {
 				let block = &new_blocks[0];
 				if let Some(header) = &block.header {
-					let number = header.number().clone();
+					let block_number = header.number().clone();
+					let timestamp = MetricActions::get_current_timestamp_in_ms();
 
-					if let Ok(block_number) = number.try_into() {
-						BlockMetrics::observe_accepted_block_timestamp(block_number);
-					}
+					MetricActions::observe_metric_partial(
+						MetricKind::SYNC,
+						block_number.try_into().ok(),
+						timestamp.ok(),
+						true,
+					);
 				}
 			}
 
@@ -1784,9 +1788,13 @@ where
 				.peers
 				.insert(who);
 
-			if let Ok(block_number) = summary.number.try_into() {
-				BlockMetrics::observe_new_sync_target_timestamp(block_number);
-			}
+			let timestamp = MetricActions::get_current_timestamp_in_ms();
+			MetricActions::observe_metric_partial(
+				MetricKind::SYNC,
+				summary.number.try_into().ok(),
+				timestamp.ok(),
+				false,
+			);
 		}
 
 		PollBlockAnnounceValidation::Nothing { is_best, who, announce }

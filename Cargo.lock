@@ -949,6 +949,10 @@ dependencies = [
 [[package]]
 name = "block-metrics"
 version = "0.1.0"
+dependencies = [
+ "sc-telemetry",
+ "serde",
+]
 
 [[package]]
 name = "block-modes"
@@ -9209,6 +9213,7 @@ name = "sc-consensus-babe"
 version = "0.10.0-dev"
 dependencies = [
  "async-trait",
+ "block-metrics",
  "fork-tree",
  "futures",
  "log",

@@ -149,7 +149,6 @@ impl TestNetworkBuilder {
 				None,
 				&sp_core::testing::TaskExecutor::new(),
 				None,
-				None,
 			)));
 
 		let protocol_id = ProtocolId::from("test-protocol-name");

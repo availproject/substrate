@@ -4,6 +4,10 @@ name = "block-metrics"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies]
+serde = { version = "1.0.163", features = ["derive"] }
+sc-telemetry = { version = "4.0.0-dev", path = "../telemetry" }
+
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 

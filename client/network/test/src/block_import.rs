@@ -73,7 +73,6 @@ fn import_single_good_block_works() {
 		BlockOrigin::File,
 		block,
 		&mut PassThroughVerifier::new(true),
-		None,
 	)) {
 		Ok(BlockImportStatus::ImportedUnknown(ref num, ref aux, ref org))
 			if *num == number && *aux == expected_aux && *org == Some(peer_id) => {},
@@ -89,7 +88,6 @@ fn import_single_good_known_block_is_ignored() {
 		BlockOrigin::File,
 		block,
 		&mut PassThroughVerifier::new(true),
-		None,
 	)) {
 		Ok(BlockImportStatus::ImportedKnown(ref n, _)) if *n == number => {},
 		_ => panic!(),
@@ -105,7 +103,6 @@ fn import_single_good_block_without_header_fails() {
 		BlockOrigin::File,
 		block,
 		&mut PassThroughVerifier::new(true),
-		None,
 	)) {
 		Err(BlockImportError::IncompleteHeader(ref org)) if *org == Some(peer_id) => {},
 		_ => panic!(),
@@ -124,7 +121,6 @@ fn async_import_queue_drops() {
 			Box::new(substrate_test_runtime_client::new()),
 			None,
 			&executor,
-			None,
 			None,
 		);
 		drop(queue);

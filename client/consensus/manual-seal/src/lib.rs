@@ -30,7 +30,6 @@ use sc_consensus::{
 	block_import::{BlockImport, BlockImportParams, ForkChoiceStrategy},
 	import_queue::{BasicQueue, BoxBlockImport, Verifier},
 };
-use sc_telemetry::TelemetryHandle;
 use sp_blockchain::HeaderBackend;
 use sp_consensus::{Environment, Proposer, SelectChain};
 use sp_core::traits::SpawnNamed;
@@ -80,13 +79,12 @@ pub fn import_queue<Block, Transaction>(
 	block_import: BoxBlockImport<Block, Transaction>,
 	spawner: &impl sp_core::traits::SpawnEssentialNamed,
 	registry: Option<&Registry>,
-	telemetry: Option<TelemetryHandle>,
 ) -> BasicQueue<Block, Transaction>
 where
 	Block: BlockT,
 	Transaction: Send + Sync + 'static,
 {
-	BasicQueue::new(ManualSealVerifier, block_import, None, spawner, registry, telemetry)
+	BasicQueue::new(ManualSealVerifier, block_import, None, spawner, registry)
 }
 
 /// Params required to start the instant sealing authorship task.

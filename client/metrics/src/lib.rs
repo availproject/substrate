@@ -1,161 +1,166 @@
-// There should be no data races happening because not a single operation will be executed at the same time.
-// Example: We cannot run block import before we actually download the block from our peers.
+// The canonical usage is to call MetricActions::observe_metric() when a metric needs to be recorded.
+// The metric will be stored inside a vector and won't be send to the telemetry until it is requested.
 //
-// Importing the block is the last action that we are doing so that's the moment where we are going to send
-// the telemetry data.
+// MetricActions::send_telemetry() sends all stored metrics to the telemetry endpoints and resets the
+// storage.
+//
+// For partial recordings, use MetricActions::observe_metric_partial(). This allows to capture
+// a metric in different points in the system without passing around the start and end timestamp.
+//
+// In order for the telemetry to work, MetricActions::subscribe_telemetry() needs to be called
+// with a valid telemetry handle.
 
+use sc_telemetry::{telemetry, TelemetryHandle, SUBSTRATE_INFO};
 use std::{
 	sync::Mutex,
 	time::{SystemTime, SystemTimeError, UNIX_EPOCH},
 };
 
-#[derive(Debug, Default, Clone)]
-pub struct BlockMetrics {
-	pub proposal_end_timestamp: Option<(u64, u128)>, // (block number, timestamp in ms)
-	pub proposal_time: Option<(u64, u128)>,          // (block number, time in ms)
-	pub new_sync_target_timestamp: Option<(u64, u128)>, // (block number, timestamp in ms)
-	pub accepted_block_timestamp: Option<(u64, u128)>, // (block number, timestamp in ms)
-	pub import_block_start_timestamp: Option<(u64, u128)>, // (block number, timestamp in ms).
-	pub import_block_end_timestamp: Option<(u64, u128)>, // (block number, timestamp in ms).
+use serde::Serialize;
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
+pub enum MetricKind {
+	PROPOSAL = 0,
+	SYNC = 1,
+	IMPORT = 2,
 }
 
-pub static BLOCK_METRICS: Mutex<BlockMetrics> = Mutex::new(BlockMetrics::new());
-impl BlockMetrics {
-	pub const fn new() -> Self {
-		Self {
-			proposal_end_timestamp: None,
-			proposal_time: None,
-			new_sync_target_timestamp: None,
-			accepted_block_timestamp: None,
-			import_block_start_timestamp: None,
-			import_block_end_timestamp: None,
+impl MetricKind {
+	pub fn from_u8(value: u8) -> Option<Self> {
+		match value {
+			0 => Some(Self::PROPOSAL),
+			1 => Some(Self::SYNC),
+			2 => Some(Self::IMPORT),
+			_ => None,
 		}
 	}
 
-	pub fn observe_proposal_end_timestamp(block_number: u64) {
-		let Ok(timestamp) = Self::get_current_timestamp_in_ms() else {
+	pub fn to_u8(self) -> u8 {
+		self as u8
+	}
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+pub struct MetricDetail {
+	kind: u8,
+	block_number: u64,
+	start_timestamp: u64,
+	end_timestamp: u64,
+}
+
+impl MetricDetail {
+	pub fn new(
+		kind: MetricKind,
+		block_number: u64,
+		start_timestamp: u64,
+		end_timestamp: u64,
+	) -> Self {
+		Self { kind: kind.to_u8(), block_number, start_timestamp, end_timestamp }
+	}
+}
+
+static STORED_METRICS: Mutex<Vec<MetricDetail>> = Mutex::new(Vec::new());
+static TELEMETRY_HANDLE: Mutex<Option<TelemetryHandle>> = Mutex::new(None);
+
+pub struct MetricActions;
+
+impl MetricActions {
+	pub fn subscribe_telemetry(handle: Option<TelemetryHandle>) {
+		let Ok(mut lock) = TELEMETRY_HANDLE.lock() else {
 			return;
 		};
 
-		let Ok(mut metrics) = BLOCK_METRICS.lock() else {
-			return;
-		};
-
-		metrics.proposal_end_timestamp = Some((block_number, timestamp));
+		*lock = handle;
 	}
 
-	pub fn observe_proposal_time(block_number: u64, time: u128) {
-		let Ok(mut metrics) = BLOCK_METRICS.lock() else {
-			return;
-		};
-
-		metrics.proposal_time = Some((block_number, time));
-	}
-
-	pub fn observe_new_sync_target_timestamp(block_number: u64) {
-		let Ok(timestamp) = Self::get_current_timestamp_in_ms() else {
-			return;
-		};
-		let Ok(mut metrics) = BLOCK_METRICS.lock() else {
-			return;
-		};
-
-		metrics.new_sync_target_timestamp = Some((block_number, timestamp));
-	}
-
-	pub fn observe_accepted_block_timestamp(block_number: u64) {
-		let Ok(timestamp) = Self::get_current_timestamp_in_ms() else {
-			return;
-		};
-		let Ok(mut metrics) = BLOCK_METRICS.lock() else {
-			return;
-		};
-
-		metrics.accepted_block_timestamp = Some((block_number, timestamp));
-	}
-
-	pub fn observe_import_block_start_timestamp(block_number: u64) {
-		let Ok(timestamp) = Self::get_current_timestamp_in_ms() else {
-			return;
-		};
-		let Ok(mut metrics) = BLOCK_METRICS.lock() else {
-			return;
-		};
-
-		metrics.import_block_start_timestamp = Some((block_number, timestamp));
-	}
-
-	pub fn observe_import_block_end_timestamp(block_number: u64) {
-		let Ok(timestamp) = Self::get_current_timestamp_in_ms() else {
-			return;
-		};
-		let Ok(mut metrics) = BLOCK_METRICS.lock() else {
-			return;
-		};
-
-		metrics.import_block_end_timestamp = Some((block_number, timestamp));
-	}
-
-	pub fn take() -> BlockMetrics {
-		let Ok(mut metrics) = BLOCK_METRICS.lock() else {
-			return BlockMetrics::new();
-		};
-
-		let val = metrics.clone();
-		*metrics = BlockMetrics::new();
-
-		val
-	}
-
-	pub fn to_block_metrics_telemetry(self) -> Option<BlockMetricsTelemetry> {
-		let mut proposal_timestamps = None;
-		if let (Some(end), Some(time)) = (&self.proposal_end_timestamp, &self.proposal_time) {
-			if end.0 == time.0 {
-				proposal_timestamps = Some(((end.1 - time.1) as u64, end.1 as u64, end.0));
-			}
-		}
-
-		let mut sync_block_timestamps = None;
-		if let (Some(start), Some(end)) =
-			(&self.new_sync_target_timestamp, &self.accepted_block_timestamp)
+	pub fn observe_metric_option(
+		kind: MetricKind,
+		block_number: Option<u64>,
+		start_timestamp: Option<u128>,
+		end_timestamp: Option<u128>,
+	) {
+		if let (Some(block_number), Some(start_timestamp), Some(end_timestamp)) =
+			(block_number, start_timestamp, end_timestamp)
 		{
-			if start.0 == end.0 {
-				sync_block_timestamps = Some((start.1 as u64, end.1 as u64, start.0));
-			}
+			Self::observe_metric(kind, block_number, start_timestamp, end_timestamp);
 		}
-
-		let mut import_block_timestamps = None;
-		if let (Some(start), Some(end)) =
-			(&self.import_block_start_timestamp, &self.import_block_end_timestamp)
-		{
-			if start.0 == end.0 {
-				import_block_timestamps = Some((start.1 as u64, end.1 as u64, start.0));
-			}
-		}
-
-		if proposal_timestamps.is_none()
-			&& sync_block_timestamps.is_none()
-			&& import_block_timestamps.is_none()
-		{
-			return None;
-		}
-
-		Some(BlockMetricsTelemetry {
-			proposal_timestamps,
-			sync_block_timestamps,
-			import_block_timestamps,
-		})
 	}
 
-	fn get_current_timestamp_in_ms() -> Result<u128, SystemTimeError> {
+	pub fn observe_metric(
+		kind: MetricKind,
+		block_number: u64,
+		start_timestamp: u128,
+		end_timestamp: u128,
+	) {
+		let Ok(mut lock) = STORED_METRICS.lock() else {
+			return;
+		};
+
+		lock.push(MetricDetail::new(
+			kind,
+			block_number,
+			start_timestamp as u64,
+			end_timestamp as u64,
+		));
+	}
+
+	pub fn observe_metric_partial(
+		kind: MetricKind,
+		block_number: Option<u64>,
+		timestamp: Option<u128>,
+		is_start: bool,
+	) {
+		let Some(block_number) = block_number else {
+			return;
+		};
+		let Some(timestamp) = timestamp else {
+			return;
+		};
+		let timestamp = timestamp as u64;
+
+		let Ok(mut lock) = STORED_METRICS.lock() else {
+			return;
+		};
+
+		let item = lock
+			.iter_mut()
+			.find(|i| i.block_number == block_number && i.kind == kind.to_u8());
+		if let Some(item) = item {
+			if is_start {
+				item.start_timestamp = timestamp;
+			} else {
+				item.end_timestamp = timestamp;
+			}
+		} else {
+			let metric = if is_start {
+				MetricDetail::new(kind, block_number, timestamp, 0)
+			} else {
+				MetricDetail::new(kind, block_number, 0, timestamp)
+			};
+			lock.push(metric)
+		}
+	}
+
+	pub fn send_telemetry() {
+		let Ok(mut metrics_lock) = STORED_METRICS.lock() else {
+			return;
+		};
+		let Ok(telemetry) = TELEMETRY_HANDLE.lock() else {
+			return;
+		};
+
+		let metrics: Vec<MetricDetail> = std::mem::take(&mut metrics_lock);
+		telemetry!(
+			telemetry;
+			SUBSTRATE_INFO;
+			"block.metrics";
+			"metrics" => metrics,
+		);
+	}
+
+	pub fn get_current_timestamp_in_ms() -> Result<u128, SystemTimeError> {
 		let start = SystemTime::now();
 		start.duration_since(UNIX_EPOCH).map(|f| f.as_millis())
 	}
-}
-
-#[derive(Debug)]
-pub struct BlockMetricsTelemetry {
-	pub proposal_timestamps: Option<(u64, u64, u64)>, // (timestamp in ms (start, end, block_number))
-	pub sync_block_timestamps: Option<(u64, u64, u64)>, // (timestamp in ms (start, end, block_number))
-	pub import_block_timestamps: Option<(u64, u64, u64)>, // (timestamp in ms (start, end, block_number))
 }

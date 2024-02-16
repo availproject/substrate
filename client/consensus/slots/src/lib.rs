@@ -29,7 +29,7 @@ mod aux_schema;
 mod slots;
 
 pub use aux_schema::{check_equivocation, MAX_SLOT_CAPACITY, PRUNING_BOUND};
-use block_metrics::{BlockMetrics, BlockMetricsTelemetry};
+use block_metrics::{MetricActions, MetricKind};
 pub use slots::SlotInfo;
 use slots::Slots;
 
@@ -37,9 +37,7 @@ use futures::{future::Either, Future, TryFutureExt};
 use futures_timer::Delay;
 use log::{debug, info, warn};
 use sc_consensus::{BlockImport, JustificationSyncLink};
-use sc_telemetry::{
-	telemetry, TelemetryHandle, CONSENSUS_DEBUG, CONSENSUS_INFO, CONSENSUS_WARN, SUBSTRATE_INFO,
-};
+use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_DEBUG, CONSENSUS_INFO, CONSENSUS_WARN};
 use sp_arithmetic::traits::BaseArithmetic;
 use sp_consensus::{Proposal, Proposer, SelectChain, SyncOracle};
 use sp_consensus_slots::{Slot, SlotDuration};
@@ -435,9 +433,7 @@ pub trait SimpleSlotWorker<B: BlockT> {
 		);
 
 		let header = block_import_params.post_header();
-		if let Ok(block_number) = header_num.try_into() {
-			BlockMetrics::observe_import_block_start_timestamp(block_number);
-		}
+		let start_timestamp = MetricActions::get_current_timestamp_in_ms();
 		match self.block_import().import_block(block_import_params).await {
 			Ok(res) => {
 				res.handle_justification(
@@ -462,20 +458,17 @@ pub trait SimpleSlotWorker<B: BlockT> {
 			},
 		}
 
-		if let Ok(block_number) = header_num.try_into() {
-			BlockMetrics::observe_import_block_end_timestamp(block_number);
-		}
-
-		if let Some(data) = BlockMetrics::take().to_block_metrics_telemetry() {
-			telemetry!(
-				telemetry;
-				SUBSTRATE_INFO;
-				"block.metrics";
-				"proposal_timestamps" => data.proposal_timestamps,
-				"sync_block_timestamps" => data.sync_block_timestamps,
-				"import_block_timestamps" => data.import_block_timestamps,
-			);
-		}
+		// +++ Telemetry Added
+		let end_timestamp = MetricActions::get_current_timestamp_in_ms();
+		let block_number: Result<u64, _> = header_num.try_into();
+		MetricActions::observe_metric_option(
+			MetricKind::IMPORT,
+			block_number.ok(),
+			start_timestamp.ok(),
+			end_timestamp.ok(),
+		);
+		MetricActions::send_telemetry();
+		// --- Telemetry Added
 
 		Some(SlotResult { block: B::new(header, body), storage_proof })
 	}

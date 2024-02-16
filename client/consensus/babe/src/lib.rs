@@ -1876,15 +1876,11 @@ where
 
 	spawner.spawn_essential("babe-worker", Some("babe"), answer_requests.boxed());
 
+	// TODO MARKO This is not the best place to initialize our Metric Singleton but whatever.
+	block_metrics::MetricActions::subscribe_telemetry(telemetry);
+
 	Ok((
-		BasicQueue::new(
-			verifier,
-			Box::new(block_import),
-			justification_import,
-			spawner,
-			registry,
-			telemetry,
-		),
+		BasicQueue::new(verifier, Box::new(block_import), justification_import, spawner, registry),
 		BabeWorkerHandle(worker_tx),
 	))
 }

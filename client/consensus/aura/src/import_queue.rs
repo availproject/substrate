@@ -381,14 +381,7 @@ where
 		compatibility_mode,
 	});
 
-	Ok(BasicQueue::new(
-		verifier,
-		Box::new(block_import),
-		justification_import,
-		spawner,
-		registry,
-		telemetry,
-	))
+	Ok(BasicQueue::new(verifier, Box::new(block_import), justification_import, spawner, registry))
 }
 
 /// Parameters of [`build_verifier`].
