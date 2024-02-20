@@ -364,7 +364,7 @@ pub(crate) async fn import_single_block_metered<
 	let end_timestamp: Result<u128, std::time::SystemTimeError> =
 		MetricActions::get_current_timestamp_in_ms();
 	MetricActions::observe_metric_option(
-		MetricKind::PROPOSAL,
+		MetricKind::IMPORT,
 		number.try_into().ok(),
 		start_timestamp.ok(),
 		end_timestamp.ok(),

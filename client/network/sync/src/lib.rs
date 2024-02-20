@@ -1543,18 +1543,19 @@ where
 				origin,
 			);
 
-			if origin == BlockOrigin::NetworkBroadcast && new_blocks.len() == 1 {
-				let block = &new_blocks[0];
-				if let Some(header) = &block.header {
-					let block_number = header.number().clone();
-					let timestamp = MetricActions::get_current_timestamp_in_ms();
+			if origin == BlockOrigin::NetworkBroadcast {
+				let timestamp = MetricActions::get_current_timestamp_in_ms();
+				for block in &new_blocks {
+					if let Some(header) = &block.header {
+						let block_number = header.number().clone();
 
-					MetricActions::observe_metric_partial(
-						MetricKind::SYNC,
-						block_number.try_into().ok(),
-						timestamp.ok(),
-						true,
-					);
+						MetricActions::observe_metric_partial(
+							MetricKind::SYNC,
+							block_number.try_into().ok(),
+							timestamp.clone().ok(),
+							true,
+						);
+					}
 				}
 			}
 
