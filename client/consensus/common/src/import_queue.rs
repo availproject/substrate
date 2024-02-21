@@ -360,17 +360,16 @@ pub(crate) async fn import_single_block_metered<
 		metrics.report_verification_and_import(started.elapsed());
 	}
 
-	// +++ Telemetry Added
 	let end_timestamp: Result<u128, std::time::SystemTimeError> =
 		MetricActions::get_current_timestamp_in_ms();
 	MetricActions::observe_metric_option(
 		MetricKind::IMPORT,
 		number.try_into().ok(),
+		std::format!("{}", &hash),
 		start_timestamp.ok(),
 		end_timestamp.ok(),
 	);
 	MetricActions::send_telemetry();
-	// --- Telemetry Added
 
 	import_handler(imported)
 }

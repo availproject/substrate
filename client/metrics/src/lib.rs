@@ -41,10 +41,11 @@ impl MetricKind {
 	}
 }
 
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct MetricDetail {
 	kind: u8,
 	block_number: u64,
+	block_hash: String,
 	start_timestamp: u64,
 	end_timestamp: u64,
 }
@@ -53,15 +54,17 @@ impl MetricDetail {
 	pub fn new(
 		kind: MetricKind,
 		block_number: u64,
+		block_hash: String,
 		start_timestamp: u64,
 		end_timestamp: u64,
 	) -> Self {
-		Self { kind: kind.to_u8(), block_number, start_timestamp, end_timestamp }
+		Self { kind: kind.to_u8(), block_number, block_hash, start_timestamp, end_timestamp }
 	}
 }
 
 static STORED_METRICS: Mutex<Vec<MetricDetail>> = Mutex::new(Vec::new());
 static TELEMETRY_HANDLE: Mutex<Option<TelemetryHandle>> = Mutex::new(None);
+pub const MAXIMUM_LENGTH: usize = 100;
 
 pub struct MetricActions;
 
@@ -77,19 +80,21 @@ impl MetricActions {
 	pub fn observe_metric_option(
 		kind: MetricKind,
 		block_number: Option<u64>,
+		block_hash: String,
 		start_timestamp: Option<u128>,
 		end_timestamp: Option<u128>,
 	) {
 		if let (Some(block_number), Some(start_timestamp), Some(end_timestamp)) =
 			(block_number, start_timestamp, end_timestamp)
 		{
-			Self::observe_metric(kind, block_number, start_timestamp, end_timestamp);
+			Self::observe_metric(kind, block_number, block_hash, start_timestamp, end_timestamp);
 		}
 	}
 
 	pub fn observe_metric(
 		kind: MetricKind,
 		block_number: u64,
+		block_hash: String,
 		start_timestamp: u128,
 		end_timestamp: u128,
 	) {
@@ -97,9 +102,16 @@ impl MetricActions {
 			return;
 		};
 
+		// If for some reason send_telemetry doesn't get called we should bail out and
+		// not add any new metrics.
+		if lock.len() >= MAXIMUM_LENGTH {
+			return;
+		}
+
 		lock.push(MetricDetail::new(
 			kind,
 			block_number,
+			block_hash,
 			start_timestamp as u64,
 			end_timestamp as u64,
 		));
@@ -108,6 +120,7 @@ impl MetricActions {
 	pub fn observe_metric_partial(
 		kind: MetricKind,
 		block_number: Option<u64>,
+		block_hash: String,
 		timestamp: Option<u128>,
 		is_start: bool,
 	) {
@@ -123,6 +136,12 @@ impl MetricActions {
 			return;
 		};
 
+		// If for some reason send_telemetry doesn't get called we should bail out and
+		// not add any new metrics.
+		if lock.len() >= MAXIMUM_LENGTH {
+			return;
+		}
+
 		let item = lock
 			.iter_mut()
 			.find(|i| i.block_number == block_number && i.kind == kind.to_u8());
@@ -134,9 +153,9 @@ impl MetricActions {
 			}
 		} else {
 			let metric = if is_start {
-				MetricDetail::new(kind, block_number, timestamp, 0)
+				MetricDetail::new(kind, block_number, block_hash, timestamp, 0)
 			} else {
-				MetricDetail::new(kind, block_number, 0, timestamp)
+				MetricDetail::new(kind, block_number, block_hash, 0, timestamp)
 			};
 			lock.push(metric)
 		}

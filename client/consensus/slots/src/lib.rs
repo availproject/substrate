@@ -388,13 +388,23 @@ pub trait SimpleSlotWorker<B: BlockT> {
 			},
 		};
 
+		let start_timestamp = MetricActions::get_current_timestamp_in_ms();
 		let proposal = self.propose(proposer, &claim, slot_info, end_proposing_at).await?;
+		let end_timestamp = MetricActions::get_current_timestamp_in_ms();
 
 		let (block, storage_proof) = (proposal.block, proposal.proof);
 		let (header, body) = block.deconstruct();
 		let header_num = *header.number();
 		let header_hash = header.hash();
 		let parent_hash = *header.parent_hash();
+
+		MetricActions::observe_metric_option(
+			MetricKind::PROPOSAL,
+			header_num.try_into().ok(),
+			std::format!("{}", &header_hash),
+			start_timestamp.ok(),
+			end_timestamp.ok(),
+		);
 
 		let block_import_params = match self
 			.block_import_params(
@@ -457,18 +467,16 @@ pub trait SimpleSlotWorker<B: BlockT> {
 				);
 			},
 		}
-
-		// +++ Telemetry Added
 		let end_timestamp = MetricActions::get_current_timestamp_in_ms();
-		let block_number: Result<u64, _> = header_num.try_into();
+
 		MetricActions::observe_metric_option(
 			MetricKind::IMPORT,
-			block_number.ok(),
+			header_num.try_into().ok(),
+			std::format!("{}", &header_hash),
 			start_timestamp.ok(),
 			end_timestamp.ok(),
 		);
 		MetricActions::send_telemetry();
-		// --- Telemetry Added
 
 		Some(SlotResult { block: B::new(header, body), storage_proof })
 	}

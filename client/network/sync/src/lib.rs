@@ -1547,11 +1547,12 @@ where
 				let timestamp = MetricActions::get_current_timestamp_in_ms();
 				for block in &new_blocks {
 					if let Some(header) = &block.header {
-						let block_number = header.number().clone();
+						let (number, hash) = (header.number().clone(), header.hash().clone());
 
 						MetricActions::observe_metric_partial(
 							MetricKind::SYNC,
-							block_number.try_into().ok(),
+							number.try_into().ok(),
+							std::format!("{}", &hash),
 							timestamp.clone().ok(),
 							true,
 						);
@@ -1793,6 +1794,7 @@ where
 			MetricActions::observe_metric_partial(
 				MetricKind::SYNC,
 				summary.number.try_into().ok(),
+				std::format!("{}", &summary.block_hash),
 				timestamp.ok(),
 				false,
 			);
